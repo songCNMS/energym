@@ -38,7 +38,7 @@ hour = 0
 #     print(reward, control, state)
 
 
-model = PPO('MlpPolicy', env_down_RL, verbose=1, device='gpu:0').learn(100000)
+model = PPO('MlpPolicy', env_down_RL, verbose=1, device='cuda:0').learn(100000)
 model.save(building_name)
 
 
