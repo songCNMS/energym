@@ -86,6 +86,7 @@ class StableBaselinesRLWrapper(RLWrapper):
                         for a_name in self.env.output_keys]
 
     def reset(self):
+        self.env.reset()
         outputs = self.env.get_output()
         self.state = self.transform_state(outputs)
         return self.state
