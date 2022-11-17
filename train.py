@@ -10,7 +10,9 @@ from stable_baselines3 import PPO
 
 
 weather = "ESP_CT_Barcelona"
-env = energym.make("Apartments2Grid-v0", weather=weather, simulation_days=30)
+building_name = "Apartments2Grid-v0"
+
+env = energym.make(building_name, weather=weather, simulation_days=30)
 
 inputs = env.get_inputs_names()
 print(inputs)
@@ -36,17 +38,21 @@ hour = 0
 #     print(reward, control, state)
 
 
-model = PPO('MlpPolicy', env_down_RL, verbose=1).learn(500)
+model = PPO('MlpPolicy', env_down_RL, verbose=1, device='gpu:0').learn(100000)
+model.save(building_name)
 
-eval_env = energym.make("Apartments2Grid-v0", weather=weather, simulation_days=30, eval_mode=True)
+
+eval_env = energym.make(building_name, weather=weather, simulation_days=7, eval_mode=True)
 eval_env_down_RL = StableBaselinesRLWrapper(eval_env, reward)
 
 done = False
-outputs = env.get_output()
-state = eval_env.transform_state(outputs)
+outputs = eval_env.get_output()
+state = eval_env_down_RL.transform_state(outputs)
 while not done:
-    actions = model.predict(state)
+    actions, _ = model.predict(state)
+    print(actions, eval_env.time, eval_env.stop_time)
+    eval_env_down_RL.render()
     state, reward, done, info = eval_env_down_RL.step(actions)
-    print(actions, eval_env.print_kpi())
     
-    
+env.close()
+eval_env.close()   
