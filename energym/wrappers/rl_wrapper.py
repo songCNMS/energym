@@ -65,6 +65,7 @@ class StableBaselinesRLWrapper(RLWrapper):
                                             shape=(n_states,), dtype=np.float32)
         assert callable(reward_function)
         self.reward_function = reward_function
+        self.cur_step = 0
         
     def inverse_transform_action(self, actions):
         control =  {a_name: [inverse_transform(a, self.env.input_specs[a_name]['lower_bound'], self.env.input_specs[a_name]['upper_bound'])]
@@ -87,6 +88,7 @@ class StableBaselinesRLWrapper(RLWrapper):
 
     def reset(self):
         self.env.reset()
+        self.cur_step = 0
         outputs = self.env.get_output()
         self.state = self.transform_state(outputs)
         return self.state
@@ -105,8 +107,10 @@ class StableBaselinesRLWrapper(RLWrapper):
         # print(inputs, type(inputs))
         ori_inputs = self.inverse_transform_action(inputs)
         outputs = self.env.step(ori_inputs)
-        reward = self.reward_function(outputs)
+        kpi = self.env.get_kpi(start_ind=self.cur_step, end_ind=self.cur_step+1)
+        reward = self.reward_function(kpi)
         done = (self.env.time >= self.env.stop_time)
         info = {}
         self.state = self.transform_state(outputs)
+        self.cur_step += 1
         return self.state, reward, done, info

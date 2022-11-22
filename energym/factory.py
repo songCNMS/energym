@@ -3,6 +3,7 @@ import os
 import platform
 import pandas as pd
 import datetime
+import sys
 
 from energym.envs.env_names import EnvNames
 from energym.envs.apartments.apartments import Apartments
@@ -108,7 +109,7 @@ def make(key, eval_mode=False, **kwargs):
                     "Apartments_heavy_th",
                 ),
                 EV_schedule=ev_schedule,
-                simulation_days=365,
+                simulation_days=14,
                 weather="ESP_CT_Barcelona_ElPratAP1",
             )
         else:
