@@ -65,10 +65,10 @@ controller_list = [lambda inputs, step: LabController(control_list=inputs, lower
                    lambda inputs, step: MixedUseController(control_list=inputs, lower_tol=0.3, upper_tol=0.8, nighttime_setback=True, nighttime_start=17, nighttime_end=6, nighttime_temp=18).get_control,
                    lambda inputs, step: SimpleController(control_list=inputs, lower_tol=0.3, upper_tol=0.8, nighttime_setback=True, nighttime_start=22, nighttime_end=9, nighttime_temp=17).get_control,
                    lambda inputs, step: SeminarcenterFullController(control_list=inputs, lower_tol=0.3, upper_tol=0.8, nighttime_setback=True, nighttime_start=17, nighttime_end=6, nighttime_temp=18).get_control,
-                   lambda inputs, step: {"u": [0.5*(signal.square(0.1*step)+1.0)]},
-                   lambda inputs, step: {"u": [0.5*(signal.square(0.1*step)+1.0)]},
-                   lambda inputs, step: {"u": [0.5*(signal.square(0.1*step)+1.0)]},
-                   lambda inputs, step: {"uHP": [0.5*(signal.square(0.1*step)+1.0)], 'uHP':[0.5*(math.sin(0.01*step)+1.0)]}
+                   lambda inputs, step: lambda x,y,z: {"u": [0.5*(signal.square(0.1*step)+1.0)]},
+                   lambda inputs, step: lambda x,y,z: {"u": [0.5*(signal.square(0.1*step)+1.0)]},
+                   lambda inputs, step: lambda x,y,z: {"u": [0.5*(signal.square(0.1*step)+1.0)]},
+                   lambda inputs, step: lambda x,y,z: {"uHP": [0.5*(signal.square(0.1*step)+1.0)], 'uHP':[0.5*(math.sin(0.01*step)+1.0)]}
                    ]
 
 cols_plot = [[['Z01_T', 'P1_T_Thermostat_sp_out'], ['Ext_T'], ['Fa_Pw_All']],
@@ -93,7 +93,6 @@ def collect_offline_data(building_name, iter):
     controller = controller_list[building_idx]
     offline_data_dir = f"offline_data/{building_name}/"
     os.makedirs(offline_data_dir, exist_ok=True)
-    env.reset()
     steps = control_frequency[building_idx]*simulation_days
     outputs = env.step(env.sample_random_action())
     out_list = [outputs]
@@ -126,6 +125,6 @@ def collect_offline_data(building_name, iter):
     
 
 if __name__ == "__main__":
-    building_name = "OfficesThermostat-v0"
+    building_name = "SimpleHouseRad-v0"
     collect_offline_data(building_name, 0)
     

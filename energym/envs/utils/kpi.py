@@ -129,7 +129,7 @@ class KPI(object):
             kpi = sum(obs)
         elif opts["type"] == "avg_dev":
             kpi = 0
-            if type(opts["target"]) == list:
+            if isinstance(opts["target"], list):
                 for val in obs:
                     if val < opts["target"][0]:
                         kpi += opts["target"][0] - val

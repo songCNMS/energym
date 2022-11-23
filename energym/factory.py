@@ -422,7 +422,7 @@ def make(key, eval_mode=False, **kwargs):
                         "HP_u_Rad_1RC_Sun",
                     ),
                     weather="CH_ZH_Maur",
-                    simulation_days=365,
+                    simulation_days=28,
                 )
             except BaseException as e:
                 logger.exception("Unable to build model. {}".format(e))

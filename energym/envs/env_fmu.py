@@ -224,7 +224,7 @@ class EnvFMU(Env):
 
         self.kpis = KPI(kpi_options)
 
-        # # initialize FMU and spaces
+        # initialize FMU and spaces
         self.initialize()
 
     def __build_input_space(self, input_specs):

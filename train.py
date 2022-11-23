@@ -1,137 +1,159 @@
 import sys
 sys.path.insert(0, "/home/energym/energym/")
 
+import time
 from energym.examples.Controller import LabController
 from energym.factory import make
 from energym.wrappers.downsample_outputs import DownsampleOutputs
 from energym.wrappers.rescale_outputs import RescaleOutputs
 from energym.wrappers.rl_wrapper import StableBaselinesRLWrapper
 from stable_baselines3 import PPO
+from buildings_factory import *
 
 
-weather = "ESP_CT_Barcelona"
-building_name = "Apartments2Grid-v0"
+# buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
+#                   "Apartments2Grid-v0", "OfficesThermostat-v0", "MixedUseFanFCU-v0",
+#                   "SeminarcenterThermostat-v0", "SeminarcenterFull-v0", "SimpleHouseRad-v0",
+#                   "SimpleHouseRSla-v0", "SwissHouseRSlaW2W-v0", "SwissHouseRSlaTank-v0"]
 
-env = make(building_name, weather=weather, simulation_days=28)
+if __name__ == "__main__":
+    building_name = "SimpleHouseRad-v0"
+    building_idx = buildings_list.index(building_name)
+    env = get_env(building_name)
+    controller = controller_list[building_idx]
+    weather = weather_list[building_idx]
+    default_control = default_controls[building_idx]
 
-inputs = env.get_inputs_names()
-print(inputs)
-controller = LabController(control_list=inputs, lower_tol=0.3, upper_tol=0.8, nighttime_setback=True, nighttime_start=18, nighttime_end=6, nighttime_temp=18)
+    downsampling_dic = {}
+    lower_bound =  {}
+    upper_bound = {}
+    def reward_func(kpi):
+        reward = 0.0
+        constraint = 0.0
+        for key, val in kpi.items():
+            if val['type'] != 'avg': constraint -= 10.0*val["kpi"]
+            else: reward -= abs(val['kpi'] / 1000.0)  
+        return reward + constraint
 
-downsampling_dic = {}
-lower_bound =  {}
-upper_bound = {}
-def reward_func(kpi):
-    reward = 0.0
-    constraint = 0.0
-    for key, val in kpi.items():
-        if val['type'] != 'avg': constraint -= val["kpi"]
-        else: reward -= abs(val['kpi'] / 1000.0)  
-    return reward + constraint
+    inputs = get_inputs(building_name, env)
+    outputs = env.step(env.sample_random_action())
+    print(inputs)
+    print(outputs)
+    env.print_kpis()
+    env_down_RL = StableBaselinesRLWrapper(env, reward_func, inputs)
+    hour = 0
 
-outputs = env.get_output()
-env.print_kpis()
-# env_down = DownsampleOutputs(env, steps, downsampling_dic)
-# env_down_res = RescaleOutputs(env_down, lower_bound, upper_bound)
-env_down_RL = StableBaselinesRLWrapper(env, reward_func)
-hour = 0
-# for i in range(10):
-#     control = controller.get_control(outputs, 21, hour)
-#     control['Bd_Ch_EV1Bat_sp'] = [0.0]
-#     control['Bd_Ch_EV2Bat_sp'] = [0.0]
-#     state, reward, done, info = env_down_RL.step(control)
-#     outputs = env_down_RL.inverse_transform_state(state)
-#     print(reward, control, state)
+    model = PPO('MlpPolicy', env_down_RL, verbose=1, device='auto')
+    model.learn(10000000)
+    os.makedirs(f"models/{building_name}/", exist_ok=True)
+    model_path = f"models/{building_name}/{time.time()}.pkl"
+    model.save(model_path)
 
+    # model.load("models/SimpleHouseRad-v0/1669143145.6766512.pkl")
 
-model = PPO('MlpPolicy', env_down_RL, verbose=1, device='auto')
-
-model.learn(1000000)
-model.save(building_name)
-
-# model.load(building_name)
-
-bs_eval_env = make(building_name, weather=weather, simulation_days=14, eval_mode=False)
-eval_env = make(building_name, weather=weather, simulation_days=14, eval_mode=False)
-eval_env_down_RL = StableBaselinesRLWrapper(eval_env, reward_func)
+    bs_eval_env = make(building_name, weather=weather, simulation_days=14, eval_mode=True)
+    eval_env = make(building_name, weather=weather, simulation_days=14, eval_mode=True)
+    eval_env_down_RL = StableBaselinesRLWrapper(eval_env, reward_func, inputs)
 
 
-out_list = []
-controls = []
-reward_list = []
+    out_list = []
+    controls = []
+    reward_list = []
 
-bs_out_list = []
-bs_controls = []
-bs_reward_list = []
+    bs_out_list = []
+    bs_controls = []
+    bs_reward_list = []
+        
+    bs_outputs = bs_eval_env.get_output()
+    done = False
+    outputs = eval_env.get_output()
+    state = eval_env_down_RL.transform_state(outputs)
+    step = 0
+    while not done:
+        control = controller(inputs, step)(bs_outputs, control_values[building_idx], hour)
+        control.update(default_control)
+        bs_controls +=[ {p:control[p][0] for p in control} ]
+        bs_outputs = bs_eval_env.step(control)
+        _,hour,_,_ = bs_eval_env.get_date()
+        bs_out_list.append(bs_outputs)
+        bs_reward = reward_func(bs_eval_env.get_kpi(start_ind=step, end_ind=step+1))
+        bs_reward_list.append(bs_reward)
+        
+        actions, _ = model.predict(state)
+        state, reward, done, info = eval_env_down_RL.step(actions)
+        # eval_env_down_RL.render()
+        outputs = eval_env_down_RL.inverse_transform_state(state)
+        control = eval_env_down_RL.inverse_transform_action(actions)
+        control.update(default_control)
+        controls +=[ {p:control[p][0] for p in control} ]
+        out_list.append(outputs)
+        reward_list.append(reward)
+        step += 1
     
-bs_outputs = bs_eval_env.get_output()
-done = False
-outputs = eval_env.get_output()
-state = eval_env_down_RL.transform_state(outputs)
-step = 0
-while not done:
-    control = controller.get_control(bs_outputs, 21, hour)
-    control['Bd_Ch_EV1Bat_sp'] = [0.0]
-    control['Bd_Ch_EV2Bat_sp'] = [0.0]
-    bs_controls +=[ {p:control[p][0] for p in control} ]
-    bs_outputs = bs_eval_env.step(control)
-    _,hour,_,_ = bs_eval_env.get_date()
-    bs_out_list.append(bs_outputs)
-    bs_reward = reward_func(bs_eval_env.get_kpi(start_ind=step, end_ind=step+1))
-    bs_reward_list.append(bs_reward)
+    print("RL KPIs") 
+    print(eval_env.get_kpi())
+    print("BS KPIs")
+    print(bs_eval_env.get_kpi())
+    env.close()
+    eval_env.close()
+    bs_eval_env.close()   
+
+
+    import pandas as pd
+    out_df = pd.DataFrame(out_list)
+    cmd_df = pd.DataFrame(controls)
+
+    bs_out_df = pd.DataFrame(bs_out_list)
+    bs_cmd_df = pd.DataFrame(bs_controls)
     
-    actions, _ = model.predict(state)
-    state, reward, done, info = eval_env_down_RL.step(actions)
-    # eval_env_down_RL.render()
-    outputs = eval_env_down_RL.inverse_transform_state(state)
-    control = eval_env_down_RL.inverse_transform_action(actions)
-    controls +=[ {p:control[p][0] for p in control} ]
-    out_list.append(outputs)
-    reward_list.append(reward)
-    step += 1
-   
-print("RL KPIs") 
-print(eval_env.get_kpi())
-print("BS KPIs")
-print(bs_eval_env.get_kpi())
-env.close()
-eval_env.close()
-bs_eval_env.close()   
+    result_data_dir = f"results/{building_name}/"
+    os.makedirs(result_data_dir, exist_ok=True)
+    out_df.to_csv(f"{result_data_dir}/out.csv", index=False)
+    bs_out_df.to_csv(f"{result_data_dir}/bs_out.csv", index=False)
+    cmd_df.to_csv(f"{result_data_dir}/control.csv", index=False)
+    bs_cmd_df.to_csv(f"{result_data_dir}/bs_control.csv", index=False)
 
-
-import pandas as pd
-out_df = pd.DataFrame(out_list)
-cmd_df = pd.DataFrame(controls)
-
-bs_out_df = pd.DataFrame(bs_out_list)
-bs_cmd_df = pd.DataFrame(bs_controls)
-
-
-import matplotlib.pyplot as plt
-
-f, (ax1,ax2,ax3,ax4,ax5) = plt.subplots(5,figsize=(10,15))#
-
-ax1.plot(out_df['Z01_T'], 'r', bs_out_df['Z01_T'], 'b')
-ax1.set_ylabel('Temp')
-ax1.set_xlabel('Steps')
-
-ax2.plot(out_df['P1_T_Thermostat_sp_out'], 'r--', bs_out_df['P1_T_Thermostat_sp_out'], 'b--')
-ax2.set_ylabel('Temp_SP')
-ax2.set_xlabel('Steps')
-
-ax3.plot(out_df['Ext_T'], 'r', bs_out_df['Ext_T'], 'b')
-ax3.set_ylabel('Temp')
-ax3.set_xlabel('Steps')
-
-ax4.plot(out_df['Fa_Pw_All'], 'r--', bs_out_df['Fa_Pw_All'], 'b--')
-ax4.set_ylabel('Power')
-ax4.set_xlabel('Steps')
-
-ax5.plot(reward_list, 'r--', bs_reward_list, 'b--')
-ax5.set_ylabel('Reward')
-ax5.set_xlabel('Steps')
-
-plt.subplots_adjust(hspace=0.4)
-
-plt.show()
-plt.savefig(f"{building_name}_RL.png")
+    import matplotlib.pyplot as plt
+    
+    all_cols_plot = []
+    for cols in cols_plot[building_idx]: all_cols_plot.extend(cols)
+    
+    kpi_targets = {}
+    for key, val in env.kpis.kpi_options.items():
+        if "target" in val: kpi_targets[val["name"]] = val["target"]
+    
+    # plot key values
+    f, axs = plt.subplots(len(all_cols_plot)+1,figsize=(10,15))#
+    for i, col in enumerate(all_cols_plot):
+        axs[i].plot(out_df[col], 'r', bs_out_df[col], 'b')
+        axs[i].set_ylabel(col)
+        axs[i].set_xlabel('Steps')
+        if col in kpi_targets: intervals = (kpi_targets[col] if isinstance(kpi_targets[col], list) else [kpi_targets[col], kpi_targets[col]])
+        else: intervals = [env.output_specs[col]['lower_bound'], env.output_specs[col]['upper_bound']]
+        axs[i].plot([0, out_df.shape[0]], [intervals[0], intervals[0]], color='g', linestyle='--', linewidth=2)
+        axs[i].plot([0, out_df.shape[0]], [intervals[1], intervals[1]], color='g', linestyle='--', linewidth=2)
+        
+    axs[-1].plot(np.cumsum(reward_list), 'r--', np.cumsum(bs_reward_list), 'b--')
+    axs[-1].set_ylabel('Reward')
+    axs[-1].set_xlabel('Steps')
+    plt.subplots_adjust(hspace=0.4)
+    plt.savefig(f"{result_data_dir}/RL.png")
+    
+    # plot controls
+    max_records_plot = 100
+    if cmd_df.shape[0] > max_records_plot:
+        cmd_df = cmd_df.iloc[-max_records_plot:, :].reset_index()
+        bs_cmd_df = bs_cmd_df.iloc[-max_records_plot:, :].reset_index()
+    f, axs = plt.subplots(len(inputs)+1,figsize=(10,15))#
+    for i, col in enumerate(inputs):
+        axs[i].plot(cmd_df[col], 'r', bs_cmd_df[col], 'b')
+        axs[i].set_ylabel(col)
+        axs[i].set_xlabel('Steps')
+        intervals = [env.input_specs[col]['lower_bound'], env.input_specs[col]['upper_bound']]
+        axs[i].plot([0, cmd_df.shape[0]], [intervals[0], intervals[0]], color='g', linestyle='--', linewidth=2)
+        axs[i].plot([0, cmd_df.shape[0]], [intervals[1], intervals[1]], color='g', linestyle='--', linewidth=2)
+        
+    plt.subplots_adjust(hspace=0.4)
+    plt.savefig(f"{result_data_dir}/Control_RL.png")
+    
+    

@@ -54,14 +54,14 @@ class StableBaselinesRLWrapper(RLWrapper):
 
     """
     metadata = {'render.modes': ['console']}
-    def __init__(self, env, reward_function):
+    def __init__(self, env, reward_function, inputs):
         super(StableBaselinesRLWrapper, self).__init__(env, reward_function)
-        self.action_keys = [a_name for a_name in env.input_keys if a_name.find("Thermostat") >= 0]
+        self.action_keys = [a_name for a_name in inputs]
         n_actions = len(self.action_keys)
         n_states = len(env.output_keys)
         self.action_space = spaces.Box(low=0.0, high=1.0,
                                         shape=(n_actions,), dtype=np.float32)
-        self.observation_space = spaces.Box(low=0.0, high=0.0,
+        self.observation_space = spaces.Box(low=0.0, high=1.0,
                                             shape=(n_states,), dtype=np.float32)
         assert callable(reward_function)
         self.reward_function = reward_function
@@ -70,8 +70,6 @@ class StableBaselinesRLWrapper(RLWrapper):
     def inverse_transform_action(self, actions):
         control =  {a_name: [inverse_transform(a, self.env.input_specs[a_name]['lower_bound'], self.env.input_specs[a_name]['upper_bound'])]
                         for a, a_name in zip(actions, self.action_keys)}
-        control['Bd_Ch_EV1Bat_sp'] = [0.0]
-        control['Bd_Ch_EV2Bat_sp'] = [0.0]
         return control
     
     def transform_action(self, actions):
