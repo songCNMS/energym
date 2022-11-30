@@ -8,7 +8,7 @@ from energym.factory import make
 from energym.wrappers.downsample_outputs import DownsampleOutputs
 from energym.wrappers.rescale_outputs import RescaleOutputs
 from energym.wrappers.rl_wrapper import StableBaselinesRLWrapper
-from stable_baselines3 import PPO
+from stable_baselines3 import PPO, SAC
 from stable_baselines3.common.callbacks import CallbackList, CheckpointCallback, EvalCallback, BaseCallback
 from buildings_factory import *
 import gym
@@ -36,11 +36,11 @@ class EnergymEvalCallback(BaseCallback):
         controller = controller_list[building_idx]
         weather = weather_list[building_idx]
         default_control = default_controls[building_idx]
-        inputs = get_inputs(building_name, env)
 
         bs_eval_env = make(self.building_name, weather=weather, simulation_days=self.simulation_days, eval_mode=True)
-        eval_env = make(self.building_name, weather=weather, simulation_days=self.simulation_days, eval_mode=True)
-        eval_env_down_RL = StableBaselinesRLWrapper(eval_env, reward_func, inputs, default_control)
+        eval_env_down_RL = StableBaselinesRLWrapper(self.building_name, reward_func, eval=True)
+        inputs = get_inputs(building_name, bs_eval_env)
+        
 
         out_list = []
         controls = []
@@ -52,7 +52,7 @@ class EnergymEvalCallback(BaseCallback):
             
         bs_outputs = bs_eval_env.get_output()
         done = False
-        outputs = eval_env.get_output()
+        outputs = eval_env_down_RL.env.get_output()
         state = eval_env_down_RL.transform_state(outputs)
         step = 0
         hour = 0
@@ -65,10 +65,11 @@ class EnergymEvalCallback(BaseCallback):
             bs_out_list.append(bs_outputs)
             bs_reward = reward_func(bs_eval_env.get_kpi(start_ind=step, end_ind=step+1))
             bs_reward_list.append(bs_reward)
+            done = (done | (bs_eval_env.time >= bs_eval_env.stop_time))
             
             actions, _ = self.model.predict(state)
-            state, reward, done, info = eval_env_down_RL.step(actions)
-            # eval_env_down_RL.render()
+            state, reward, _done, info = eval_env_down_RL.step(actions)
+            done = (done | _done)
             outputs = eval_env_down_RL.inverse_transform_state(state)
             control = eval_env_down_RL.inverse_transform_action(actions)
             controls +=[ {p:control[p][0] for p in control} ]
@@ -78,10 +79,10 @@ class EnergymEvalCallback(BaseCallback):
 
             if self.verbose:
                 print("RL KPIs") 
-                print(eval_env.get_kpi())
+                print(eval_env_down_RL.env.get_kpi())
                 print("BS KPIs")
                 print(bs_eval_env.get_kpi())
-        eval_env.close()
+        eval_env_down_RL.close()
         bs_eval_env.close()   
 
         out_df = pd.DataFrame(out_list)
@@ -100,7 +101,7 @@ class EnergymEvalCallback(BaseCallback):
         for cols in cols_plot[building_idx]: all_cols_plot.extend(cols)
         
         kpi_targets = {}
-        for key, val in eval_env.kpis.kpi_options.items():
+        for key, val in eval_env_down_RL.env.kpis.kpi_options.items():
             if "target" in val: kpi_targets[val["name"]] = val["target"]
         
         # plot key values
@@ -110,7 +111,7 @@ class EnergymEvalCallback(BaseCallback):
             axs[i].set_ylabel(col)
             axs[i].set_xlabel('Steps')
             if col in kpi_targets: intervals = (kpi_targets[col] if isinstance(kpi_targets[col], list) else [kpi_targets[col], kpi_targets[col]])
-            else: intervals = [eval_env.output_specs[col]['lower_bound'], eval_env.output_specs[col]['upper_bound']]
+            else: intervals = [eval_env_down_RL.env.output_specs[col]['lower_bound'], eval_env_down_RL.env.output_specs[col]['upper_bound']]
             axs[i].plot([0, out_df.shape[0]], [intervals[0], intervals[0]], color='g', linestyle='--', linewidth=2)
             axs[i].plot([0, out_df.shape[0]], [intervals[1], intervals[1]], color='g', linestyle='--', linewidth=2)
             
@@ -130,7 +131,7 @@ class EnergymEvalCallback(BaseCallback):
             axs[i].plot(cmd_df[col], 'r', bs_cmd_df[col], 'b')
             axs[i].set_ylabel(col)
             axs[i].set_xlabel('Steps')
-            intervals = [eval_env.input_specs[col]['lower_bound'], eval_env.input_specs[col]['upper_bound']]
+            intervals = [eval_env_down_RL.env.input_specs[col]['lower_bound'], eval_env_down_RL.env.input_specs[col]['upper_bound']]
             axs[i].plot([0, cmd_df.shape[0]], [intervals[0], intervals[0]], color='g', linestyle='--', linewidth=2)
             axs[i].plot([0, cmd_df.shape[0]], [intervals[1], intervals[1]], color='g', linestyle='--', linewidth=2)
             
@@ -145,29 +146,26 @@ class EnergymEvalCallback(BaseCallback):
 #                   "SeminarcenterThermostat-v0", "SeminarcenterFull-v0", "SimpleHouseRad-v0",
 #                   "SimpleHouseRSla-v0", "SwissHouseRSlaW2W-v0", "SwissHouseRSlaTank-v0"]
 
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
+parser.add_argument('--building', type=str, help='building name', required=True)
+
+args = parser.parse_args()
+
 if __name__ == "__main__":
-    building_name = "SimpleHouseRSla-v0"
-    building_idx = buildings_list.index(building_name)
-    env = get_env(building_name)
-    controller = controller_list[building_idx]
-    weather = weather_list[building_idx]
-    default_control = default_controls[building_idx]
-
-    downsampling_dic = {}
-    lower_bound =  {}
-    upper_bound = {}
-
-    inputs = get_inputs(building_name, env)
-    outputs = env.step(env.sample_random_action())
-    print(inputs)
-    print(outputs)
-    env.print_kpis()
-    env_down_RL = StableBaselinesRLWrapper(env, reward_func, inputs, default_control)
-    model_loc = f"models/{building_name}/"
-    log_loc = f"models/{building_name}/logs/"
+    building_name = args.building
+    env_down_RL = StableBaselinesRLWrapper(building_name, reward_func)
+    
+    if args.amlt:
+        model_loc = f"{os.environ['AMLT_OUTPUT_DIR']}/models/{building_name}/"
+    else:
+        model_loc = f"models/{building_name}/"
+    
+    log_loc = f"{model_loc}/logs/"
     os.makedirs(log_loc, exist_ok=True)
 
-    model = PPO('MlpPolicy', env_down_RL, verbose=1, device='auto')
+    model = SAC('MlpPolicy', env_down_RL, verbose=1, device='auto')
     checkpoint_callback = CheckpointCallback(save_freq=1000, save_path=model_loc)
     post_eval_callback = EnergymEvalCallback(model, building_name, log_loc)
     eval_callback = EvalCallback(env_down_RL, best_model_save_path=model_loc + "/best_model/",
@@ -177,5 +175,5 @@ if __name__ == "__main__":
     callback = CallbackList([checkpoint_callback, eval_callback])
     model.learn(1000000, callback=callback)
     # model.load("models/SimpleHouseRad-v0/1669143145.6766512.pkl")
-    env.close()
+    env_down_RL.close()
     

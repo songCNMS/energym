@@ -4,9 +4,6 @@ sys.path.insert(0, "/home/energym/energym/")
 import os
 from energym.examples.Controller import *
 from energym.factory import make
-from energym.wrappers.downsample_outputs import DownsampleOutputs
-from energym.wrappers.rescale_outputs import RescaleOutputs
-from energym.wrappers.rl_wrapper import StableBaselinesRLWrapper
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -28,8 +25,8 @@ default_controls = [{'P1_T_Tank_sp': [40.0], 'P2_T_Tank_sp': [40.0], 'P3_T_Tank_
                      'HVAC_onoff_HP_sp': [1.0], 'Bd_T_HP_sp': [45]},
                     {'P1_T_Tank_sp': [45.0], 'P2_T_Tank_sp': [45.0], 'P3_T_Tank_sp':[45.0],
                      'P4_T_Tank_sp': [4.0], 'Bd_Ch_EVBat_sp': [0.0], 'Bd_DisCh_EVBat_sp': [0.0]},
-                    {'Bd_Ch_EV1Bat_sp': [0.0], 'Bd_Ch_EV2Bat_sp': [0.0]},
-                    {'Bd_Ch_EV1Bat_sp': [0.0], 'Bd_Ch_EV2Bat_sp': [0.0]},
+                    {'Bd_Ch_EV1Bat_sp': [0.0], 'Bd_Ch_EV2Bat_sp': [0.0], 'Bd_Pw_Bat_sp':[1.0]},
+                    {'Bd_Ch_EV1Bat_sp': [0.0], 'Bd_Ch_EV2Bat_sp': [0.0], 'Bd_Pw_Bat_sp':[1.0]},
                     {'Bd_Heating_onoff_sp': [1], 'Bd_Cooling_onoff_sp': [0]},
                     {},
                     {},
@@ -43,7 +40,7 @@ default_controls = [{'P1_T_Tank_sp': [40.0], 'P2_T_Tank_sp': [40.0], 'P3_T_Tank_
 control_values = [21, 21, 21, 21, 21, 22, 22, 22, 0, 0, 0, 0]
 control_frequency = [480, 480, 480, 480, 96, 96, 144, 144, 288, 288, 288, 288]
 
-simulation_days = 100
+simulation_days = 28
 
 
 def reward_func(kpi):
@@ -55,9 +52,9 @@ def reward_func(kpi):
         return reward + constraint
     
 
-def get_env(building_name):
+def get_env(building_name, eval=False):
     building_idx = buildings_list.index(building_name)
-    env = make(building_name, weather=weather_list[building_idx], simulation_days=simulation_days)
+    env = make(building_name, weather=weather_list[building_idx], simulation_days=simulation_days, eval_mode=eval)
     return env
 
 def get_inputs(building_name, _env):

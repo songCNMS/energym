@@ -2,13 +2,14 @@ from energym.envs.env import StepWrapper
 from gym import spaces
 import numpy as np
 from collections import OrderedDict
+from buildings_factory import *
 
 
 def transform(val, l, u):
     return (val - l) / max((u - l), 1.0)
 
 def inverse_transform(val, l, u):
-    return val*max((u - l), 1.0) + l
+    return min(u, max(l, val*max((u - l), 1.0) + l))
 
 class RLWrapper(StepWrapper):
     r"""Transform steps outputs to have rl (gym like) outputs timesteps, i.e. add rewards, done, and info
@@ -54,7 +55,13 @@ class StableBaselinesRLWrapper(RLWrapper):
 
     """
     metadata = {'render.modes': ['console']}
-    def __init__(self, env, reward_function, inputs, default_control):
+    def __init__(self, building_name, reward_function, eval=False):
+        self.building_name = building_name
+        building_idx = buildings_list.index(building_name)
+        env = get_env(building_name, eval=eval)
+        default_control = default_controls[building_idx]
+        inputs = get_inputs(building_name, env)
+        env.step(env.sample_random_action())
         super(StableBaselinesRLWrapper, self).__init__(env, reward_function)
         self.action_keys = [a_name for a_name in inputs]
         n_actions = len(self.action_keys)
@@ -67,6 +74,8 @@ class StableBaselinesRLWrapper(RLWrapper):
         self.reward_function = reward_function
         self.cur_step = 0
         self.default_control = default_control
+        self.env = env
+        self.num_steps = int(self.env.stop_time - self.env.time) // control_frequency[building_idx] 
         
     def inverse_transform_action(self, actions):
         control =  {a_name: [inverse_transform(a, self.env.input_specs[a_name]['lower_bound'], self.env.input_specs[a_name]['upper_bound'])]
@@ -88,7 +97,9 @@ class StableBaselinesRLWrapper(RLWrapper):
                         for a_name in self.env.output_keys]
 
     def reset(self):
-        self.unwrapped.reset()
+        if self.building_name.startswith("Simple") or self.building_name.startswith("Swiss"):
+            self.env = get_env(self.building_name)
+        else: self.env.reset()
         self.env.step(self.env.sample_random_action())
         outputs = self.env.get_output()
         self.cur_step = 0

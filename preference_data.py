@@ -153,8 +153,16 @@ preference_per_round = 20
 #                   "SeminarcenterThermostat-v0", "SeminarcenterFull-v0", "SimpleHouseRad-v0",
 #                   "SimpleHouseRSla-v0", "SwissHouseRSlaW2W-v0", "SwissHouseRSlaTank-v0"] 
 
+
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
+parser.add_argument('--building', type=str, help='building name', required=True)
+
+args = parser.parse_args()
+
 if __name__ == "__main__":
-    building_name = "SimpleHouseRad-v0"
+    building_name = args.building
     if (not building_name.startswith("Simple")) and (not building_name.startswith("Swiss")):
         for i in range(num_workers): generate_offline_data_worker(building_name, i, preference_per_round)
     else:

@@ -1,15 +1,15 @@
 description: Energym
 
 target:
-  service: amlk8s
-  name: itplabrr1cl1
-  vc: resrchvc
+  service: aml
+  name: australia1GPUcl
+  vc: australiav100
   # run "amlt target list amlk8s" to list the names of available AMLK8s targets
   # name: msrresrchvc
   # vc: gcr-singularity-resrch
 
 environment:
-  image: lesongdocker:vrp
+  image: energym_base:latest
   registry: resrchvc4cr.azurecr.io # any public registry can be specified here
   username: resrchvc4cr
   setup:
@@ -28,7 +28,15 @@ code:
 
 # list of jobs to run, we run 2 jobs in this example
 jobs:
-- name: SimpleHouseRSla-v0
+- name: SwissHouseRSlaW2W-v0
   sku: G1
   command:
-  - python train.py
+  - python train.py --building SwissHouseRSlaW2W-v0 --amlt
+- name: Apartments2Grid-v0
+  sku: G1
+  command:
+  - python train.py --building Apartments2Grid-v0 --amlt
+# - name: SimpleHouseRad-v0
+#   sku: G1
+#   command:
+#   - python train.py --building SimpleHouseRad-v0 --amlt

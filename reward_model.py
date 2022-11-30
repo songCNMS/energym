@@ -135,9 +135,15 @@ print(device)
 #                   "SeminarcenterThermostat-v0", "SeminarcenterFull-v0", "SimpleHouseRad-v0",
 #                   "SimpleHouseRSla-v0", "SwissHouseRSlaW2W-v0", "SwissHouseRSlaTank-v0"] 
 
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
+parser.add_argument('--building', type=str, help='building name', required=True)
+
+args = parser.parse_args()
 
 if __name__ == "__main__":
-    building_name = "SimpleHouseRad-v0"
+    building_name = args.building
     building_idx = buildings_list.index(building_name)
     env = get_env(building_name)
     inputs = get_inputs(building_name, env)
