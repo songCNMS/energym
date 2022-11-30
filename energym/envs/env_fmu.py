@@ -6,6 +6,7 @@ import collections
 from pathlib import Path
 import logging
 import uuid
+import copy
 
 import numpy as np
 from fmpy.fmi1 import FMU1Slave, FMU1Model

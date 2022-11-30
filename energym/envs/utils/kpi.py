@@ -1,3 +1,6 @@
+import copy
+
+
 class KPI(object):
     """A class to track the KPIs while running simulations.
 
@@ -111,7 +114,7 @@ class KPI(object):
             if start_ind < 0:
                 start_ind = self.num_obs + start_ind
             assert start_ind < end_ind
-            kpi_summary = self.kpi_options.copy()
+            kpi_summary = copy.deepcopy(self.kpi_options)
             for key in self.kpi_options:
                 kpi_val = self._compute_kpi(
                     self.kpi_dict[key][start_ind:end_ind],

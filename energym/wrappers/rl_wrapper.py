@@ -54,7 +54,7 @@ class StableBaselinesRLWrapper(RLWrapper):
 
     """
     metadata = {'render.modes': ['console']}
-    def __init__(self, env, reward_function, inputs):
+    def __init__(self, env, reward_function, inputs, default_control):
         super(StableBaselinesRLWrapper, self).__init__(env, reward_function)
         self.action_keys = [a_name for a_name in inputs]
         n_actions = len(self.action_keys)
@@ -66,13 +66,16 @@ class StableBaselinesRLWrapper(RLWrapper):
         assert callable(reward_function)
         self.reward_function = reward_function
         self.cur_step = 0
+        self.default_control = default_control
         
     def inverse_transform_action(self, actions):
         control =  {a_name: [inverse_transform(a, self.env.input_specs[a_name]['lower_bound'], self.env.input_specs[a_name]['upper_bound'])]
                         for a, a_name in zip(actions, self.action_keys)}
+        control.update(self.default_control)
         return control
     
     def transform_action(self, actions):
+        actions.update(self.default_control)
         return [transform(actions[a_name][0], self.env.input_specs[a_name]['lower_bound'], self.env.input_specs[a_name]['upper_bound'])
                         for a_name in self.action_keys]
     
@@ -85,9 +88,10 @@ class StableBaselinesRLWrapper(RLWrapper):
                         for a_name in self.env.output_keys]
 
     def reset(self):
-        self.env.reset()
-        self.cur_step = 0
+        self.unwrapped.reset()
+        self.env.step(self.env.sample_random_action())
         outputs = self.env.get_output()
+        self.cur_step = 0
         self.state = self.transform_state(outputs)
         return self.state
         

@@ -423,7 +423,7 @@ OUTPUTS_SPECS_RSLA = {
 }
 
 default_kpi_options = {
-    "kpi1": {"name": "heaPum.P", "type": "avg"},
+    "kpi1": {"name": "heaPum.QCon_flow", "type": "avg"},
     "kpi2": {
         "name": "temRoo.T",
         "type": "avg_dev",

@@ -45,6 +45,16 @@ control_frequency = [480, 480, 480, 480, 96, 96, 144, 144, 288, 288, 288, 288]
 
 simulation_days = 100
 
+
+def reward_func(kpi):
+        reward = 0.0
+        constraint = 0.0
+        for key, val in kpi.items():
+            if val['type'] == 'avg_dev': constraint -= val["kpi"]
+            elif val['type'] == 'avg': reward -= abs(val['kpi'] / 1000.0)  
+        return reward + constraint
+    
+
 def get_env(building_name):
     building_idx = buildings_list.index(building_name)
     env = make(building_name, weather=weather_list[building_idx], simulation_days=simulation_days)
@@ -126,5 +136,5 @@ def collect_offline_data(building_name, iter):
 
 if __name__ == "__main__":
     building_name = "SimpleHouseRad-v0"
-    collect_offline_data(building_name, 0)
+    collect_offline_data(building_name, 1)
     
