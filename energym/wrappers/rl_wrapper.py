@@ -62,8 +62,9 @@ class StableBaselinesRLWrapper(RLWrapper):
         default_control = default_controls[building_idx]
         inputs = get_inputs(building_name, env)
         env.step(env.sample_random_action())
+        self.outputs = env.get_output()
         super(StableBaselinesRLWrapper, self).__init__(env, reward_function)
-        self.action_keys = [a_name for a_name in inputs]
+        self.action_keys = [a_name for a_name in inputs if env.input_specs[a_name]["type"] == "scalar"]
         n_actions = len(self.action_keys)
         n_states = len(env.output_keys)
         self.action_space = spaces.Box(low=0.0, high=1.0,
@@ -75,11 +76,16 @@ class StableBaselinesRLWrapper(RLWrapper):
         self.cur_step = 0
         self.default_control = default_control
         self.env = env
+        self.controller = controller_list[building_idx]
+        self.building_idx = building_idx
+        self.hour = control_values[building_idx]
         self.num_steps = int(self.env.stop_time - self.env.time) // control_frequency[building_idx] 
         
     def inverse_transform_action(self, actions):
         control =  {a_name: [inverse_transform(a, self.env.input_specs[a_name]['lower_bound'], self.env.input_specs[a_name]['upper_bound'])]
                         for a, a_name in zip(actions, self.action_keys)}
+        for key in self.baseline_control.keys():
+            if key not in self.action_keys: control[key] = self.baseline_control[key]
         control.update(self.default_control)
         return control
     
@@ -101,9 +107,9 @@ class StableBaselinesRLWrapper(RLWrapper):
             self.env = get_env(self.building_name)
         else: self.env.reset()
         self.env.step(self.env.sample_random_action())
-        outputs = self.env.get_output()
+        self.outputs = self.env.get_output()
         self.cur_step = 0
-        self.state = self.transform_state(outputs)
+        self.state = self.transform_state(self.outputs)
         return self.state
         
         
@@ -114,16 +120,19 @@ class StableBaselinesRLWrapper(RLWrapper):
 
 
     def close(self):
-        self.env.close()
+        if not(self.building_name.startswith("Simple") or self.building_name.startswith("Swiss")):
+            self.env.close()
 
     def step(self, inputs):
-        # print(inputs, type(inputs))
+        _,self.hour,_,_ = self.unwrapped.get_date()
+        self.baseline_control = self.controller(self.action_keys, self.cur_step)(self.outputs, control_values[self.building_idx], self.hour)
+        
         ori_inputs = self.inverse_transform_action(inputs)
-        outputs = self.env.step(ori_inputs)
+        self.outputs = self.env.step(ori_inputs)
         kpi = self.env.get_kpi(start_ind=self.cur_step, end_ind=self.cur_step+1)
         reward = self.reward_function(kpi)
         done = (self.env.time >= self.env.stop_time)
         info = {}
-        self.state = self.transform_state(outputs)
+        self.state = self.transform_state(self.outputs)
         self.cur_step += 1
         return self.state, reward, done, info
