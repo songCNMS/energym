@@ -1,21 +1,24 @@
 description: Energym
 
 target:
-  service: aml
-  name: australia1GPUcl
-  vc: australiav100
+  service: sing
+  name: msrresrchvc
+  vc: gcr-singularity-resrch
+  # service: aml
+  # name: ms-shared
+  # vc: MS-Shared
   # run "amlt target list amlk8s" to list the names of available AMLK8s targets
   # name: msrresrchvc
   # vc: gcr-singularity-resrch
 
 environment:
-  image: energym_base:latest
+  image: energym_sing:sing
   registry: resrchvc4cr.azurecr.io # any public registry can be specified here
   username: resrchvc4cr
   setup:
+    - apt-get update && apt-get install --no-install-recommends --no-install-suggests -yq figlet && rm -rf /var/lib/apt/lists/* && apt-get purge --auto-remove && apt-get clean && figlet Singularity
     - apt install libffi-dev
-    # - pip install pulp
-    # - pip install elkai
+
 
 code:
   # local directory of the code. this will be uploaded to the server.
@@ -27,16 +30,35 @@ code:
 #   remote_dir: ./
 
 # list of jobs to run, we run 2 jobs in this example
+
+# buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
+#                   "Apartments2Grid-v0", "OfficesThermostat-v0", "MixedUseFanFCU-v0",
+#                   "SeminarcenterThermostat-v0", "SeminarcenterFull-v0", "SimpleHouseRad-v0",
+#                   "SimpleHouseRSla-v0", "SwissHouseRSlaW2W-v0", "SwissHouseRSlaTank-v0"] 
+
+
 jobs:
-- name: SwissHouseRSlaW2W-v0
+- name: ApartmentsThermal-v0
   sku: G1
   command:
-  - python train.py --building SwissHouseRSlaW2W-v0 --amlt
+  - python train.py --building ApartmentsThermal-v0 --amlt
 - name: Apartments2Grid-v0
   sku: G1
   command:
   - python train.py --building Apartments2Grid-v0 --amlt
-# - name: SimpleHouseRad-v0
-#   sku: G1
-#   command:
-#   - python train.py --building SimpleHouseRad-v0 --amlt
+- name: Apartments2Thermal-v0
+  sku: G1
+  command:
+  - python train.py --building Apartments2Thermal-v0 --amlt
+- name: OfficesThermostat-v0
+  sku: G1
+  command:
+  - python train.py --building OfficesThermostat-v0 --amlt
+- name: SimpleHouseRad-v0
+  sku: G1
+  command:
+  - python train.py --building SimpleHouseRad-v0 --amlt
+- name: SwissHouseRSlaW2W-v0
+  sku: G1
+  command:
+  - python train.py --building SwissHouseRSlaW2W-v0 --amlt

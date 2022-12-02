@@ -18,6 +18,7 @@ from energym.schedules.EVSchedule import ElectricVehicleSchedule
 
 logger = logging.getLogger(__name__)
 
+eval_simulation_days = 28
 
 def make(key, eval_mode=False, **kwargs):
     """Creates an instance of the requested simulation model.
@@ -60,7 +61,7 @@ def make(key, eval_mode=False, **kwargs):
                     "Apartments_heavy_pump",
                 ),
                 EV_schedule=ev_schedule,
-                simulation_days=120,
+                simulation_days=eval_simulation_days,
                 weather="ESP_CT_Barcelona_ElPratAP1",
             )
         else:
@@ -109,7 +110,7 @@ def make(key, eval_mode=False, **kwargs):
                     "Apartments_heavy_th",
                 ),
                 EV_schedule=ev_schedule,
-                simulation_days=14,
+                simulation_days=eval_simulation_days,
                 weather="ESP_CT_Barcelona_ElPratAP1",
             )
         else:
@@ -161,7 +162,7 @@ def make(key, eval_mode=False, **kwargs):
                 ),
                 EV1_schedule=ev1_schedule,
                 EV2_schedule=ev2_schedule,
-                simulation_days=120,
+                simulation_days=eval_simulation_days,
                 weather="ESP_CT_Barcelona_ElPratAP1",
             )
         else:
@@ -217,7 +218,7 @@ def make(key, eval_mode=False, **kwargs):
                 ),
                 EV1_schedule=ev1_schedule,
                 EV2_schedule=ev2_schedule,
-                simulation_days=365,
+                simulation_days=eval_simulation_days,
                 weather="ESP_CT_Barcelona_ElPratAP1",
             )
         else:
@@ -262,7 +263,7 @@ def make(key, eval_mode=False, **kwargs):
                     op_sys,
                     "Offices_Thermostat",
                 ),
-                simulation_days=365,
+                simulation_days=eval_simulation_days,
                 weather="GRC_TC_Lamia1",
             )
         else:
@@ -287,7 +288,7 @@ def make(key, eval_mode=False, **kwargs):
                     op_sys,
                     "MixedUse_ahu",
                 ),
-                simulation_days=365,
+                simulation_days=eval_simulation_days,
                 weather="GRC_TC_Lamia1",
             )
         else:
@@ -325,7 +326,7 @@ def make(key, eval_mode=False, **kwargs):
                     "Seminarcenter_Thermostat",
                 ),
                 CO2_schedule=CO2_schedule,
-                simulation_days=151,
+                simulation_days=eval_simulation_days,
                 weather="DNK_MJ_Horsens2",
             )
         else:
@@ -379,7 +380,7 @@ def make(key, eval_mode=False, **kwargs):
                     "Seminarcenter_Fullcontrol",
                 ),
                 CO2_schedule=CO2_schedule,
-                simulation_days=151,
+                simulation_days=eval_simulation_days,
                 weather="DNK_MJ_Horsens2",
             )
         else:
@@ -422,7 +423,7 @@ def make(key, eval_mode=False, **kwargs):
                         "HP_u_Rad_1RC_Sun",
                     ),
                     weather="CH_ZH_Maur",
-                    simulation_days=28,
+                    simulation_days=eval_simulation_days,
                 )
             except BaseException as e:
                 logger.exception("Unable to build model. {}".format(e))
@@ -450,7 +451,7 @@ def make(key, eval_mode=False, **kwargs):
                         "HP_u_Slab_1RC_Sun",
                     ),
                     weather="CH_ZH_Maur",
-                    simulation_days=365,
+                    simulation_days=eval_simulation_days,
                 )
             except BaseException as e:
                 logger.exception("Unable to build model. {}".format(e))
@@ -478,7 +479,7 @@ def make(key, eval_mode=False, **kwargs):
                         "HP_u_RSla_1RC_Sun",
                     ),
                     weather="CH_ZH_Maur",
-                    simulation_days=365,
+                    simulation_days=eval_simulation_days,
                 )
             except BaseException as e:
                 logger.exception("Unable to build model. {}".format(e))
@@ -506,7 +507,7 @@ def make(key, eval_mode=False, **kwargs):
                         "HP_u_RSla_1RC_Sun_W2W",
                     ),
                     weather="CH_ZH_Maur",
-                    simulation_days=365,
+                    simulation_days=eval_simulation_days,
                 )
             except BaseException as e:
                 logger.exception("Unable to build model. {}".format(e))
@@ -534,7 +535,7 @@ def make(key, eval_mode=False, **kwargs):
                         "HP_u_RSla_1RC_Sun_A2W",
                     ),
                     weather="CH_ZH_Maur",
-                    simulation_days=365,
+                    simulation_days=eval_simulation_days,
                 )
             except BaseException as e:
                 logger.exception("Unable to build model. {}".format(e))
@@ -562,7 +563,7 @@ def make(key, eval_mode=False, **kwargs):
                         "HP_u_Tank_u_RSla_1RC_Sun",
                     ),
                     weather="CH_ZH_Maur",
-                    simulation_days=365,
+                    simulation_days=eval_simulation_days,
                 )
             except BaseException as e:
                 logger.exception("Unable to build model. {}".format(e))
@@ -590,7 +591,7 @@ def make(key, eval_mode=False, **kwargs):
                         "HP_u_Tank_u_DHW_u_RSla_1RC_Sun",
                     ),
                     weather="CH_ZH_Maur",
-                    simulation_days=365,
+                    simulation_days=eval_simulation_days,
                 )
             except BaseException as e:
                 logger.exception("Unable to build model. {}".format(e))

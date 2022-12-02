@@ -55,8 +55,11 @@ class StableBaselinesRLWrapper(RLWrapper):
 
     """
     metadata = {'render.modes': ['console']}
-    def __init__(self, building_name, reward_function, eval=False):
+    def __init__(self, building_name, min_kpis, max_kpis, reward_function, eval=False):
         self.building_name = building_name
+        self.min_kpis = min_kpis
+        self.max_kpis = max_kpis
+        self.eval_mode = eval
         building_idx = buildings_list.index(building_name)
         env = get_env(building_name, eval=eval)
         default_control = default_controls[building_idx]
@@ -102,9 +105,12 @@ class StableBaselinesRLWrapper(RLWrapper):
         return [transform(state[a_name], self.env.output_specs[a_name]['lower_bound'], self.env.output_specs[a_name]['upper_bound'])
                         for a_name in self.env.output_keys]
 
+    def seed(self, s):
+        pass
+
     def reset(self):
         if self.building_name.startswith("Simple") or self.building_name.startswith("Swiss"):
-            self.env = get_env(self.building_name)
+            self.env = get_env(self.building_name, eval=self.eval_mode)
         else: self.env.reset()
         self.env.step(self.env.sample_random_action())
         self.outputs = self.env.get_output()
@@ -112,12 +118,10 @@ class StableBaselinesRLWrapper(RLWrapper):
         self.state = self.transform_state(self.outputs)
         return self.state
         
-        
     def render(self, mode='console'):
         if mode != 'console':
            raise NotImplementedError()
         self.env.print_kpis()
-
 
     def close(self):
         if not(self.building_name.startswith("Simple") or self.building_name.startswith("Swiss")):
@@ -130,7 +134,7 @@ class StableBaselinesRLWrapper(RLWrapper):
         ori_inputs = self.inverse_transform_action(inputs)
         self.outputs = self.env.step(ori_inputs)
         kpi = self.env.get_kpi(start_ind=self.cur_step, end_ind=self.cur_step+1)
-        reward = self.reward_function(kpi)
+        reward = self.reward_function(self.min_kpis, self.max_kpis, kpi)
         done = (self.env.time >= self.env.stop_time)
         info = {}
         self.state = self.transform_state(self.outputs)

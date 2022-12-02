@@ -27,7 +27,7 @@ default_controls = [{'P1_T_Tank_sp': [40.0], 'P2_T_Tank_sp': [40.0], 'P3_T_Tank_
                      'P4_T_Tank_sp': [4.0], 'Bd_Ch_EVBat_sp': [0.0], 'Bd_DisCh_EVBat_sp': [0.0]},
                     {'Bd_Ch_EV1Bat_sp': [0.0], 'Bd_Ch_EV2Bat_sp': [0.0], 'Bd_Pw_Bat_sp':[1.0]},
                     {'Bd_Ch_EV1Bat_sp': [0.0], 'Bd_Ch_EV2Bat_sp': [0.0], 'Bd_Pw_Bat_sp':[1.0]},
-                    {'Bd_Heating_onoff_sp': [1], 'Bd_Cooling_onoff_sp': [0], 'Bd_Pw_Bat_sp':[1.0]},
+                    {'Bd_Heating_onoff_sp': [1], 'Bd_Cooling_onoff_sp': [0]},
                     {},
                     {},
                     {},
@@ -43,13 +43,14 @@ control_frequency = [480, 480, 480, 480, 96, 96, 144, 144, 288, 288, 288, 288]
 simulation_days = 28
 
 
-def reward_func(kpi):
+def reward_func(min_kpi, max_kpi, kpi):
         reward = 0.0
         constraint = 0.0
         for key, val in kpi.items():
-            if val['type'] == 'avg_dev': constraint -= val["kpi"]
-            elif val['type'] == 'avg': reward -= abs(val['kpi'] / 1000.0)  
-        return reward + constraint
+            min_v, max_v = min_kpi[key]['kpi'], max_kpi[key]['kpi']
+            if val['type'] == 'avg_dev': constraint += (max_v - val["kpi"]) / max(max_v-min_v, 1.0)
+            elif val['type'] == 'avg': reward += (max_v - val["kpi"]) / max(max_v-min_v, 1.0)
+        return reward + 10.0*constraint
     
 
 def get_env(building_name, eval=False):
@@ -75,7 +76,7 @@ controller_list = [lambda inputs, step: LabController(control_list=inputs, lower
                    lambda inputs, step: lambda x,y,z: {"u": [0.5*(signal.square(0.1*step)+1.0)]},
                    lambda inputs, step: lambda x,y,z: {"u": [0.5*(signal.square(0.1*step)+1.0)]},
                    lambda inputs, step: lambda x,y,z: {"u": [0.5*(signal.square(0.1*step)+1.0)]},
-                   lambda inputs, step: lambda x,y,z: {"uHP": [0.5*(signal.square(0.1*step)+1.0)], 'uHP':[0.5*(math.sin(0.01*step)+1.0)]}
+                   lambda inputs, step: lambda x,y,z: {"uHP": [0.5*(signal.square(0.1*step)+1.0)], 'uRSla':[0.5*(math.sin(0.01*step)+1.0)]}
                    ]
 
 cols_plot = [[['Z01_T', 'P1_T_Thermostat_sp_out'], ['Ext_T'], ['Fa_Pw_All']],
@@ -86,10 +87,10 @@ cols_plot = [[['Z01_T', 'P1_T_Thermostat_sp_out'], ['Ext_T'], ['Fa_Pw_All']],
              [['Z02_T', 'Z02_T_Thermostat_sp_out', 'Bd_Fl_AHU1_sp'], ['Ext_T'], ['Fa_Pw_All']],
              [['Z02_T', 'Z02_T_Thermostat_sp_out'], ['Ext_T'], ['Fa_Pw_All']],
              [['Z22_T', 'Z22_T_Thermostat_sp_out'], ['Ext_T'], ['Bd_onoff_HP1_sp', 'Bd_T_HP1_sp', 'Bd_onoff_HP3_sp', 'Bd_onoff_HP4_sp'], ['Fa_Pw_All']],
-             [['temRoo.T', 'temSup.T', 'temRet.T'], ['TOut.T'], ['heaPum.QCon_flow']],
-             [['temRoo.T', 'temSup.T', 'temRet.T'], ['TOut.T'], ['heaPum.QCon_flow']],
-             [['temRoo.T', 'sla.heatPortEmb[1].T', 'heaPum.TEvaAct'], ['TOut.T'], ['heaPum.QCon_flow']],
-             [['temRoo.T', 'sla.heatPortEmb[1].T', 'heaPum.TEvaAct'], ['TOut.T'], ['heaPum.QCon_flow']]
+             [['temRoo.T', 'temSup.T', 'temRet.T'], ['TOut.T'], ['heaPum.P']],
+             [['temRoo.T', 'temSup.T', 'temRet.T'], ['TOut.T'], ['heaPum.P']],
+             [['temRoo.T', 'sla.heatPortEmb[1].T', 'heaPum.TEvaAct'], ['TOut.T'], ['heaPum.P']],
+             [['temRoo.T', 'sla.heatPortEmb[1].T', 'heaPum.TEvaAct'], ['TOut.T'], ['heaPum.P']]
             ]
 
 

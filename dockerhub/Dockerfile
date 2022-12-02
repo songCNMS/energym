@@ -14,6 +14,34 @@ RUN apt-get update \
     && pip3 install --upgrade pip
 
 
+
+
+# install software needed for the workload
+# this example is installing figlet
+RUN apt-get update && \
+    apt-get install --no-install-recommends --no-install-suggests -yq \
+        figlet && \
+    rm -rf /var/lib/apt/lists/* && \
+    apt-get purge --auto-remove && \
+    apt-get clean && \
+    figlet Singularity
+
+# get the installation scripts
+COPY --from=installer /installer /opt/microsoft/_singularity/installations/
+
+# install components required for running this image in Singularity
+RUN /opt/microsoft/_singularity/installations/singularity/installer.sh
+
+# get the validation scripts
+COPY --from=validator /validations /opt/microsoft/_singularity/validations/
+
+# optionally set validation arguments to run additional checks for Nvidia drivers
+ENV SINGULARITY_IMAGE_ACCELERATOR="NVIDIA"
+
+# run the validation
+RUN /opt/microsoft/_singularity/validations/validator.sh
+
+
 ###########################################################
 #Installing E+
 #Define E+ version 
@@ -36,6 +64,7 @@ RUN rm -rf PostProcess/EP-Compare PreProcess/FMUParser PreProcess/ParametricPreP
 # Remove the broken symlinks
 RUN cd /usr/local/bin \
     && find -L . -type l -delete
+
 
 
 
