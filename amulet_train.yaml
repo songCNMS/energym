@@ -1,18 +1,18 @@
 description: Energym
 
 target:
-  service: sing
-  name: msrresrchvc
-  vc: gcr-singularity-resrch
-  # service: aml
-  # name: ms-shared
-  # vc: MS-Shared
+  # service: sing
+  # name: msrresrchvc
+  # vc: gcr-singularity-resrch
+  service: amlk8s
+  name: ms-shared
+  vc: MS-Shared
   # run "amlt target list amlk8s" to list the names of available AMLK8s targets
   # name: msrresrchvc
   # vc: gcr-singularity-resrch
 
 environment:
-  image: energym_sing:sing
+  image: energym_base:latest
   registry: resrchvc4cr.azurecr.io # any public registry can be specified here
   username: resrchvc4cr
   setup:
@@ -42,23 +42,31 @@ jobs:
   sku: G1
   command:
   - python train.py --building ApartmentsThermal-v0 --amlt
-- name: Apartments2Grid-v0
+- name: ApartmentsGrid-v0
   sku: G1
   command:
-  - python train.py --building Apartments2Grid-v0 --amlt
+  - python train.py --building ApartmentsGrid-v0 --amlt
 - name: Apartments2Thermal-v0
   sku: G1
   command:
   - python train.py --building Apartments2Thermal-v0 --amlt
+- name: Apartments2Grid-v0
+  sku: G1
+  command:
+  - python train.py --building Apartments2Grid-v0 --amlt
 - name: OfficesThermostat-v0
   sku: G1
   command:
   - python train.py --building OfficesThermostat-v0 --amlt
-- name: SimpleHouseRad-v0
+- name: MixedUseFanFCU-v0
   sku: G1
   command:
-  - python train.py --building SimpleHouseRad-v0 --amlt
-- name: SwissHouseRSlaW2W-v0
+  - python train.py --building MixedUseFanFCU-v0 --amlt
+- name: SeminarcenterThermostat-v0
   sku: G1
   command:
-  - python train.py --building SwissHouseRSlaW2W-v0 --amlt
+  - python train.py --building SeminarcenterThermostat-v0 --amlt
+- name: SeminarcenterFull-v0
+  sku: G1
+  command:
+  - python train.py --building SeminarcenterFull-v0 --amlt

@@ -15,6 +15,8 @@ import gym
 import pandas as pd
 import matplotlib.pyplot as plt
 
+bs_total_reward_list = []
+eval_total_reward_list = []
 
 class EnergymEvalCallback(BaseCallback):
     def __init__(
@@ -71,7 +73,7 @@ class EnergymEvalCallback(BaseCallback):
             bs_reward_list.append(bs_reward)
             done = (done | (bs_eval_env.time >= bs_eval_env.stop_time))
             
-            actions, _ = self.model.predict(state)
+            actions, _ = self.model.predict(state, deterministic=True)
             state, reward, _done, info = eval_env_down_RL.step(actions)
             done = (done | _done)
             outputs = eval_env_down_RL.inverse_transform_state(state)
@@ -88,6 +90,9 @@ class EnergymEvalCallback(BaseCallback):
                 print(bs_eval_env.get_kpi())
         eval_env_down_RL.close()
         bs_eval_env.close()   
+
+        eval_total_reward_list.append(np.sum(reward_list))
+        bs_total_reward_list.append(np.sum(bs_reward_list))
 
         out_df = pd.DataFrame(out_list)
         cmd_df = pd.DataFrame(controls)
@@ -111,6 +116,7 @@ class EnergymEvalCallback(BaseCallback):
         # plot key values
         f, axs = plt.subplots(len(all_cols_plot)+1,figsize=(10,15))#
         for i, col in enumerate(all_cols_plot):
+            if (col not in out_df.columns) or (col not in bs_out_df.columns): continue
             axs[i].plot(out_df[col], 'r', bs_out_df[col], 'b')
             axs[i].set_ylabel(col)
             axs[i].set_xlabel('Steps')
@@ -132,6 +138,7 @@ class EnergymEvalCallback(BaseCallback):
             bs_cmd_df = bs_cmd_df.iloc[-max_records_plot:, :].reset_index()
         f, axs = plt.subplots(len(inputs)+1,figsize=(10,15))#
         for i, col in enumerate(inputs):
+            if (col not in cmd_df.columns) or (col not in bs_cmd_df.columns): continue
             axs[i].plot(cmd_df[col], 'r', bs_cmd_df[col], 'b')
             axs[i].set_ylabel(col)
             axs[i].set_xlabel('Steps')
@@ -142,7 +149,9 @@ class EnergymEvalCallback(BaseCallback):
         plt.subplots_adjust(hspace=0.4)
         plt.savefig(f"{result_data_dir}/Control_RL.png")
             
-        
+        # f, ax = plt.plot(igsize=(10,15))
+        plt.plot(eval_total_reward_list, 'r', bs_total_reward_list, 'b')
+        plt.savefig(f"{result_data_dir}/reward.png")
 
 
 # buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
@@ -203,8 +212,8 @@ if __name__ == "__main__":
     log_loc = f"{model_loc}/logs/"
     os.makedirs(log_loc, exist_ok=True)
 
-    # model = SAC('MlpPolicy', env_down_RL, verbose=1, device='auto', train_freq=256, learning_starts=5120, batch_size=512, gradient_steps=8, seed=43)
-    model = PPO('MlpPolicy', env_down_RL, verbose=1, device='auto', batch_size=64, seed=43)
+    model = SAC('MlpPolicy', env_down_RL, verbose=1, device='auto', train_freq=256, learning_starts=5120, batch_size=512, gradient_steps=8, seed=43)
+    # model = PPO('MlpPolicy', env_down_RL, verbose=1, device='auto', batch_size=64, seed=43)
     checkpoint_callback = CheckpointCallback(save_freq=5120, save_path=model_loc)
     post_eval_callback = EnergymEvalCallback(model, building_name, log_loc, min_kpis, max_kpis)
     eval_callback = EvalCallback(env_down_RL, best_model_save_path=model_loc + "/best_model/",

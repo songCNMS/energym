@@ -5,6 +5,8 @@ import numpy as np
 import os
 from buildings_factory import *
 from energym.wrappers.rl_wrapper import StableBaselinesRLWrapper
+from train import collect_baseline_kpi
+
 
 
 
@@ -77,19 +79,8 @@ def sample_trajectory(env, building_name, controller=None):
     building_idx = buildings_list.index(building_name)
     trajectory = []
     done = False
-    if building_name.startswith("Simple") or building_name.startswith("Swiss"): 
-        building_idx = buildings_list.index(building_name)
-        env = get_env(building_name)
-        control = env.sample_random_action()
-        inputs = get_inputs(building_name, env)
-        default_control = default_controls[building_idx]
-        env = StableBaselinesRLWrapper(env, reward_func, inputs, default_control)
-        actions = env.transform_action(control)
-        state, _, _, _ = env.step(actions)
-        step = 1
-    else: 
-        state = env.reset()
-        step = 0
+    state = env.reset()
+    step = 0
 
     # trajectory.append(state)
     while not done:
@@ -109,8 +100,8 @@ def sample_trajectory(env, building_name, controller=None):
 
 def sample_preferences(env, building_name, num_preferences=8):
     building_idx = buildings_list.index(building_name)
-    controller1 = (None if np.random.random() <= 0.7 else controller_list[building_idx])
-    controller2 = (None if np.random.random() <= 0.7 else controller_list[building_idx])
+    controller1 = (None if np.random.random() <= 0.8 else controller_list[building_idx])
+    controller2 = (None if np.random.random() <= 0.8 else controller_list[building_idx])
     trajectory1 = sample_trajectory(env, building_name, controller=controller1)
     trajectory2 = sample_trajectory(env, building_name, controller=controller2)
     
@@ -126,27 +117,21 @@ def sample_preferences(env, building_name, num_preferences=8):
     return preference_pairs
 
 
-def generate_offline_data_worker(building_name, round, preference_per_round):
+def generate_offline_data_worker(building_name, min_kpis, max_kpis, round, preference_per_round):
     preference_pairs = []
-    building_idx = buildings_list.index(building_name)
-    env = get_env(building_name)
-    # env.step(env.sample_random_action())
-    inputs = get_inputs(building_name, env)
-    default_control = default_controls[building_idx]
-    env_rl = StableBaselinesRLWrapper(env, reward_func, inputs, default_control)
+    env_rl = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, reward_func)
     for i in range(preference_per_round):
         preference_pairs.extend(sample_preferences(env_rl, building_name, num_preferences=10240))
     os.makedirs(f"offline_data/preferences_data_{building_name}/{len_traj}/", exist_ok=True)
     with open(f'offline_data/preferences_data_{building_name}/{len_traj}/preference_data_{round*preference_per_round}_{(round+1)*preference_per_round}.pkl', 'wb') as f:
         np.save(f, preference_pairs)
     print(f"round {round} done!")
-    if  (not building_name.startswith("Simple")) and (not building_name.startswith("Swiss")):
-        env.close()
+    env_rl.close()
 
 
-len_traj = 2
+len_traj = 1
 num_workers = 8
-preference_per_round = 20
+preference_per_round = 30
 
 # buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
 #                   "Apartments2Grid-v0", "OfficesThermostat-v0", "MixedUseFanFCU-v0",
@@ -163,12 +148,14 @@ args = parser.parse_args()
 
 if __name__ == "__main__":
     building_name = args.building
+    min_kpis, max_kpis = collect_baseline_kpi(building_name)
+    
     if (not building_name.startswith("Simple")) and (not building_name.startswith("Swiss")):
-        for i in range(num_workers): generate_offline_data_worker(building_name, i, preference_per_round)
+        for i in range(num_workers): generate_offline_data_worker(building_name, min_kpis, max_kpis, i, preference_per_round)
     else:
         jobs = []
         for i in range(num_workers):
-            p = mp.Process(target=generate_offline_data_worker, args=(building_name, i, preference_per_round))
+            p = mp.Process(target=generate_offline_data_worker, args=(building_name, min_kpis, max_kpis, i, preference_per_round))
             jobs.append(p)
             p.start()
 

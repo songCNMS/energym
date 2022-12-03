@@ -44,13 +44,14 @@ simulation_days = 28
 
 
 def reward_func(min_kpi, max_kpi, kpi):
-        reward = 0.0
-        constraint = 0.0
-        for key, val in kpi.items():
-            min_v, max_v = min_kpi[key]['kpi'], max_kpi[key]['kpi']
-            if val['type'] == 'avg_dev': constraint += (max_v - val["kpi"]) / max(max_v-min_v, 1.0)
-            elif val['type'] == 'avg': reward += (max_v - val["kpi"]) / max(max_v-min_v, 1.0)
-        return reward + 10.0*constraint
+    reward = 0.0
+    constraint = 0.0
+    for key, val in kpi.items():
+        min_v, max_v = min_kpi[key]['kpi'], max_kpi[key]['kpi']
+        if val['type'] == 'avg_dev': constraint += (0.0 - val["kpi"]) / max(max_v-min_v, 1.0)
+        elif val['type'] == 'avg': reward += (max_v - val["kpi"]) / max(max_v-min_v, 1.0)
+    # print(reward, constraint, kpi)
+    return reward + 2.0*constraint
     
 
 def get_env(building_name, eval=False):
