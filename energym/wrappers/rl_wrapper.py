@@ -83,6 +83,8 @@ class StableBaselinesRLWrapper(RLWrapper):
         self.building_idx = building_idx
         self.hour = control_values[building_idx]
         self.num_steps = int(self.env.stop_time - self.env.time) // control_frequency[building_idx] 
+        self.state = self.transform_state(self.outputs)
+        
         
     def inverse_transform_action(self, actions):
         control =  {a_name: [inverse_transform(a, self.env.input_specs[a_name]['lower_bound'], self.env.input_specs[a_name]['upper_bound'])]

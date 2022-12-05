@@ -117,13 +117,15 @@ def sample_preferences(env, building_name, num_preferences=8):
     return preference_pairs
 
 
-def generate_offline_data_worker(building_name, min_kpis, max_kpis, round, preference_per_round):
+def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, round, preference_per_round):
     preference_pairs = []
+    if is_remote: data_loc = f"{os.environ['AMLT_OUTPUT_DIR']}/offline_data/preferences_data_{building_name}/{len_traj}/"
+    else: data_loc = f"offline_data/preferences_data_{building_name}/{len_traj}/"
     env_rl = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, reward_func)
     for i in range(preference_per_round):
-        preference_pairs.extend(sample_preferences(env_rl, building_name, num_preferences=10240))
-    os.makedirs(f"offline_data/preferences_data_{building_name}/{len_traj}/", exist_ok=True)
-    with open(f'offline_data/preferences_data_{building_name}/{len_traj}/preference_data_{round*preference_per_round}_{(round+1)*preference_per_round}.pkl', 'wb') as f:
+        preference_pairs.extend(sample_preferences(env_rl, building_name, num_preferences=100240))
+    os.makedirs(data_loc, exist_ok=True)
+    with open(f'{data_loc}/preference_data_{round*preference_per_round}_{(round+1)*preference_per_round}.pkl', 'wb') as f:
         np.save(f, preference_pairs)
     print(f"round {round} done!")
     env_rl.close()
@@ -131,7 +133,7 @@ def generate_offline_data_worker(building_name, min_kpis, max_kpis, round, prefe
 
 len_traj = 1
 num_workers = 8
-preference_per_round = 30
+preference_per_round = 10
 
 # buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
 #                   "Apartments2Grid-v0", "OfficesThermostat-v0", "MixedUseFanFCU-v0",
@@ -144,18 +146,18 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
 parser.add_argument('--building', type=str, help='building name', required=True)
 
-args = parser.parse_args()
 
 if __name__ == "__main__":
+    args = parser.parse_args()
     building_name = args.building
     min_kpis, max_kpis = collect_baseline_kpi(building_name)
     
     if (not building_name.startswith("Simple")) and (not building_name.startswith("Swiss")):
-        for i in range(num_workers): generate_offline_data_worker(building_name, min_kpis, max_kpis, i, preference_per_round)
+        for i in range(num_workers): generate_offline_data_worker(args.amlt, building_name, min_kpis, max_kpis, i, preference_per_round)
     else:
         jobs = []
         for i in range(num_workers):
-            p = mp.Process(target=generate_offline_data_worker, args=(building_name, min_kpis, max_kpis, i, preference_per_round))
+            p = mp.Process(target=generate_offline_data_worker, args=(args.amlt, building_name, min_kpis, max_kpis, i, preference_per_round))
             jobs.append(p)
             p.start()
 

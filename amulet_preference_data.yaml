@@ -39,61 +39,61 @@ code:
 
 jobs:
 - name: ApartmentsThermal-v0
-  sku: G1
+  sku: C8
   command:
-  - python train.py --building ApartmentsThermal-v0 --amlt
+  - python preference_data.py --building ApartmentsThermal-v0 --amlt
 
 - name: ApartmentsGrid-v0
-  sku: G1
+  sku: C8
   command:
-  - python train.py --building ApartmentsGrid-v0 --amlt
+  - python preference_data.py --building ApartmentsGrid-v0 --amlt
 
 - name: Apartments2Thermal-v0
-  sku: G1
+  sku: C8
   command:
-  - python train.py --building Apartments2Thermal-v0 --amlt
+  - python preference_data.py --building Apartments2Thermal-v0 --amlt
 
 - name: Apartments2Grid-v0
-  sku: G1
+  sku: C8
   command:
-  - python train.py --building Apartments2Grid-v0 --amlt
+  - python preference_data.py --building Apartments2Grid-v0 --amlt
 
 - name: OfficesThermostat-v0
-  sku: G1
+  sku: C8
   command:
-  - python train.py --building OfficesThermostat-v0 --amlt
+  - python preference_data.py --building OfficesThermostat-v0 --amlt
 
 - name: MixedUseFanFCU-v0
-  sku: G1
+  sku: C8
   command:
-  - python train.py --building MixedUseFanFCU-v0 --amlt
+  - python preference_data.py --building MixedUseFanFCU-v0 --amlt
 
 - name: SeminarcenterThermostat-v0
-  sku: G1
+  sku: C8
   command:
-  - python train.py --building SeminarcenterThermostat-v0 --amlt
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt
   
 - name: SeminarcenterFull-v0
-  sku: G1
+  sku: C8
   command:
-  - python train.py --building SeminarcenterFull-v0 --amlt
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt
 
 - name: SimpleHouseRad-v0
-  sku: G1
+  sku: C8
   command:
-  - python train.py --building SimpleHouseRad-v0 --amlt
+  - python preference_data.py --building SimpleHouseRad-v0 --amlt
 
 - name: SimpleHouseRSla-v0
-  sku: G1
+  sku: C8
   command:
-  - python train.py --building SimpleHouseRSla-v0 --amlt
+  - python preference_data.py --building SimpleHouseRSla-v0 --amlt
 
 - name: SwissHouseRSlaW2W-v0
-  sku: G1
+  sku: C8
   command:
-  - python train.py --building SwissHouseRSlaW2W-v0 --amlt
+  - python preference_data.py --building SwissHouseRSlaW2W-v0 --amlt
 
 - name: SwissHouseRSlaTank-v0
-  sku: G1
+  sku: C8
   command:
-  - python train.py --building SwissHouseRSlaTank-v0 --amlt
+  - python preference_data.py --building SwissHouseRSlaTank-v0 --amlt

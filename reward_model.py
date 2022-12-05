@@ -8,6 +8,7 @@ import os
 import pandas as pd
 from torch.utils.data import Dataset, DataLoader
 import pickle
+from train import collect_baseline_kpi
 
 
 class RewardNet(nn.Module):
@@ -16,7 +17,7 @@ class RewardNet(nn.Module):
         self.linear_relu_stack = NN(input_dim=input_dim, 
                       layers_info= [256, 256, 1],
                       output_activation="sigmoid",
-                      batch_norm=False, dropout=0.3,
+                      batch_norm=False, dropout=0.2,
                       hidden_activations=["tanh", 'relu', 'relu'], initialiser="Xavier", random_seed=43)
         
     def get_reward(self, x):
@@ -45,7 +46,7 @@ def preference_loss(outputs, labels):
 class PreferencDataset(Dataset):
     def __init__(self, round, building_name):
         self.round = round
-        with open(f'offline_data/preferences_data_{building_name}/{len_traj}/preference_data_{round*preference_per_round}_{(round+1)*preference_per_round}.pkl', 'rb') as f:
+        with open(f'{parent_loc}/offline_data/preferences_data_{building_name}/{len_traj}/preference_data_{round*preference_per_round}_{(round+1)*preference_per_round}.pkl', 'rb') as f:
             self.raw_data = np.load(f, allow_pickle=True)
         self.data = torch.from_numpy(self.raw_data[:, :-2]).to(torch.float)
         self.labels = torch.from_numpy(self.raw_data[:, -2:]).to(torch.float)
@@ -140,19 +141,21 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
 parser.add_argument('--building', type=str, help='building name', required=True)
 
-args = parser.parse_args()
 
 if __name__ == "__main__":
+    args = parser.parse_args()
+    is_remote = args.amlt
+    parent_loc = (os.environ['AMLT_OUTPUT_DIR'] if is_remote else "./")
     building_name = args.building
-    building_idx = buildings_list.index(building_name)
-    env = get_env(building_name)
-    inputs = get_inputs(building_name, env)
-    default_control = default_controls[building_idx]
-    env_rl = StableBaselinesRLWrapper(env, reward_func, inputs, default_control)
-    # input_dim = env_rl.action_space.shape[0] + env_rl.observation_space.shape[0]
+    min_kpis, max_kpis = collect_baseline_kpi(building_name)
+    # building_idx = buildings_list.index(building_name)
+    # env = get_env(building_name)
+    # inputs = get_inputs(building_name, env)
+    # default_control = default_controls[building_idx]
+    env_rl = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, reward_func)
     input_dim = env_rl.observation_space.shape[0]
     model = RewardNet(input_dim).to(device)
-    learning_rate = 0.001
+    learning_rate = 0.0003
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     loss_fn = preference_loss
 
@@ -166,7 +169,7 @@ if __name__ == "__main__":
     loss_list = []
     test_loss_list = []
     correct_list = []
-    model_loc = f"models/{building_name}/"
+    model_loc = f"{parent_loc}/models/{building_name}/reward_model/"
     os.makedirs(model_loc, exist_ok=True)
     for t in range(epochs):
         print(f"Epoch {t+1}\n-------------------------------")

@@ -18,7 +18,7 @@ from energym.schedules.EVSchedule import ElectricVehicleSchedule
 
 logger = logging.getLogger(__name__)
 
-eval_simulation_days = 28
+eval_simulation_days = 90
 
 def make(key, eval_mode=False, **kwargs):
     """Creates an instance of the requested simulation model.
@@ -422,7 +422,7 @@ def make(key, eval_mode=False, **kwargs):
                         op_sys,
                         "HP_u_Rad_1RC_Sun",
                     ),
-                    weather="CH_ZH_Maur",
+                    weather="CH_BS_Basel",
                     simulation_days=eval_simulation_days,
                 )
             except BaseException as e:
@@ -450,7 +450,7 @@ def make(key, eval_mode=False, **kwargs):
                         op_sys,
                         "HP_u_Slab_1RC_Sun",
                     ),
-                    weather="CH_ZH_Maur",
+                    weather="CH_BS_Basel",
                     simulation_days=eval_simulation_days,
                 )
             except BaseException as e:
@@ -478,7 +478,7 @@ def make(key, eval_mode=False, **kwargs):
                         op_sys,
                         "HP_u_RSla_1RC_Sun",
                     ),
-                    weather="CH_ZH_Maur",
+                    weather="CH_BS_Basel",
                     simulation_days=eval_simulation_days,
                 )
             except BaseException as e:
@@ -506,7 +506,7 @@ def make(key, eval_mode=False, **kwargs):
                         op_sys,
                         "HP_u_RSla_1RC_Sun_W2W",
                     ),
-                    weather="CH_ZH_Maur",
+                    weather="CH_BS_Basel",
                     simulation_days=eval_simulation_days,
                 )
             except BaseException as e:
@@ -534,7 +534,7 @@ def make(key, eval_mode=False, **kwargs):
                         op_sys,
                         "HP_u_RSla_1RC_Sun_A2W",
                     ),
-                    weather="CH_ZH_Maur",
+                    weather="CH_BS_Basel",
                     simulation_days=eval_simulation_days,
                 )
             except BaseException as e:
@@ -562,7 +562,7 @@ def make(key, eval_mode=False, **kwargs):
                         op_sys,
                         "HP_u_Tank_u_RSla_1RC_Sun",
                     ),
-                    weather="CH_ZH_Maur",
+                    weather="CH_BS_Basel",
                     simulation_days=eval_simulation_days,
                 )
             except BaseException as e:
@@ -590,7 +590,7 @@ def make(key, eval_mode=False, **kwargs):
                         op_sys,
                         "HP_u_Tank_u_DHW_u_RSla_1RC_Sun",
                     ),
-                    weather="CH_ZH_Maur",
+                    weather="CH_BS_Basel",
                     simulation_days=eval_simulation_days,
                 )
             except BaseException as e:

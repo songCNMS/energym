@@ -6,7 +6,7 @@ abbreviation _ city (+ addiditional information abbreviated).
 """
 
 WEATHERNAMES = {
-    "CH_ZH_Maur": "Switzerland_CHE_Maur",
+    "CH_BS_Basel": "Switzerland_CHE_Maur",
     "CH_BS_Basel": "Basel_Fixed",
     "CH_TI_Bellinzona": "Bellinzona_Fixed",
     "CH_GR_Davos": "Davos_Fixed",

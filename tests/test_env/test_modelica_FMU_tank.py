@@ -30,7 +30,7 @@ def sh_tank():
             op_sys,
             "HP_u_Tank_u_RSla_1RC_Sun",
         ),
-        "weather": "CH_ZH_Maur",
+        "weather": "CH_BS_Basel",
         "start_time": 0,  # [s]
         "stop_time": 21 * 24 * 3600,  # [s]
         "step_size": 5 * 60,  # [s]

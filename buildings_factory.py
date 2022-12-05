@@ -40,7 +40,7 @@ default_controls = [{'P1_T_Tank_sp': [40.0], 'P2_T_Tank_sp': [40.0], 'P3_T_Tank_
 control_values = [21, 21, 21, 21, 21, 22, 22, 22, 0, 0, 0, 0]
 control_frequency = [480, 480, 480, 480, 96, 96, 144, 144, 288, 288, 288, 288]
 
-simulation_days = 28
+simulation_days = 90
 
 
 def reward_func(min_kpi, max_kpi, kpi):
@@ -51,7 +51,7 @@ def reward_func(min_kpi, max_kpi, kpi):
         if val['type'] == 'avg_dev': constraint += (0.0 - val["kpi"]) / max(max_v-min_v, 1.0)
         elif val['type'] == 'avg': reward += (max_v - val["kpi"]) / max(max_v-min_v, 1.0)
     # print(reward, constraint, kpi)
-    return reward + 2.0*constraint
+    return reward + 10.0*constraint
     
 
 def get_env(building_name, eval=False):

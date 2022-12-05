@@ -231,7 +231,7 @@ class SwissHouse(EnvModFMU):
             Number of days the simulation can run for, by default 10
         weather : str, optional
             Specific weather file to run the simulation, by default
-            "CH_ZH_Maur"
+            "CH_BS_Basel"
         kpi_options : dict, optional
             Dict to specify the tracked KPIs, by default None.
         """

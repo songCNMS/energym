@@ -15,6 +15,14 @@ import gym
 import pandas as pd
 import matplotlib.pyplot as plt
 
+
+
+import wandb
+import os
+os.environ["WANDB_API_KEY"] = "116a4f287fd4fbaa6f790a50d2dd7f97ceae4a03"
+wandb.login()
+
+
 bs_total_reward_list = []
 eval_total_reward_list = []
 
@@ -42,6 +50,9 @@ class EnergymEvalCallback(BaseCallback):
         controller = controller_list[building_idx]
         weather = weather_list[building_idx]
         default_control = default_controls[building_idx]
+        exp_name = f"{datetime.today().time().strftime('%m%d-%H%M%S')}"
+        
+        wandb.init(project="Energym", config={}, group=building_name, name=f"{self.num_timesteps}_{exp_name}")
 
         bs_eval_env = make(self.building_name, weather=weather, simulation_days=self.simulation_days, eval_mode=True)
         eval_env_down_RL = StableBaselinesRLWrapper(self.building_name, self.min_kpis, self.max_kpis, reward_func, eval=True)
@@ -58,15 +69,15 @@ class EnergymEvalCallback(BaseCallback):
             
         bs_outputs = bs_eval_env.get_output()
         done = False
-        outputs = eval_env_down_RL.env.get_output()
-        state = eval_env_down_RL.transform_state(outputs)
+        state = eval_env_down_RL.state
         step = 0
         hour = control_values[building_idx]
+        res = {}
         while not done:
-            control = controller(inputs, step)(bs_outputs, control_values[building_idx], hour)
-            control.update(default_control)
-            bs_controls +=[ {p:control[p][0] for p in control} ]
-            bs_outputs = bs_eval_env.step(control)
+            bs_control = controller(inputs, step)(bs_outputs, control_values[building_idx], hour)
+            bs_control.update(default_control)
+            bs_controls +=[ {p:bs_control[p][0] for p in bs_control} ]
+            bs_outputs = bs_eval_env.step(bs_control)
             _,hour,_,_ = bs_eval_env.get_date()
             bs_out_list.append(bs_outputs)
             bs_reward = reward_func(self.min_kpis, self.max_kpis, bs_eval_env.get_kpi(start_ind=step, end_ind=step+1))
@@ -81,18 +92,24 @@ class EnergymEvalCallback(BaseCallback):
             controls +=[ {p:control[p][0] for p in control} ]
             out_list.append(outputs)
             reward_list.append(reward)
+            
+            res["baseline_reward"] = bs_reward
+            res["reward"] = reward
+            for key in control:
+                res[f"baseline_{key}"] = bs_control[key][0]
+                res[key] = control[key][0]
+            wandb.log(res)
             step += 1
 
             if self.verbose:
                 print("RL KPIs") 
                 print(eval_env_down_RL.env.get_kpi())
                 print("BS KPIs")
-                print(bs_eval_env.get_kpi())
-        eval_env_down_RL.close()
-        bs_eval_env.close()   
+                print(bs_eval_env.get_kpi()) 
 
         eval_total_reward_list.append(np.sum(reward_list))
         bs_total_reward_list.append(np.sum(bs_reward_list))
+        best_result = (np.max(eval_total_reward_list) == np.sum(reward_list))
 
         out_df = pd.DataFrame(out_list)
         cmd_df = pd.DataFrame(controls)
@@ -100,11 +117,18 @@ class EnergymEvalCallback(BaseCallback):
         bs_out_df = pd.DataFrame(bs_out_list)
         bs_cmd_df = pd.DataFrame(bs_controls)
         
-        result_data_dir = self.log_loc
-        out_df.to_csv(f"{result_data_dir}/out.csv", index=False)
-        bs_out_df.to_csv(f"{result_data_dir}/bs_out.csv", index=False)
-        cmd_df.to_csv(f"{result_data_dir}/control.csv", index=False)
-        bs_cmd_df.to_csv(f"{result_data_dir}/bs_control.csv", index=False)
+        result_data_dir = f"{self.log_loc}/{self.num_timesteps}/"
+        best_result_data_dir = f"{self.log_loc}/best/"
+        os.makedirs(result_data_dir, exist_ok=True)
+        os.makedirs(best_result_data_dir, exist_ok=True)
+        out_dirs = [result_data_dir]
+        if best_result: out_dirs.append(best_result_data_dir)
+        for _data_dir in out_dirs:
+            out_df.to_csv(f"{_data_dir}/out.csv", index=False)
+            bs_out_df.to_csv(f"{_data_dir}/bs_out.csv", index=False)
+            cmd_df.to_csv(f"{_data_dir}/control.csv", index=False)
+            bs_cmd_df.to_csv(f"{_data_dir}/bs_control.csv", index=False)
+        
         
         all_cols_plot = []
         for cols in cols_plot[building_idx]: all_cols_plot.extend(cols)
@@ -125,11 +149,19 @@ class EnergymEvalCallback(BaseCallback):
             axs[i].plot([0, out_df.shape[0]], [intervals[0], intervals[0]], color='g', linestyle='--', linewidth=2)
             axs[i].plot([0, out_df.shape[0]], [intervals[1], intervals[1]], color='g', linestyle='--', linewidth=2)
             
+            vals = out_df[col].tolist()
+            bs_vals = bs_out_df[col].tolist()
+            for j in range(min(len(vals), len(bs_vals))):
+                wandb.log({f"{col}_out_lower_bound": intervals[0], 
+                           f"{col}_out_upper_bound": intervals[1],
+                           f"baseline_out_{col}": bs_vals[j],
+                           f"out_{col}": vals[j]})
+            
         axs[-1].plot(np.cumsum(reward_list), 'r--', np.cumsum(bs_reward_list), 'b--')
         axs[-1].set_ylabel('Reward')
         axs[-1].set_xlabel('Steps')
         plt.subplots_adjust(hspace=0.4)
-        plt.savefig(f"{result_data_dir}/RL.png")
+        for _data_dir in out_dirs: plt.savefig(f"{_data_dir}/RL.png")
         
         # plot controls
         max_records_plot = 100
@@ -146,13 +178,27 @@ class EnergymEvalCallback(BaseCallback):
             axs[i].plot([0, cmd_df.shape[0]], [intervals[0], intervals[0]], color='g', linestyle='--', linewidth=2)
             axs[i].plot([0, cmd_df.shape[0]], [intervals[1], intervals[1]], color='g', linestyle='--', linewidth=2)
             
+            vals = cmd_df[col].tolist()
+            bs_vals = bs_cmd_df[col].tolist()
+            for j in range(min(len(vals), len(bs_vals))):
+                wandb.log({f"{col}_cmd_lower_bound": intervals[0], 
+                           f"{col}_cmd_upper_bound": intervals[1],
+                           f"baseline_cmd_{col}": bs_vals[j],
+                           f"cmd_{col}": vals[j]})
+        
+        for i, (r, b_r) in enumerate(zip(eval_total_reward_list, bs_total_reward_list)):
+            wandb.log({"eval_episode_reward": r,
+                       "baseline_eval_episode_reward": b_r})
+        
         plt.subplots_adjust(hspace=0.4)
-        plt.savefig(f"{result_data_dir}/Control_RL.png")
+        for _data_dir in out_dirs: plt.savefig(f"{_data_dir}/Control_RL.png")
             
         # f, ax = plt.plot(igsize=(10,15))
         plt.plot(eval_total_reward_list, 'r', bs_total_reward_list, 'b')
-        plt.savefig(f"{result_data_dir}/reward.png")
-
+        for _data_dir in out_dirs: plt.savefig(f"{_data_dir}/reward.png")
+        eval_env_down_RL.close()
+        bs_eval_env.close()
+        wandb.finish()
 
 # buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
 #                   "Apartments2Grid-v0", "OfficesThermostat-v0", "MixedUseFanFCU-v0",
@@ -160,11 +206,13 @@ class EnergymEvalCallback(BaseCallback):
 #                   "SimpleHouseRSla-v0", "SwissHouseRSlaW2W-v0", "SwissHouseRSlaTank-v0"]
 
 import argparse
+from datetime import datetime
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
 parser.add_argument('--building', type=str, help='building name', required=True)
-
-args = parser.parse_args()
+parser.add_argument("--exp_name", default=f"{datetime.today().date().strftime('%m%d-%H%M')}")
 
 
 def collect_baseline_kpi(building_name):
@@ -199,6 +247,7 @@ def collect_baseline_kpi(building_name):
 
 
 if __name__ == "__main__":
+    args = parser.parse_args()
     building_name = args.building
     min_kpis, max_kpis = collect_baseline_kpi(building_name)
 
@@ -215,7 +264,7 @@ if __name__ == "__main__":
     model = SAC('MlpPolicy', env_down_RL, verbose=1, device='auto', train_freq=256, learning_starts=5120, batch_size=512, gradient_steps=8, seed=43)
     # model = PPO('MlpPolicy', env_down_RL, verbose=1, device='auto', batch_size=64, seed=43)
     checkpoint_callback = CheckpointCallback(save_freq=5120, save_path=model_loc)
-    post_eval_callback = EnergymEvalCallback(model, building_name, log_loc, min_kpis, max_kpis)
+    post_eval_callback = EnergymEvalCallback(model, building_name, log_loc, min_kpis, max_kpis, verbose=0)
     eval_callback = EvalCallback(env_down_RL, best_model_save_path=model_loc + "/best_model/",
                                  log_path=log_loc, eval_freq=5120, callback_after_eval=post_eval_callback)
     
