@@ -18,7 +18,7 @@ from energym.schedules.EVSchedule import ElectricVehicleSchedule
 
 logger = logging.getLogger(__name__)
 
-eval_simulation_days = 90
+eval_simulation_days = 60
 
 def make(key, eval_mode=False, **kwargs):
     """Creates an instance of the requested simulation model.

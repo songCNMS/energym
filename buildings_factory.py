@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import signal
+import torch
 
 
 
@@ -24,10 +25,10 @@ default_controls = [{'P1_T_Tank_sp': [40.0], 'P2_T_Tank_sp': [40.0], 'P3_T_Tank_
                      'P4_T_Tank_sp': [40.0], 'Bd_Ch_EVBat_sp': [1.0], 'Bd_DisCh_EVBat_sp': [0.0],
                      'HVAC_onoff_HP_sp': [1.0], 'Bd_T_HP_sp': [45], 'Bd_Pw_Bat_sp':[1.0]},
                     {'P1_T_Tank_sp': [45.0], 'P2_T_Tank_sp': [45.0], 'P3_T_Tank_sp':[45.0],
-                     'P4_T_Tank_sp': [4.0], 'Bd_Ch_EVBat_sp': [0.0], 'Bd_DisCh_EVBat_sp': [0.0]},
+                     'P4_T_Tank_sp': [4.0], 'Bd_Ch_EVBat_sp': [0.0], 'Bd_DisCh_EVBat_sp': [0.0], "Bd_Pw_Bat_sp": [1.0]},
                     {'Bd_Ch_EV1Bat_sp': [0.0], 'Bd_Ch_EV2Bat_sp': [0.0], 'Bd_Pw_Bat_sp':[1.0]},
                     {'Bd_Ch_EV1Bat_sp': [0.0], 'Bd_Ch_EV2Bat_sp': [0.0], 'Bd_Pw_Bat_sp':[1.0]},
-                    {'Bd_Heating_onoff_sp': [1], 'Bd_Cooling_onoff_sp': [0]},
+                    {'Bd_Heating_onoff_sp': [1], 'Bd_Cooling_onoff_sp': [0], 'Bd_Pw_Bat_sp':[1.0]},
                     {},
                     {},
                     {},
@@ -40,10 +41,41 @@ default_controls = [{'P1_T_Tank_sp': [40.0], 'P2_T_Tank_sp': [40.0], 'P3_T_Tank_
 control_values = [21, 21, 21, 21, 21, 22, 22, 22, 0, 0, 0, 0]
 control_frequency = [480, 480, 480, 480, 96, 96, 144, 144, 288, 288, 288, 288]
 
-simulation_days = 90
+simulation_days = 60
 
 
-def reward_func(min_kpi, max_kpi, kpi):
+def collect_baseline_kpi(building_name):
+    max_kpis, min_kpis = {}, {}
+    _env = get_env(building_name)
+    building_idx = buildings_list.index(building_name)
+    controller = controller_list[building_idx]
+    default_control = default_controls[building_idx]
+    hour = control_values[building_idx]
+    step = 0
+    inputs = get_inputs(building_name, _env)
+    outputs = _env.get_output()
+    done = False
+    while not done:
+        control = controller(inputs, step)(outputs, control_values[building_idx], hour)
+        control.update(default_control)
+        outputs = _env.step(control)
+        _,hour,_,_ = _env.get_date()
+        kpis = _env.get_kpi(start_ind=step, end_ind=step+1)
+        done = (_env.time >= _env.stop_time)
+        step += 1
+        for key, val in kpis.items():
+            if key not in max_kpis: 
+                max_kpis[key] = {}
+                max_kpis[key].update(val)
+            if key not in min_kpis:
+                min_kpis[key] = {}
+                min_kpis[key].update(val)
+            max_kpis[key]['kpi'] = max(max_kpis[key]['kpi'], val['kpi'])
+            min_kpis[key]['kpi'] = min(min_kpis[key]['kpi'], val['kpi'])
+    return min_kpis, max_kpis
+
+
+def reward_func(min_kpi, max_kpi, kpi, state):
     reward = 0.0
     constraint = 0.0
     for key, val in kpi.items():
@@ -52,6 +84,13 @@ def reward_func(min_kpi, max_kpi, kpi):
         elif val['type'] == 'avg': reward += (max_v - val["kpi"]) / max(max_v-min_v, 1.0)
     # print(reward, constraint, kpi)
     return reward + 10.0*constraint
+
+
+def learnt_reward_func(reward_model, min_kpi, max_kpi, kpi, state):
+    with torch.no_grad():
+        model_in = torch.from_numpy(np.array(state)).reshape(1, -1).to(torch.float)
+        new_reward = reward_model.get_reward(model_in)[0].item()            
+    return new_reward
     
 
 def get_env(building_name, eval=False):

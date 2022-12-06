@@ -695,6 +695,9 @@ class EnvFMU(Env):
         self.close()
         self.kpis.reset()
         self.initialize()
+    
+    def seed(self, s):
+        pass
 
     def close(self, save=True):
         """Terminates the FMU and removes leftover folders."""

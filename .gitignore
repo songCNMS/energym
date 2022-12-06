@@ -133,3 +133,9 @@ dependencies/
 .mypy_cache/
 .vscode/launch.json
 .idea/
+
+amlt
+wandb
+models
+offline_data
+test_models

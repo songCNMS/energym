@@ -12,7 +12,7 @@ target:
   # vc: gcr-singularity-resrch
 
 environment:
-  image: energym_base:latest
+  image: energym_sing:sing
   registry: resrchvc4cr.azurecr.io # any public registry can be specified here
   username: resrchvc4cr
   setup:

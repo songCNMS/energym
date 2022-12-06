@@ -84,6 +84,7 @@ class StableBaselinesRLWrapper(RLWrapper):
         self.hour = control_values[building_idx]
         self.num_steps = int(self.env.stop_time - self.env.time) // control_frequency[building_idx] 
         self.state = self.transform_state(self.outputs)
+        self.max_episode_len = 100000
         
         
     def inverse_transform_action(self, actions):
@@ -117,6 +118,7 @@ class StableBaselinesRLWrapper(RLWrapper):
         self.env.step(self.env.sample_random_action())
         self.outputs = self.env.get_output()
         self.cur_step = 0
+        self.hour = control_values[self.building_idx]
         self.state = self.transform_state(self.outputs)
         return self.state
         
@@ -135,10 +137,10 @@ class StableBaselinesRLWrapper(RLWrapper):
         
         ori_inputs = self.inverse_transform_action(inputs)
         self.outputs = self.env.step(ori_inputs)
-        kpi = self.env.get_kpi(start_ind=self.cur_step, end_ind=self.cur_step+1)
-        reward = self.reward_function(self.min_kpis, self.max_kpis, kpi)
-        done = (self.env.time >= self.env.stop_time)
-        info = {}
         self.state = self.transform_state(self.outputs)
+        kpi = self.env.get_kpi(start_ind=self.cur_step, end_ind=self.cur_step+1)
+        reward = self.reward_function(self.min_kpis, self.max_kpis, kpi, self.state)
+        done = ((self.unwrapped.time >= self.unwrapped.stop_time) | (self.cur_step >= self.max_episode_len))
+        info = {}
         self.cur_step += 1
         return self.state, reward, done, info

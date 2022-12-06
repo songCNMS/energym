@@ -5,9 +5,6 @@ import numpy as np
 import os
 from buildings_factory import *
 from energym.wrappers.rl_wrapper import StableBaselinesRLWrapper
-from train import collect_baseline_kpi
-
-
 
 
 def add_kpi(cur_kpi, kpi):

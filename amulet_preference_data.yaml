@@ -1,18 +1,18 @@
-description: Energym
+description: Energym Data Collection
 
 target:
   # service: sing
   # name: msrresrchvc
   # vc: gcr-singularity-resrch
   service: amlk8s
-  name: ms-shared
-  vc: MS-Shared
+  name: itpwus2cpucl1
+  vc: gcrcpu
   # run "amlt target list amlk8s" to list the names of available AMLK8s targets
   # name: msrresrchvc
   # vc: gcr-singularity-resrch
 
 environment:
-  image: energym_base:latest
+  image: energym_sing:sing
   registry: resrchvc4cr.azurecr.io # any public registry can be specified here
   username: resrchvc4cr
   setup:

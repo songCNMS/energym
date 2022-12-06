@@ -8,17 +8,18 @@ import os
 import pandas as pd
 from torch.utils.data import Dataset, DataLoader
 import pickle
-from train import collect_baseline_kpi
+from buildings_factory import *
+
 
 
 class RewardNet(nn.Module):
     def __init__(self, input_dim):
         super(RewardNet, self).__init__()
         self.linear_relu_stack = NN(input_dim=input_dim, 
-                      layers_info= [256, 256, 1],
+                      layers_info= [256, 256, 256, 1],
                       output_activation="sigmoid",
-                      batch_norm=False, dropout=0.2,
-                      hidden_activations=["tanh", 'relu', 'relu'], initialiser="Xavier", random_seed=43)
+                      batch_norm=False, dropout=0.0,
+                      hidden_activations=['tanh', 'relu', 'relu', 'relu'], initialiser="Xavier", random_seed=43)
         
     def get_reward(self, x):
         x_out = self.linear_relu_stack(x)
@@ -98,8 +99,7 @@ def test_loop(building_name, model, loss_fn, round_list):
     total_size = 0
     for round in round_list:
         training_dataset = PreferencDataset(round, building_name)
-        dataloader = DataLoader(training_dataset, batch_size=1, shuffle=False)
-        total_size = len(dataloader.dataset)
+        dataloader = DataLoader(training_dataset, batch_size=batch_size, shuffle=False)
         num_batches = len(dataloader)
         total_num_batches += num_batches
         with torch.no_grad():
@@ -116,6 +116,7 @@ def test_loop(building_name, model, loss_fn, round_list):
                     pred = pred + model_out
                 test_loss += loss_fn(pred, y).cpu().item()
                 correct += (pred.argmax(1) == y.argmax(1)).type(torch.float).sum().cpu().item()
+                total_size += 1
     correct /= total_size
     test_loss /= total_size
     print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
