@@ -25,9 +25,10 @@ code:
   # $CONFIG_DIR is expanded to the directory of this config file
   local_dir: $CONFIG_DIR/
 
-# data:
-#   local_dir: ./
-#   remote_dir: ./
+data:
+  local_dir: $CONFIG_DIR/data/
+  remote_dir: energym/
+
 
 # list of jobs to run, we run 2 jobs in this example
 

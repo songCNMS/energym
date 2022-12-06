@@ -136,6 +136,5 @@ dependencies/
 
 amlt
 wandb
-models
-offline_data
+data
 test_models

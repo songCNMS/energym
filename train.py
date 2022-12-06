@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(0, "/home/lesong/energym/")
+sys.path.insert(0, "./")
 
 from typing import Any, Callable, Dict, List, Optional, Union
 import time
@@ -188,7 +188,9 @@ class EnergymEvalCallback(BaseCallback):
             axs[i].plot(cmd_df[col], 'r', bs_cmd_df[col], 'b')
             axs[i].set_ylabel(col)
             axs[i].set_xlabel('Steps')
-            intervals = [eval_env_down_RL.env.input_specs[col]['lower_bound'], eval_env_down_RL.env.input_specs[col]['upper_bound']]
+            if eval_env_down_RL.env.input_specs[col]['type'] == 'scalar':
+                intervals = [eval_env_down_RL.env.input_specs[col]['lower_bound'], eval_env_down_RL.env.input_specs[col]['upper_bound']]
+            else: intervals = [0, 0]
             axs[i].plot([0, cmd_df.shape[0]], [intervals[0], intervals[0]], color='g', linestyle='--', linewidth=2)
             axs[i].plot([0, cmd_df.shape[0]], [intervals[1], intervals[1]], color='g', linestyle='--', linewidth=2)
             
@@ -251,11 +253,11 @@ if __name__ == "__main__":
 
     reward_path_suffix = ("rewards" if args.rm else "manual")
     if args.amlt:
-        model_loc = f"{os.environ['AMLT_OUTPUT_DIR']}/{args.logdir}/{building_name}/{reward_path_suffix}/"
-        reward_model_loc = f"{os.environ['AMLT_OUTPUT_DIR']}/models/{building_name}/reward_model/reward_model_best.pkl"
+        model_loc = f"{os.environ['AMLT_DATA_DIR']}/data/{args.logdir}/{building_name}/{reward_path_suffix}/"
+        reward_model_loc = f"{os.environ['AMLT_DATA_DIR']}/data/models/{building_name}/reward_model/reward_model_best.pkl"
     else:
-        model_loc = f"{args.logdir}/{building_name}/{reward_path_suffix}/"
-        reward_model_loc = f"./models/{building_name}/reward_model/reward_model_best.pkl"
+        model_loc = f"data/{args.logdir}/{building_name}/{reward_path_suffix}/"
+        reward_model_loc = f"./data/models/{building_name}/reward_model/reward_model_best.pkl"
     
     log_loc = f"{model_loc}/logs/"
     os.makedirs(log_loc, exist_ok=True)

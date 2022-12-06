@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0, "./")
+
 import numpy as np
 import random
 import torch
@@ -47,7 +50,7 @@ def preference_loss(outputs, labels):
 class PreferencDataset(Dataset):
     def __init__(self, round, building_name):
         self.round = round
-        with open(f'{parent_loc}/offline_data/preferences_data_{building_name}/{len_traj}/preference_data_{round*preference_per_round}_{(round+1)*preference_per_round}.pkl', 'rb') as f:
+        with open(f'{parent_loc}/data/offline_data/preferences_data_{building_name}/{len_traj}/preference_data_{round*preference_per_round}_{(round+1)*preference_per_round}.pkl', 'rb') as f:
             self.raw_data = np.load(f, allow_pickle=True)
         self.data = torch.from_numpy(self.raw_data[:, :-2]).to(torch.float)
         self.labels = torch.from_numpy(self.raw_data[:, -2:]).to(torch.float)
@@ -146,7 +149,7 @@ parser.add_argument('--building', type=str, help='building name', required=True)
 if __name__ == "__main__":
     args = parser.parse_args()
     is_remote = args.amlt
-    parent_loc = (os.environ['AMLT_OUTPUT_DIR'] if is_remote else "./")
+    parent_loc = (os.environ['AMLT_DATA_DIR'] if is_remote else "./")
     building_name = args.building
     min_kpis, max_kpis = collect_baseline_kpi(building_name)
     # building_idx = buildings_list.index(building_name)
@@ -170,7 +173,7 @@ if __name__ == "__main__":
     loss_list = []
     test_loss_list = []
     correct_list = []
-    model_loc = f"{parent_loc}/models/{building_name}/reward_model/"
+    model_loc = f"{parent_loc}/data/models/{building_name}/reward_model/"
     os.makedirs(model_loc, exist_ok=True)
     for t in range(epochs):
         print(f"Epoch {t+1}\n-------------------------------")

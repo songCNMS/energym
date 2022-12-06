@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0, "./")
+
 import random
 import multiprocessing as mp
 import pickle
@@ -116,8 +119,8 @@ def sample_preferences(env, building_name, num_preferences=8):
 
 def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, round, preference_per_round):
     preference_pairs = []
-    if is_remote: data_loc = f"{os.environ['AMLT_OUTPUT_DIR']}/offline_data/preferences_data_{building_name}/{len_traj}/"
-    else: data_loc = f"offline_data/preferences_data_{building_name}/{len_traj}/"
+    if is_remote: data_loc = f"{os.environ['AMLT_DATA_DIR']}/data/offline_data/preferences_data_{building_name}/{len_traj}/"
+    else: data_loc = f"data/offline_data/preferences_data_{building_name}/{len_traj}/"
     env_rl = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, reward_func)
     for i in range(preference_per_round):
         preference_pairs.extend(sample_preferences(env_rl, building_name, num_preferences=100240))
