@@ -16,6 +16,7 @@ import gym
 import pandas as pd
 import matplotlib.pyplot as plt
 import torch
+from dynamics_predictor import DynamicsPredictor
 
 
 import wandb
@@ -212,10 +213,14 @@ class EnergymEvalCallback(BaseCallback):
         for _data_dir in out_dirs: plt.savefig(f"{_data_dir}/Control_RL.png")
             
         f, axs = plt.subplots(2,figsize=(10,15))#
-        axs[0].plot(eval_total_reward_list, 'r', bs_total_reward_list, 'b')
+        axs[0].plot(eval_total_reward_list, 'r')
+        ax01 = axs[0].twinx()
+        ax01.plot(bs_total_reward_list, 'b')
         axs[0].set_ylabel("Rewards")
         axs[0].set_xlabel('Steps')
-        axs[1].plot(ori_eval_total_reward_list, 'r--', ori_bs_total_reward_list, 'b--')
+        axs[1].plot(ori_eval_total_reward_list, 'r--')
+        ax11 = axs[1].twinx()
+        ax11.plot(ori_bs_total_reward_list, 'b--')
         axs[1].set_ylabel("Manual Rewards")
         axs[1].set_xlabel('Steps')
         plt.subplots_adjust(hspace=0.4)
@@ -240,7 +245,7 @@ parser.add_argument('--iter', type=int, help='learning steps', default=1000000)
 parser.add_argument("--exp_name", default=f"{datetime.today().date().strftime('%m%d-%H%M')}")
 parser.add_argument('--logdir', type=str, help='dir of results', default="models")
 parser.add_argument('--rm', action='store_true', help="whether using learnt reward model")
-
+parser.add_argument('--dm', action='store_true', help="whether using learnt dynamics model")
 
 
 if __name__ == "__main__":
@@ -252,12 +257,15 @@ if __name__ == "__main__":
     min_kpis, max_kpis = collect_baseline_kpi(building_name)
 
     reward_path_suffix = ("rewards" if args.rm else "manual")
+    reward_path_suffix += ("_predictor" if args.dm else "_simulator")
     if args.amlt:
         model_loc = f"{os.environ['AMLT_DATA_DIR']}/data/{args.logdir}/{building_name}/{reward_path_suffix}/"
         reward_model_loc = f"{os.environ['AMLT_DATA_DIR']}/data/models/{building_name}/reward_model/reward_model_best.pkl"
+        dynamics_model_loc = f"{os.environ['AMLT_DATA_DIR']}/data/models/{building_name}/dynamics_model/dynamics_model_best.pkl"
     else:
         model_loc = f"data/{args.logdir}/{building_name}/{reward_path_suffix}/"
         reward_model_loc = f"./data/models/{building_name}/reward_model/reward_model_best.pkl"
+        dynamics_model_loc = f"./data/models/{building_name}/dynamics_model/dynamics_model_best.pkl"
     
     log_loc = f"{model_loc}/logs/"
     os.makedirs(log_loc, exist_ok=True)
@@ -270,6 +278,14 @@ if __name__ == "__main__":
         reward_model.eval()
         env_down_RL.reward_function = lambda min_kip, max_kpi, kpi, state: learnt_reward_func(reward_model, min_kip, max_kpi, kpi, state)
     
+    if args.dm:
+        input_dim = env_down_RL.observation_space.shape[0]
+        action_dim=env_down_RL.action_space.shape[0]
+        dynamics_predictor = DynamicsPredictor(input_dim+action_dim, input_dim)
+        dynamics_predictor.load_state_dict(torch.load(dynamics_model_loc))
+        dynamics_predictor.eval()
+        env_down_RL.dynamics_predictor = dynamics_predictor
+        
 
     model = SAC('MlpPolicy', env_down_RL, verbose=1, device='auto', train_freq=256, learning_starts=5120, batch_size=512, gradient_steps=8)
     # model = PPO('MlpPolicy', env_down_RL, verbose=1, device='auto', batch_size=64, seed=43)

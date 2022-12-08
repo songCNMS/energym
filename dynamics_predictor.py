@@ -1,6 +1,7 @@
 import sys
 sys.path.insert(0, "./")
 
+import pickle
 import numpy as np
 import random
 import torch
@@ -14,46 +15,44 @@ import pickle
 from buildings_factory import *
 
 
-class RewardNet(nn.Module):
-    def __init__(self, input_dim):
-        super(RewardNet, self).__init__()
+class DynamicsPredictor(nn.Module):
+    def __init__(self, input_dim, output_dim):
+        super(DynamicsPredictor, self).__init__()
         self.linear_relu_stack = NN(input_dim=input_dim, 
-                      layers_info= [256, 256, 256, 1],
-                      output_activation="sigmoid",
+                      layers_info= [256, 256, 256, output_dim],
+                      output_activation="none",
                       batch_norm=False, dropout=0.0,
                       hidden_activations=['tanh', 'relu', 'relu', 'relu'], initialiser="Xavier", random_seed=43)
         
-    def get_reward(self, x):
-        x_out = self.linear_relu_stack(x)
-        return 10.0*x_out
-        # return 5.0*torch.nn.Sigmoid()(x_out)
-        # return torch.clamp(x_out, 0.0, 10.0)
-
     def forward(self, x):
-        num_sample = x.size(0)
-        x_in = x.reshape(num_sample, 2, -1)
-        logits1 = self.get_reward(x_in[:, 0, :])
-        logits2 = self.get_reward(x_in[:, 1, :])
-        logits = torch.cat((logits1, logits2), axis=1)
-        return logits
+        x_out = self.linear_relu_stack(x)
+        return x_out
 
 
-def preference_loss(outputs, labels):
-    # out_logsumexp = torch.logsumexp(outputs, axis=1, keepdim=True)
-    # out_logsumexp = torch.cat((out_logsumexp, out_logsumexp), axis=1)
-    # out = - outputs + out_logsumexp
-    out = -torch.log(torch.nn.Softmax(dim=1)(outputs))
-    return torch.mul(out, labels).sum(axis=1).mean()
+def predictor_loss(outputs, labels):
+    return nn.L1Loss()(outputs, labels)
 
 
-class PreferencDataset(Dataset):
+class DynamicsDataset(Dataset):
     def __init__(self, round, building_name):
         self.round = round
-        with open(f'{parent_loc}/data/offline_data/preferences_data_{building_name}/{len_traj}/preference_data_{round*preference_per_round}_{(round+1)*preference_per_round}.pkl', 'rb') as f:
-            _raw_data = np.load(f, allow_pickle=True)
-            self.raw_data = _raw_data[_raw_data[:, -1] != 0.5, :]
-        self.data = torch.from_numpy(self.raw_data[:, :-2]).to(torch.float)
-        self.labels = torch.from_numpy(self.raw_data[:, -2:]).to(torch.float)
+        # state, actions, reward, kpis, next_state
+        with open(f'{parent_loc}/data/offline_data/traj_data_{building_name}/{round}.pkl', 'rb') as f:
+            raw_data = pickle.load(f)
+        num_samples = (len(raw_data)*len(raw_data[0])) // 4
+        state_dim = len(raw_data[0][0])
+        action_dim = len(raw_data[0][1])
+        input_data = np.zeros((num_samples, state_dim+action_dim))
+        output_data = np.zeros((num_samples, state_dim))
+        k = 0
+        for traj in raw_data:
+            for i in range(len(traj) // 4):
+                state, actions, next_state = traj[4*i], traj[4*i+1], traj[4*i+4]
+                input_data[k, :] = np.concatenate((state, actions))
+                output_data[k, :] = next_state
+                k += 1
+        self.data = torch.from_numpy(input_data).to(torch.float)
+        self.labels = torch.from_numpy(output_data).to(torch.float)
         
     def __len__(self):
         return self.data.size(0)
@@ -63,26 +62,17 @@ class PreferencDataset(Dataset):
         label = self.labels[idx, :]
         return feature, label
     
+    
 def train_loop(building_name, model, loss_fn, optimizer, round_list):
     total_loss = 0.0
     total_size = 0
     for round in round_list:
-        training_dataset = PreferencDataset(round, building_name)
+        training_dataset = DynamicsDataset(round, building_name)
         dataloader = DataLoader(training_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
         size = len(dataloader.dataset)
-        # total_size += size
         for batch, (X, y) in enumerate(dataloader):
             # Compute prediction and loss
-            num_samples = X.size(0)
-            X = X.reshape(num_samples, 2, -1)
-            X_left = X[:, 0, :].reshape(num_samples, len_traj, -1)
-            X_right = X[:, 1, :].reshape(num_samples, len_traj, -1)
-            pred = torch.zeros(X.size(0), 2, requires_grad=True).to(device)
-            for i in range(len_traj):
-                model_in = torch.cat((X_left[:, i, :], X_right[:, i, :]), axis=1).to(device)
-                model_out = model(model_in)
-                pred = pred + model_out
-            pred /= len_traj
+            pred = model(X.to(device))
             loss = loss_fn(pred, y.to(device))
             # Backpropagation
             optimizer.zero_grad()
@@ -100,37 +90,29 @@ def test_loop(building_name, model, loss_fn, round_list):
     total_num_batches = 0
     test_loss, correct = 0, 0
     total_size = 0
+    model.eval()
     for round in round_list:
-        training_dataset = PreferencDataset(round, building_name)
+        training_dataset = DynamicsDataset(round, building_name)
         dataloader = DataLoader(training_dataset, batch_size=batch_size, shuffle=False)
         num_batches = len(dataloader)
         total_num_batches += num_batches
         with torch.no_grad():
             for X, y in dataloader:
                 y = y.to(device)
-                num_samples = X.size(0)
-                X = X.reshape(num_samples, 2, -1)
-                X_left = X[:, 0, :].reshape(num_samples, len_traj, -1)
-                X_right = X[:, 1, :].reshape(num_samples, len_traj, -1)
-                pred = torch.zeros(X.size(0), 2, requires_grad=True).to(device)
-                for i in range(len_traj):
-                    model_in = torch.cat((X_left[:, i, :], X_right[:, i, :]), axis=1).to(device)
-                    model_out = model(model_in)
-                    pred = pred + model_out
+                pred = model(X.to(device))
                 test_loss += loss_fn(pred, y).cpu().item()
-                correct += (pred.argmax(1) == y.argmax(1)).type(torch.float).sum().cpu().item()
                 total_size += 1
-    correct /= total_size
+    model.train()
     test_loss /= total_size
-    print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
-    return test_loss, correct
+    print(f"Test Avg loss: {test_loss:>8f} \n")
+    return test_loss
     
     
 import matplotlib.pyplot as plt
 from buildings_factory import *
 from energym.wrappers.rl_wrapper import StableBaselinesRLWrapper
 
-batch_size = 1024
+batch_size = 256
 device = ("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
@@ -157,11 +139,12 @@ if __name__ == "__main__":
     # inputs = get_inputs(building_name, env)
     # default_control = default_controls[building_idx]
     env_rl = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, reward_func)
-    input_dim = env_rl.observation_space.shape[0]
-    model = RewardNet(input_dim).to(device)
+    input_dim = env_rl.observation_space.shape[0] + env_rl.action_space.shape[0]
+    output_dim = env_rl.observation_space.shape[0]
+    model = DynamicsPredictor(input_dim, output_dim).to(device)
     learning_rate = 0.001
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    loss_fn = preference_loss
+    loss_fn = predictor_loss
 
 
     train_round_list = list(range(num_workers-1))
@@ -169,25 +152,22 @@ if __name__ == "__main__":
     # train_round_list = [1, 7]
     # eval_round_list = [0]
 
-    epochs = 50
+    epochs = 1000
     loss_list = []
     test_loss_list = []
-    correct_list = []
-    model_loc = f"{parent_loc}/data/models/{building_name}/reward_model/"
+    model_loc = f"{parent_loc}/data/models/{building_name}/dynamics_model/"
     os.makedirs(model_loc, exist_ok=True)
     for t in range(epochs):
         print(f"Epoch {t+1}\n-------------------------------")
         total_loss = train_loop(building_name, model, loss_fn, optimizer, train_round_list)
-        torch.save(model.state_dict(), f"{model_loc}/reward_model_best.pkl")
+        torch.save(model.state_dict(), f"{model_loc}/dynamics_model_best.pkl")
         loss_list.append(total_loss)
-        fig, axs = plt.subplots(3, 1)
+        fig, axs = plt.subplots(2, 1)
         axs[0].plot(loss_list)
-        test_loss, correct = test_loop(building_name, model, loss_fn, eval_round_list)
+        test_loss = test_loop(building_name, model, loss_fn, eval_round_list)
         test_loss_list.append(test_loss)
-        correct_list.append(correct)
         axs[1].plot(test_loss_list)
-        axs[2].plot(correct_list)
-        plt.savefig(f"{model_loc}/reward_model_cost.png")
+        plt.savefig(f"{model_loc}/dynamics_model_cost.png")
     print("Done!")
 
 

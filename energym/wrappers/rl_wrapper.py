@@ -1,6 +1,9 @@
+import gym
 from energym.envs.env import StepWrapper
 from gym import spaces
+import torch
 import numpy as np
+from energym.envs.utils.kpi import KPI
 from collections import OrderedDict
 from buildings_factory import *
 
@@ -10,6 +13,10 @@ def transform(val, l, u):
 
 def inverse_transform(val, l, u):
     return min(u, max(l, val*max((u - l), 1.0) + l))
+
+
+def state_distance(state1, state2):
+    return np.abs(np.array(state1)-np.array(state2)).sum()
 
 class RLWrapper(StepWrapper):
     r"""Transform steps outputs to have rl (gym like) outputs timesteps, i.e. add rewards, done, and info
@@ -55,11 +62,12 @@ class StableBaselinesRLWrapper(RLWrapper):
 
     """
     metadata = {'render.modes': ['console']}
-    def __init__(self, building_name, min_kpis, max_kpis, reward_function, eval=False):
+    def __init__(self, building_name, min_kpis, max_kpis, reward_function, dynamics_predictor=None, eval=False):
         self.building_name = building_name
         self.min_kpis = min_kpis
         self.max_kpis = max_kpis
         self.eval_mode = eval
+        self.dynamics_predictor = dynamics_predictor
         building_idx = buildings_list.index(building_name)
         env = get_env(building_name, eval=eval)
         default_control = default_controls[building_idx]
@@ -85,6 +93,7 @@ class StableBaselinesRLWrapper(RLWrapper):
         self.num_steps = int(self.env.stop_time - self.env.time) // control_frequency[building_idx] 
         self.state = self.transform_state(self.outputs)
         self.max_episode_len = 100000
+        self.kpis = KPI(self.env.kpi_options)
         
         
     def inverse_transform_action(self, actions):
@@ -134,12 +143,25 @@ class StableBaselinesRLWrapper(RLWrapper):
     def step(self, inputs):
         _,self.hour,_,_ = self.unwrapped.get_date()
         self.baseline_control = self.controller(self.action_keys, self.cur_step)(self.outputs, control_values[self.building_idx], self.hour)
-        
         ori_inputs = self.inverse_transform_action(inputs)
-        self.outputs = self.env.step(ori_inputs)
+        if self.dynamics_predictor is not None:
+            with torch.no_grad():
+                model_in = torch.from_numpy(np.concatenate((self.state, inputs))).reshape(1, -1).to(torch.float)
+                next_state = self.dynamics_predictor(model_in.to(next(self.dynamics_predictor.parameters()).device))[0, :].cpu().detach().numpy()
+            self.outputs = self.inverse_transform_state(next_state)
+            self.kpis.add_observation(self.outputs)
+            kpi = self.kpis.get_kpi(start_ind=self.cur_step, end_ind=self.cur_step+1)
+            env_outputs = self.env.step(ori_inputs)
+            env_state = self.transform_state(env_outputs)
+            # state_gap = state_distance(next_state, env_state)
+            state_gap = 0.0
+        else:             
+            self.outputs = self.env.step(ori_inputs)
+            kpi = self.env.get_kpi(start_ind=self.cur_step, end_ind=self.cur_step+1)
+            state_gap = 0.0
+
         self.state = self.transform_state(self.outputs)
-        kpi = self.env.get_kpi(start_ind=self.cur_step, end_ind=self.cur_step+1)
-        reward = self.reward_function(self.min_kpis, self.max_kpis, kpi, self.state)
+        reward = self.reward_function(self.min_kpis, self.max_kpis, kpi, self.state) - state_gap
         done = ((self.unwrapped.time >= self.unwrapped.stop_time) | (self.cur_step >= self.max_episode_len))
         info = {}
         self.cur_step += 1

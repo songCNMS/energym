@@ -185,6 +185,7 @@ class EnvFMU(Env):
 
         self.input_specs = input_specs
         self.output_specs = output_specs
+        self.kpi_options = kpi_options
 
         # Fix inputs and outputs keys
         if output_specs is not None:

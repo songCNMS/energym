@@ -28,7 +28,7 @@ default_controls = [{'P1_T_Tank_sp': [40.0], 'P2_T_Tank_sp': [40.0], 'P3_T_Tank_
                      'P4_T_Tank_sp': [4.0], 'Bd_Ch_EVBat_sp': [0.0], 'Bd_DisCh_EVBat_sp': [0.0], "Bd_Pw_Bat_sp": [1.0]},
                     {'Bd_Ch_EV1Bat_sp': [0.0], 'Bd_Ch_EV2Bat_sp': [0.0], 'Bd_Pw_Bat_sp':[1.0]},
                     {'Bd_Ch_EV1Bat_sp': [0.0], 'Bd_Ch_EV2Bat_sp': [0.0], 'Bd_Pw_Bat_sp':[1.0]},
-                    {'Bd_Heating_onoff_sp': [1], 'Bd_Cooling_onoff_sp': [0], 'Bd_Pw_Bat_sp':[1.0]},
+                    {'Bd_Heating_onoff_sp': [1], 'Bd_Cooling_onoff_sp': [0]},
                     {},
                     {},
                     {},

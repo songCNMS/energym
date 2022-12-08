@@ -1,6 +1,7 @@
 import sys
 sys.path.insert(0, "./")
 
+import pickle
 import random
 import multiprocessing as mp
 import pickle
@@ -51,7 +52,7 @@ def get_info_from_trajectory(trajectory):
         state, action, reward, kpis, next_state = trajectory[4*i], trajectory[4*i+1], trajectory[4*i+2], trajectory[4*i+3], trajectory[4*i+4]
         # reward_state = np.concatenate((state, action, next_state))
         # reward_state = np.concatenate((state)
-        traj_state.append(state)
+        traj_state.append(next_state)
         cur_kpis = add_kpi(cur_kpis, kpis)
     state = np.concatenate(traj_state)
     return state, cur_kpis
@@ -77,10 +78,11 @@ def compare_trajectory(trajectory1, trajectory2):
 
 def sample_trajectory(env, building_name, controller=None):
     building_idx = buildings_list.index(building_name)
-    trajectory = []
     done = False
     state = env.reset()
     step = 0
+    trajectory = [state]
+    
 
     # trajectory.append(state)
     while not done:
@@ -92,16 +94,15 @@ def sample_trajectory(env, building_name, controller=None):
         actions = env.transform_action(control)
         state, reward, done, info = env.step(actions)
         kpis = env.unwrapped.get_kpi(start_ind=step, end_ind=step+1)
-        trajectory.extend([state, actions, reward, kpis])
+        trajectory.extend([actions, reward, kpis, state])
         step += 1
-    trajectory.append(state)
     return trajectory
 
 
 def sample_preferences(env, building_name, num_preferences=8):
     building_idx = buildings_list.index(building_name)
-    controller1 = (None if np.random.random() <= 0.8 else controller_list[building_idx])
-    controller2 = (None if np.random.random() <= 0.8 else controller_list[building_idx])
+    controller1 = (None if np.random.random() <= 0.95 else controller_list[building_idx])
+    controller2 = (None if np.random.random() <= 0.95 else controller_list[building_idx])
     trajectory1 = sample_trajectory(env, building_name, controller=controller1)
     trajectory2 = sample_trajectory(env, building_name, controller=controller2)
     
@@ -114,49 +115,62 @@ def sample_preferences(env, building_name, num_preferences=8):
         traj1, traj2 = trajectory1[start_idx1*4:(start_idx1+len_traj)*4+1], trajectory2[start_idx2*4:(start_idx2+len_traj)*4+1]
         state1, state2, mu = compare_trajectory(traj1, traj2)
         preference_pairs.append(np.concatenate((state1, state2, np.array(mu))))
-    return preference_pairs
+    return preference_pairs, trajectory1, trajectory2
 
 
 def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, round, preference_per_round):
     preference_pairs = []
-    if is_remote: data_loc = f"{os.environ['AMLT_DATA_DIR']}/data/offline_data/preferences_data_{building_name}/{len_traj}/"
-    else: data_loc = f"data/offline_data/preferences_data_{building_name}/{len_traj}/"
+    trajectory_list = []
+    if is_remote: 
+        data_loc = f"{os.environ['AMLT_DATA_DIR']}/data/offline_data/preferences_data_{building_name}/{len_traj}/"
+        traj_data_loc = f"{os.environ['AMLT_DATA_DIR']}/data/offline_data/traj_data_{building_name}/"
+    else: 
+        data_loc = f"data/offline_data/preferences_data_{building_name}/{len_traj}/"
+        traj_data_loc = f"data/offline_data/traj_data_{building_name}/"
     env_rl = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, reward_func)
     for i in range(preference_per_round):
-        preference_pairs.extend(sample_preferences(env_rl, building_name, num_preferences=100240))
+        preference_pairs, trajectory1, trajectory2 = sample_preferences(env_rl, building_name, num_preferences=100240)
+        preference_pairs.extend(preference_pairs)
+        trajectory_list.extend([trajectory1, trajectory2])
     os.makedirs(data_loc, exist_ok=True)
+    os.makedirs(traj_data_loc, exist_ok=True)
     with open(f'{data_loc}/preference_data_{round*preference_per_round}_{(round+1)*preference_per_round}.pkl', 'wb') as f:
         np.save(f, preference_pairs)
+    with open(f"{traj_data_loc}/{round}.pkl", "wb") as f:
+        pickle.dump(trajectory_list, f)
     print(f"round {round} done!")
     env_rl.close()
 
 
 len_traj = 1
-num_workers = 8
-preference_per_round = 10
+num_workers = 16
+preference_per_round = 20
 
 # buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
 #                   "Apartments2Grid-v0", "OfficesThermostat-v0", "MixedUseFanFCU-v0",
 #                   "SeminarcenterThermostat-v0", "SeminarcenterFull-v0", "SimpleHouseRad-v0",
 #                   "SimpleHouseRSla-v0", "SwissHouseRSlaW2W-v0", "SwissHouseRSlaTank-v0"] 
 
-
+import time
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
 parser.add_argument('--building', type=str, help='building name', required=True)
+parser.add_argument('--round', type=str, help='round', default="")
+
 
 
 if __name__ == "__main__":
     args = parser.parse_args()
     building_name = args.building
     min_kpis, max_kpis = collect_baseline_kpi(building_name)
-    
+    if args.round == "": rounds_list = list(range(num_workers))
+    else: rounds_list = [int(c) for c in args.split(",")]
     if (not building_name.startswith("Simple")) and (not building_name.startswith("Swiss")):
-        for i in range(num_workers): generate_offline_data_worker(args.amlt, building_name, min_kpis, max_kpis, i, preference_per_round)
+        for i in rounds_list: generate_offline_data_worker(args.amlt, building_name, min_kpis, max_kpis, i, preference_per_round)
     else:
         jobs = []
-        for i in range(num_workers):
+        for i in rounds_list:
             p = mp.Process(target=generate_offline_data_worker, args=(args.amlt, building_name, min_kpis, max_kpis, i, preference_per_round))
             jobs.append(p)
             p.start()

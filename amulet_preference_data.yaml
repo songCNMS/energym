@@ -38,45 +38,122 @@ data:
 
 
 jobs:
-- name: ApartmentsThermal-v0
-  sku: C8
+- name: ApartmentsThermal-v0-1
+  sku: C2
   command:
-  - python preference_data.py --building ApartmentsThermal-v0 --amlt
+  - python preference_data.py --building ApartmentsThermal-v0 --amlt --round 0,1
+- name: ApartmentsThermal-v0-2
+  sku: C2
+  command:
+  - python preference_data.py --building ApartmentsThermal-v0 --amlt --round 2,3
+- name: ApartmentsThermal-v0-3
+  sku: C2
+  command:
+  - python preference_data.py --building ApartmentsThermal-v0 --amlt --round 4,5
+- name: ApartmentsThermal-v0-4
+  sku: C2
+  command:
+  - python preference_data.py --building ApartmentsThermal-v0 --amlt --round 6,7
 
-- name: ApartmentsGrid-v0
-  sku: C8
-  command:
-  - python preference_data.py --building ApartmentsGrid-v0 --amlt
 
-- name: Apartments2Thermal-v0
-  sku: C8
+- name: ApartmentsGrid-v0-1
+  sku: C2
   command:
-  - python preference_data.py --building Apartments2Thermal-v0 --amlt
+  - python preference_data.py --building ApartmentsGrid-v0 --amlt --round 0,1
+- name: ApartmentsGrid-v0-2
+  sku: C2
+  command:
+  - python preference_data.py --building ApartmentsGrid-v0 --amlt --round 2,3
+- name: ApartmentsGrid-v0-3
+  sku: C2
+  command:
+  - python preference_data.py --building ApartmentsGrid-v0 --amlt --round 4,5
+- name: ApartmentsGrid-v0-4
+  sku: C2
+  command:
+  - python preference_data.py --building ApartmentsGrid-v0 --amlt --round 6,7
 
-- name: Apartments2Grid-v0
-  sku: C8
-  command:
-  - python preference_data.py --building Apartments2Grid-v0 --amlt
 
-- name: OfficesThermostat-v0
-  sku: C8
+- name: Apartments2Thermal-v0-1
+  sku: C2
   command:
-  - python preference_data.py --building OfficesThermostat-v0 --amlt
+  - python preference_data.py --building Apartments2Thermal-v0 --amlt --round 0,1
+- name: Apartments2Thermal-v0-2
+  sku: C2
+  command:
+  - python preference_data.py --building Apartments2Thermal-v0 --amlt --round 2,3
+- name: Apartments2Thermal-v0-3
+  sku: C2
+  command:
+  - python preference_data.py --building Apartments2Thermal-v0 --amlt --round 4,5
+- name: Apartments2Thermal-v0-4
+  sku: C2
+  command:
+  - python preference_data.py --building Apartments2Thermal-v0 --amlt --round 6,7
+
+
+- name: Apartments2Grid-v0-1
+  sku: C2
+  command:
+  - python preference_data.py --building Apartments2Grid-v0 --amlt --round 0,1
+- name: Apartments2Grid-v0-2
+  sku: C2
+  command:
+  - python preference_data.py --building Apartments2Grid-v0 --amlt --round 2,3
+- name: Apartments2Grid-v0-3
+  sku: C2
+  command:
+  - python preference_data.py --building Apartments2Grid-v0 --amlt --round 4,5
+- name: Apartments2Grid-v0-4
+  sku: C2
+  command:
+  - python preference_data.py --building Apartments2Grid-v0 --amlt --round 6,7
+
+
+- name: SeminarcenterThermostat-v0-1
+  sku: C2
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt --round 0,1
+- name: SeminarcenterThermostat-v0-2
+  sku: C2
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt --round 2,3
+- name: SeminarcenterThermostat-v0-3
+  sku: C2
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt --round 4,5
+- name: SeminarcenterThermostat-v0-4
+  sku: C2
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt --round 6,7
+
+  
+- name: SeminarcenterFull-v0-1
+  sku: C2
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt --round 0,1
+- name: SeminarcenterFull-v0-2
+  sku: C2
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt --round 2,3
+- name: SeminarcenterFull-v0-3
+  sku: C2
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt --round 4,5
+- name: SeminarcenterFull-v0-4
+  sku: C2
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt --round 6,7
 
 - name: MixedUseFanFCU-v0
-  sku: C8
+  sku: C2
   command:
   - python preference_data.py --building MixedUseFanFCU-v0 --amlt
 
-- name: SeminarcenterThermostat-v0
-  sku: C8
+- name: OfficesThermostat-v0
+  sku: C2
   command:
-  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt
-  
-- name: SeminarcenterFull-v0
-  sku: C8
-  command:
-  - python preference_data.py --building SeminarcenterFull-v0 --amlt
+  - python preference_data.py --building OfficesThermostat-v0 --amlt
 
 - name: SimpleHouseRad-v0
   sku: C8
