@@ -11,7 +11,7 @@ from energym.wrappers.rl_wrapper import StableBaselinesRLWrapper
 from stable_baselines3 import PPO, SAC
 from stable_baselines3.common.callbacks import CallbackList, CheckpointCallback, EvalCallback, BaseCallback
 from buildings_factory import *
-from reward_model import RewardNet
+from reward_model import RewardNet, ensemble_num
 import gym
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -203,6 +203,12 @@ class EnergymEvalCallback(BaseCallback):
                            f"baseline_cmd_{col}": bs_vals[j],
                            f"cmd_{col}": vals[j]})
         
+        reward_df = pd.DataFrame(data={"eval_episode_reward": eval_total_reward_list,
+                                       "baseline_eval_episode_reward": bs_total_reward_list,
+                                       "manual_eval_episode_reward": ori_eval_total_reward_list,
+                                       "manual_baseline_eval_episode_reward": ori_bs_total_reward_list})
+        for _data_dir in out_dirs: reward_df.to_csv(f"{_data_dir}/rewards.csv", index=False)
+        
         for i in range(len(eval_total_reward_list)):
             wandb.log({"eval_episode_reward": eval_total_reward_list[i],
                        "baseline_eval_episode_reward": bs_total_reward_list[i],
@@ -246,6 +252,7 @@ parser.add_argument("--exp_name", default=f"{datetime.today().date().strftime('%
 parser.add_argument('--logdir', type=str, help='dir of results', default="models")
 parser.add_argument('--rm', action='store_true', help="whether using learnt reward model")
 parser.add_argument('--dm', action='store_true', help="whether using learnt dynamics model")
+parser.add_argument('--seed', type=int, help='seed', default=7)
 
 
 if __name__ == "__main__":
@@ -258,14 +265,15 @@ if __name__ == "__main__":
 
     reward_path_suffix = ("rewards" if args.rm else "manual")
     reward_path_suffix += ("_predictor" if args.dm else "_simulator")
+    reward_path_suffix += f"_seed{args.seed}"
     if args.amlt:
         model_loc = f"{os.environ['AMLT_DATA_DIR']}/data/{args.logdir}/{building_name}/{reward_path_suffix}/"
-        reward_model_loc = f"{os.environ['AMLT_DATA_DIR']}/data/models/{building_name}/reward_model/reward_model_best.pkl"
+        reward_model_loc = os.environ['AMLT_DATA_DIR'] + "/data/models/{}/reward_model/reward_model_best_{}.pkl"
         dynamics_model_loc = f"{os.environ['AMLT_DATA_DIR']}/data/models/{building_name}/dynamics_model/dynamics_model_best.pkl"
     else:
         model_loc = f"data/{args.logdir}/{building_name}/{reward_path_suffix}/"
-        reward_model_loc = f"./data/models/{building_name}/reward_model/reward_model_best.pkl"
-        dynamics_model_loc = f"./data/models/{building_name}/dynamics_model/dynamics_model_best.pkl"
+        reward_model_loc = "data/models/{}/reward_model/reward_model_best_{}.pkl"
+        dynamics_model_loc = f"data/models/{building_name}/dynamics_model/dynamics_model_best.pkl"
     
     log_loc = f"{model_loc}/logs/"
     os.makedirs(log_loc, exist_ok=True)
@@ -273,10 +281,14 @@ if __name__ == "__main__":
     
     if args.rm:
         input_dim = env_down_RL.observation_space.shape[0]
-        reward_model = RewardNet(input_dim)
-        reward_model.load_state_dict(torch.load(reward_model_loc))
-        reward_model.eval()
-        env_down_RL.reward_function = lambda min_kip, max_kpi, kpi, state: learnt_reward_func(reward_model, min_kip, max_kpi, kpi, state)
+        reward_models = []
+        for i in range(ensemble_num):
+            reward_model = RewardNet(input_dim)
+            _reward_model_loc = reward_model_loc.format(building_name, i)
+            reward_model.load_state_dict(torch.load(_reward_model_loc))
+            reward_model.eval()
+            reward_models.append(reward_model)
+        env_down_RL.reward_function = lambda min_kip, max_kpi, kpi, state: learnt_reward_func(reward_models, min_kip, max_kpi, kpi, state)
     
     if args.dm:
         input_dim = env_down_RL.observation_space.shape[0]
@@ -287,7 +299,8 @@ if __name__ == "__main__":
         env_down_RL.dynamics_predictor = dynamics_predictor
         
 
-    model = SAC('MlpPolicy', env_down_RL, verbose=1, device='auto', train_freq=256, learning_starts=5120, batch_size=512, gradient_steps=8)
+    model = SAC('MlpPolicy', env_down_RL, verbose=1, device='auto', train_freq=256, 
+                learning_starts=5120, batch_size=512, gradient_steps=8, seed=args.seed)
     # model = PPO('MlpPolicy', env_down_RL, verbose=1, device='auto', batch_size=64, seed=43)
     checkpoint_callback = CheckpointCallback(save_freq=5120, save_path=model_loc)
     post_eval_callback = EnergymEvalCallback(model, building_name, log_loc, min_kpis, max_kpis, env_down_RL.reward_function, verbose=0)

@@ -143,8 +143,8 @@ def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, r
 
 
 len_traj = 1
-num_workers = 16
-preference_per_round = 20
+num_workers = 8
+preference_per_round = 30
 
 # buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
 #                   "Apartments2Grid-v0", "OfficesThermostat-v0", "MixedUseFanFCU-v0",
@@ -165,7 +165,7 @@ if __name__ == "__main__":
     building_name = args.building
     min_kpis, max_kpis = collect_baseline_kpi(building_name)
     if args.round == "": rounds_list = list(range(num_workers))
-    else: rounds_list = [int(c) for c in args.split(",")]
+    else: rounds_list = [int(c) for c in args.round.split(",")]
     if (not building_name.startswith("Simple")) and (not building_name.startswith("Swiss")):
         for i in rounds_list: generate_offline_data_worker(args.amlt, building_name, min_kpis, max_kpis, i, preference_per_round)
     else:

@@ -19,7 +19,7 @@ class DynamicsPredictor(nn.Module):
     def __init__(self, input_dim, output_dim):
         super(DynamicsPredictor, self).__init__()
         self.linear_relu_stack = NN(input_dim=input_dim, 
-                      layers_info= [256, 256, 256, output_dim],
+                      layers_info= [512, 512, 512, output_dim],
                       output_activation="none",
                       batch_norm=False, dropout=0.0,
                       hidden_activations=['tanh', 'relu', 'relu', 'relu'], initialiser="Xavier", random_seed=43)
@@ -27,7 +27,6 @@ class DynamicsPredictor(nn.Module):
     def forward(self, x):
         x_out = self.linear_relu_stack(x)
         return x_out
-
 
 def predictor_loss(outputs, labels):
     return nn.L1Loss()(outputs, labels)
@@ -152,7 +151,7 @@ if __name__ == "__main__":
     # train_round_list = [1, 7]
     # eval_round_list = [0]
 
-    epochs = 1000
+    epochs = 100
     loss_list = []
     test_loss_list = []
     model_loc = f"{parent_loc}/data/models/{building_name}/dynamics_model/"

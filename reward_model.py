@@ -130,6 +130,8 @@ import matplotlib.pyplot as plt
 from buildings_factory import *
 from energym.wrappers.rl_wrapper import StableBaselinesRLWrapper
 
+
+ensemble_num = num_workers
 batch_size = 1024
 device = ("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
@@ -144,6 +146,9 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
 parser.add_argument('--building', type=str, help='building name', required=True)
+
+
+
 
 
 if __name__ == "__main__":
@@ -164,31 +169,31 @@ if __name__ == "__main__":
     loss_fn = preference_loss
 
 
-    train_round_list = list(range(num_workers-1))
-    eval_round_list = list(range(num_workers-1, num_workers))
-    # train_round_list = [1, 7]
-    # eval_round_list = [0]
+    for i in range(ensemble_num):
+        train_round_list = list(range(num_workers))
+        train_round_list.remove(i)        
+        eval_round_list = [i]
 
-    epochs = 50
-    loss_list = []
-    test_loss_list = []
-    correct_list = []
-    model_loc = f"{parent_loc}/data/models/{building_name}/reward_model/"
-    os.makedirs(model_loc, exist_ok=True)
-    for t in range(epochs):
-        print(f"Epoch {t+1}\n-------------------------------")
-        total_loss = train_loop(building_name, model, loss_fn, optimizer, train_round_list)
-        torch.save(model.state_dict(), f"{model_loc}/reward_model_best.pkl")
-        loss_list.append(total_loss)
-        fig, axs = plt.subplots(3, 1)
-        axs[0].plot(loss_list)
-        test_loss, correct = test_loop(building_name, model, loss_fn, eval_round_list)
-        test_loss_list.append(test_loss)
-        correct_list.append(correct)
-        axs[1].plot(test_loss_list)
-        axs[2].plot(correct_list)
-        plt.savefig(f"{model_loc}/reward_model_cost.png")
-    print("Done!")
+        epochs = 20
+        loss_list = []
+        test_loss_list = []
+        correct_list = []
+        model_loc = f"{parent_loc}/data/models/{building_name}/reward_model/"
+        os.makedirs(model_loc, exist_ok=True)
+        for t in range(epochs):
+            print(f"Epoch {t+1}\n-------------------------------")
+            total_loss = train_loop(building_name, model, loss_fn, optimizer, train_round_list)
+            torch.save(model.state_dict(), f"{model_loc}/reward_model_best_{i}.pkl")
+            loss_list.append(total_loss)
+            fig, axs = plt.subplots(3, 1)
+            axs[0].plot(loss_list)
+            test_loss, correct = test_loop(building_name, model, loss_fn, eval_round_list)
+            test_loss_list.append(test_loss)
+            correct_list.append(correct)
+            axs[1].plot(test_loss_list)
+            axs[2].plot(correct_list)
+            plt.savefig(f"{model_loc}/reward_model_cost_{i}.png")
+        print("Done!")
 
 
 
