@@ -46,6 +46,7 @@ simulation_days = 60
 
 def collect_baseline_kpi(building_name):
     max_kpis, min_kpis = {}, {}
+    max_outputs, min_outputs = {}, {}
     _env = get_env(building_name)
     building_idx = buildings_list.index(building_name)
     controller = controller_list[building_idx]
@@ -72,7 +73,12 @@ def collect_baseline_kpi(building_name):
                 min_kpis[key].update(val)
             max_kpis[key]['kpi'] = max(max_kpis[key]['kpi'], val['kpi'])
             min_kpis[key]['kpi'] = min(min_kpis[key]['kpi'], val['kpi'])
-    return min_kpis, max_kpis
+        for key, val in outputs.items():
+            if key not in max_kpis: max_kpis[key] = val
+            if key not in min_kpis: min_kpis[key] = val
+            max_kpis[key] = max(max_kpis[key], val)
+            min_kpis[key] = min(min_kpis[key], val)
+    return min_kpis, max_kpis, min_outputs, max_outputs
 
 
 def reward_func(min_kpi, max_kpi, kpi, state):
@@ -95,6 +101,7 @@ def learnt_reward_func(reward_models, min_kpi, max_kpi, kpi, state):
             reward_list.append(new_reward)
     reward_mean = np.mean(reward_list)
     reward_std = (0.0 if len(reward_list) <= 1 else np.std(reward_list)) 
+    print(reward_mean, reward_std, reward_list)
     return reward_mean - reward_std
     
 

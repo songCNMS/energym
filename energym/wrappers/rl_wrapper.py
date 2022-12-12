@@ -12,7 +12,8 @@ def transform(val, l, u):
     return (val - l) / max((u - l), 1.0)
 
 def inverse_transform(val, l, u):
-    return min(u, max(l, val*max((u - l), 1.0) + l))
+    return val*max((u - l), 1.0) + l
+    # return min(u, max(l, val*max((u - l), 1.0) + l))
 
 
 def state_distance(state1, state2):
@@ -62,10 +63,12 @@ class StableBaselinesRLWrapper(RLWrapper):
 
     """
     metadata = {'render.modes': ['console']}
-    def __init__(self, building_name, min_kpis, max_kpis, reward_function, dynamics_predictor=None, eval=False):
+    def __init__(self, building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_function, dynamics_predictor=None, eval=False):
         self.building_name = building_name
         self.min_kpis = min_kpis
         self.max_kpis = max_kpis
+        self.min_outputs = min_outputs
+        self.max_outputs = max_outputs
         self.eval_mode = eval
         self.dynamics_predictor = dynamics_predictor
         building_idx = buildings_list.index(building_name)
@@ -144,6 +147,7 @@ class StableBaselinesRLWrapper(RLWrapper):
         _,self.hour,_,_ = self.unwrapped.get_date()
         self.baseline_control = self.controller(self.action_keys, self.cur_step)(self.outputs, control_values[self.building_idx], self.hour)
         ori_inputs = self.inverse_transform_action(inputs)
+        # print("env action: ", ori_inputs)
         if self.dynamics_predictor is not None:
             with torch.no_grad():
                 model_in = torch.from_numpy(np.concatenate((self.state, inputs))).reshape(1, -1).to(torch.float)
@@ -160,9 +164,10 @@ class StableBaselinesRLWrapper(RLWrapper):
             kpi = self.env.get_kpi(start_ind=self.cur_step, end_ind=self.cur_step+1)
             state_gap = 0.0
 
-        self.state = self.transform_state(self.outputs)
-        reward = self.reward_function(self.min_kpis, self.max_kpis, kpi, self.state) - state_gap
+        next_state = self.transform_state(self.outputs)
+        reward = self.reward_function(self.min_kpis, self.max_kpis, kpi, next_state) - state_gap
         done = ((self.unwrapped.time >= self.unwrapped.stop_time) | (self.cur_step >= self.max_episode_len))
         info = {}
         self.cur_step += 1
-        return self.state, reward, done, info
+        self.state = next_state
+        return next_state, reward, done, info

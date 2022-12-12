@@ -12,6 +12,7 @@ import pandas as pd
 from torch.utils.data import Dataset, DataLoader
 import pickle
 from buildings_factory import *
+import multiprocessing as mp
 
 
 class RewardNet(nn.Module):
@@ -20,7 +21,7 @@ class RewardNet(nn.Module):
         self.linear_relu_stack = NN(input_dim=input_dim, 
                       layers_info= [256, 256, 256, 1],
                       output_activation="sigmoid",
-                      batch_norm=False, dropout=0.0,
+                      batch_norm=False, dropout=0.2,
                       hidden_activations=['tanh', 'relu', 'relu', 'relu'], initialiser="Xavier", random_seed=43)
         
     def get_reward(self, x):
@@ -47,7 +48,7 @@ def preference_loss(outputs, labels):
 
 
 class PreferencDataset(Dataset):
-    def __init__(self, round, building_name):
+    def __init__(self, round, building_name, parent_loc):
         self.round = round
         with open(f'{parent_loc}/data/offline_data/preferences_data_{building_name}/{len_traj}/preference_data_{round*preference_per_round}_{(round+1)*preference_per_round}.pkl', 'rb') as f:
             _raw_data = np.load(f, allow_pickle=True)
@@ -63,11 +64,11 @@ class PreferencDataset(Dataset):
         label = self.labels[idx, :]
         return feature, label
     
-def train_loop(building_name, model, loss_fn, optimizer, round_list):
+def train_loop(building_name, model, loss_fn, optimizer, round_list, parent_loc):
     total_loss = 0.0
     total_size = 0
     for round in round_list:
-        training_dataset = PreferencDataset(round, building_name)
+        training_dataset = PreferencDataset(round, building_name, parent_loc)
         dataloader = DataLoader(training_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
         size = len(dataloader.dataset)
         # total_size += size
@@ -90,19 +91,19 @@ def train_loop(building_name, model, loss_fn, optimizer, round_list):
             optimizer.step()
             total_loss += loss.cpu().item()
             total_size += 1
-            if (not is_remote) and (batch % 10 == 0):
-                print(pred[:5, :], y[:5, :])
+            if (batch % 10 == 0):
                 loss, current = loss.cpu().item(), batch * len(X)
                 print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
     return total_loss / total_size
 
-def test_loop(building_name, model, loss_fn, round_list):
+def test_loop(building_name, model, loss_fn, round_list, parent_loc):
     total_num_batches = 0
     test_loss, correct = 0, 0
     total_size = 0
+    model.eval()
     for round in round_list:
-        training_dataset = PreferencDataset(round, building_name)
-        dataloader = DataLoader(training_dataset, batch_size=batch_size, shuffle=False)
+        testing_dataset = PreferencDataset(round, building_name, parent_loc)
+        dataloader = DataLoader(testing_dataset, batch_size=batch_size, shuffle=False)
         num_batches = len(dataloader)
         total_num_batches += num_batches
         with torch.no_grad():
@@ -120,7 +121,8 @@ def test_loop(building_name, model, loss_fn, round_list):
                 test_loss += loss_fn(pred, y).cpu().item()
                 correct += (pred.argmax(1) == y.argmax(1)).type(torch.float).sum().cpu().item()
                 total_size += 1
-    correct /= total_size
+    model.train()
+    correct /= len(testing_dataset)
     test_loss /= total_size
     print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
     return test_loss, correct
@@ -148,52 +150,57 @@ parser.add_argument('--amlt', action='store_true', help="remote execution on aml
 parser.add_argument('--building', type=str, help='building name', required=True)
 
 
-
+def run_train(i, input_dim, parent_loc, building_name):
+    train_round_list = list(range(num_workers))
+    train_round_list.remove(i)        
+    eval_round_list = [i]
+    epochs = 50
+    learning_rate = 0.001
+    loss_fn = preference_loss
+    model = RewardNet(input_dim).to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    loss_list = []
+    test_loss_list = []
+    correct_list = []
+    model_loc = f"{parent_loc}/data/models/{building_name}/reward_model/"
+    os.makedirs(model_loc, exist_ok=True)
+    for t in range(epochs):
+        print(f"Epoch {t+1}\n-------------------------------")
+        total_loss = train_loop(building_name, model, loss_fn, optimizer, train_round_list, parent_loc)
+        torch.save(model.state_dict(), f"{model_loc}/reward_model_best_{i}.pkl")
+        loss_list.append(total_loss)
+        fig, axs = plt.subplots(3, 1)
+        axs[0].plot(loss_list)
+        test_loss, correct = test_loop(building_name, model, loss_fn, eval_round_list, parent_loc)
+        test_loss_list.append(test_loss)
+        correct_list.append(correct)
+        axs[1].plot(test_loss_list)
+        axs[2].plot(correct_list)
+        plt.savefig(f"{model_loc}/reward_model_cost_{i}.png")
+    print(f"Round {i} done!")
 
 
 if __name__ == "__main__":
+    mp.set_start_method("spawn")
     args = parser.parse_args()
     is_remote = args.amlt
     parent_loc = (os.environ['AMLT_DATA_DIR'] if is_remote else "./")
     building_name = args.building
-    min_kpis, max_kpis = collect_baseline_kpi(building_name)
+    min_kpis, max_kpis, min_outputs, max_outputs = collect_baseline_kpi(building_name)
     # building_idx = buildings_list.index(building_name)
     # env = get_env(building_name)
     # inputs = get_inputs(building_name, env)
     # default_control = default_controls[building_idx]
-    env_rl = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, reward_func)
+    env_rl = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func)
     input_dim = env_rl.observation_space.shape[0]
-    model = RewardNet(input_dim).to(device)
-    learning_rate = 0.001
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    loss_fn = preference_loss
-
-
-    for i in range(ensemble_num):
-        train_round_list = list(range(num_workers))
-        train_round_list.remove(i)        
-        eval_round_list = [i]
-
-        epochs = 20
-        loss_list = []
-        test_loss_list = []
-        correct_list = []
-        model_loc = f"{parent_loc}/data/models/{building_name}/reward_model/"
-        os.makedirs(model_loc, exist_ok=True)
-        for t in range(epochs):
-            print(f"Epoch {t+1}\n-------------------------------")
-            total_loss = train_loop(building_name, model, loss_fn, optimizer, train_round_list)
-            torch.save(model.state_dict(), f"{model_loc}/reward_model_best_{i}.pkl")
-            loss_list.append(total_loss)
-            fig, axs = plt.subplots(3, 1)
-            axs[0].plot(loss_list)
-            test_loss, correct = test_loop(building_name, model, loss_fn, eval_round_list)
-            test_loss_list.append(test_loss)
-            correct_list.append(correct)
-            axs[1].plot(test_loss_list)
-            axs[2].plot(correct_list)
-            plt.savefig(f"{model_loc}/reward_model_cost_{i}.png")
-        print("Done!")
-
+    
+    for i in range(ensemble_num): run_train(i, input_dim, parent_loc, building_name)
+    # jobs = []
+    # for i in range(ensemble_num):
+    #     p = mp.Process(target=run_train, args=(i, input_dim, parent_loc, building_name))
+    #     jobs.append(p)
+    #     p.start()
+    # for proc in jobs:
+    #     proc.join()
 
 

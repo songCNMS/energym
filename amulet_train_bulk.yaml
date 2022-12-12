@@ -1,4 +1,4 @@
-description: Energym
+description: Energym Train Bulk
 
 target:
   # service: sing
@@ -38,62 +38,103 @@ data:
 
 
 jobs:
-- name: ApartmentsThermal-v0
-  sku: G1
-  command:
-  - python train_bulk.py --building ApartmentsThermal-v0 --amlt --seed 7
+# - name: ApartmentsThermal-v0
+#   sku: G1
+#   command:
+#   - python train_bulk.py --building ApartmentsThermal-v0 --amlt --seed 7
 
-- name: ApartmentsGrid-v0
-  sku: G1
-  command:
-  - python train_bulk.py --building ApartmentsGrid-v0 --amlt --seed 7
+# - name: ApartmentsGrid-v0
+#   sku: G1
+#   command:
+#   - python train_bulk.py --building ApartmentsGrid-v0 --amlt --seed 7
 
-- name: Apartments2Thermal-v0
-  sku: G1
-  command:
-  - python train_bulk.py --building Apartments2Thermal-v0 --amlt --seed 7
+# - name: Apartments2Thermal-v0
+#   sku: G1
+#   command:
+#   - python train_bulk.py --building Apartments2Thermal-v0 --amlt --seed 7
 
-- name: Apartments2Grid-v0
-  sku: G1
-  command:
-  - python train_bulk.py --building Apartments2Grid-v0 --amlt --seed 7
+# - name: Apartments2Grid-v0
+#   sku: G1
+#   command:
+#   - python train_bulk.py --building Apartments2Grid-v0 --amlt --seed 7
 
-- name: OfficesThermostat-v0
-  sku: G1
-  command:
-  - python train_bulk.py --building OfficesThermostat-v0 --amlt --seed 7
+# - name: OfficesThermostat-v0
+#   sku: G1
+#   command:
+#   - python train_bulk.py --building OfficesThermostat-v0 --amlt --seed 7
 
-- name: MixedUseFanFCU-v0
-  sku: G1
-  command:
-  - python train_bulk.py --building MixedUseFanFCU-v0 --amlt --seed 7
+# - name: MixedUseFanFCU-v0
+#   sku: G1
+#   command:
+#   - python train_bulk.py --building MixedUseFanFCU-v0 --amlt --seed 7
 
-- name: SeminarcenterThermostat-v0
-  sku: G1
-  command:
-  - python train_bulk.py --building SeminarcenterThermostat-v0 --amlt --seed 7
+# - name: SeminarcenterThermostat-v0
+#   sku: G1
+#   command:
+#   - python train_bulk.py --building SeminarcenterThermostat-v0 --amlt --seed 7
   
-- name: SeminarcenterFull-v0
-  sku: G1
-  command:
-  - python train_bulk.py --building SeminarcenterFull-v0 --amlt --seed 7
+# - name: SeminarcenterFull-v0
+#   sku: G1
+#   command:
+#   - python train_bulk.py --building SeminarcenterFull-v0 --amlt --seed 7
 
-- name: SimpleHouseRad-v0
-  sku: G1
-  command:
-  - python train_bulk.py --building SimpleHouseRad-v0 --amlt --seed 7
+# - name: SimpleHouseRad-v0
+#   sku: G1
+#   command:
+#   - python train_bulk.py --building SimpleHouseRad-v0 --amlt --seed 7
 
-- name: SimpleHouseRSla-v0
-  sku: G1
-  command:
-  - python train_bulk.py --building SimpleHouseRSla-v0 --amlt --seed 7
+# - name: SimpleHouseRSla-v0
+#   sku: G1
+#   command:
+#   - python train_bulk.py --building SimpleHouseRSla-v0 --amlt --seed 7
 
-- name: SwissHouseRSlaW2W-v0
-  sku: G1
-  command:
-  - python train_bulk.py --building SwissHouseRSlaW2W-v0 --amlt --seed 7
+# - name: SwissHouseRSlaW2W-v0
+#   sku: G1
+#   command:
+#   - python train_bulk.py --building SwissHouseRSlaW2W-v0 --amlt --seed 7
 
-- name: SwissHouseRSlaTank-v0
+# - name: SwissHouseRSlaTank-v0
+#   sku: G1
+#   command:
+#   - python train_bulk.py --building SwissHouseRSlaTank-v0 --amlt --seed 7
+
+
+- name: SimpleHouseRad-v0-1
   sku: G1
   command:
-  - python train_bulk.py --building SwissHouseRSlaTank-v0 --amlt --seed 7
+  - python train_bulk.py --building SimpleHouseRad-v0 --amlt --seed 7,13
+
+- name: SimpleHouseRSla-v0-1
+  sku: G1
+  command:
+  - python train_bulk.py --building SimpleHouseRSla-v0 --amlt --seed 7,13
+
+- name: SimpleHouseRad-v0-2
+  sku: G1
+  command:
+  - python train_bulk.py --building SimpleHouseRad-v0 --amlt --seed 19,23
+
+- name: SimpleHouseRSla-v0-2
+  sku: G1
+  command:
+  - python train_bulk.py --building SimpleHouseRSla-v0 --amlt --seed 19,23
+
+- name: SimpleHouseRad-v0-3
+  sku: G1
+  command:
+  - python train_bulk.py --building SimpleHouseRad-v0 --amlt --seed 29,31
+
+- name: SimpleHouseRSla-v0-3
+  sku: G1
+  command:
+  - python train_bulk.py --building SimpleHouseRSla-v0 --amlt --seed 29,31
+
+- name: SimpleHouseRad-v0-4
+  sku: G1
+  command:
+  - python train_bulk.py --building SimpleHouseRad-v0 --amlt --seed 43,67
+
+- name: SimpleHouseRSla-v0-4
+  sku: G1
+  command:
+  - python train_bulk.py --building SimpleHouseRSla-v0 --amlt --seed 43,67

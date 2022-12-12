@@ -8,3 +8,4 @@ wandb
 data
 test_models
 amlt_configs
+*.ipynb

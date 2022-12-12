@@ -45,10 +45,10 @@ def constraint_violate_compare(kpi1, kpi2):
             break
     return preference
 
-def get_info_from_trajectory(trajectory):
+def get_info_from_trajectory(trajectory, _len_traj):
     traj_state = []
     cur_kpis = {}
-    for i in range(len_traj):
+    for i in range(_len_traj):
         state, action, reward, kpis, next_state = trajectory[4*i], trajectory[4*i+1], trajectory[4*i+2], trajectory[4*i+3], trajectory[4*i+4]
         # reward_state = np.concatenate((state, action, next_state))
         # reward_state = np.concatenate((state)
@@ -57,9 +57,9 @@ def get_info_from_trajectory(trajectory):
     state = np.concatenate(traj_state)
     return state, cur_kpis
 
-def compare_trajectory(trajectory1, trajectory2):
-    state1, kpis1 = get_info_from_trajectory(trajectory1)
-    state2, kpis2 = get_info_from_trajectory(trajectory2)
+def compare_trajectory(trajectory1, trajectory2, _len_traj):
+    state1, kpis1 = get_info_from_trajectory(trajectory1, _len_traj)
+    state2, kpis2 = get_info_from_trajectory(trajectory2, _len_traj)
     preference = 0
     if (not constraint_violate(kpis1)) and (not constraint_violate(kpis2)): preference = objective_compare(kpis1, kpis2)
     elif constraint_violate(kpis1) and (not constraint_violate(kpis2)): preference = -1.0
@@ -95,6 +95,8 @@ def sample_trajectory(env, building_name, controller=None):
         state, reward, done, info = env.step(actions)
         kpis = env.unwrapped.get_kpi(start_ind=step, end_ind=step+1)
         trajectory.extend([actions, reward, kpis, state])
+        # print("control: ", control, "outputs: ", env.outputs)
+        # print("state: ", state, " ori:", env.inverse_transform_state(state))
         step += 1
     return trajectory
 
@@ -108,43 +110,48 @@ def sample_preferences(env, building_name, num_preferences=8):
     
     trajectory_len1 = len(trajectory1) // 4
     trajectory_len2 = len(trajectory2) // 4
-    preference_pairs = []
-    for _ in range(num_preferences):
-        start_idx1 = np.random.randint(trajectory_len1-len_traj)
-        start_idx2 = np.random.randint(trajectory_len2-len_traj)
-        traj1, traj2 = trajectory1[start_idx1*4:(start_idx1+len_traj)*4+1], trajectory2[start_idx2*4:(start_idx2+len_traj)*4+1]
-        state1, state2, mu = compare_trajectory(traj1, traj2)
-        preference_pairs.append(np.concatenate((state1, state2, np.array(mu))))
+    preference_pairs = [[] for _ in len_traj_list]
+    for i, _len_traj in enumerate(len_traj_list):
+        for _ in range(num_preferences):
+            start_idx1 = np.random.randint(trajectory_len1-_len_traj)
+            start_idx2 = np.random.randint(trajectory_len2-_len_traj)
+            traj1, traj2 = trajectory1[start_idx1*4:(start_idx1+_len_traj)*4+1], trajectory2[start_idx2*4:(start_idx2+_len_traj)*4+1]
+            state1, state2, mu = compare_trajectory(traj1, traj2, _len_traj)
+            preference_pairs[i].append(np.concatenate((state1, state2, np.array(mu))))
     return preference_pairs, trajectory1, trajectory2
 
 
-def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, round, preference_per_round):
-    preference_pairs = []
+def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, min_outputs, max_outputs, round, preference_per_round):
     trajectory_list = []
+    preference_pairs = [[] for _ in len_traj_list]
     if is_remote: 
-        data_loc = f"{os.environ['AMLT_DATA_DIR']}/data/offline_data/preferences_data_{building_name}/{len_traj}/"
+        data_loc = os.environ['AMLT_DATA_DIR'] + "/data/offline_data/preferences_data_{}/{}/"
         traj_data_loc = f"{os.environ['AMLT_DATA_DIR']}/data/offline_data/traj_data_{building_name}/"
     else: 
-        data_loc = f"data/offline_data/preferences_data_{building_name}/{len_traj}/"
+        data_loc = "data/offline_data/preferences_data_{}/{}/"
         traj_data_loc = f"data/offline_data/traj_data_{building_name}/"
-    env_rl = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, reward_func)
-    for i in range(preference_per_round):
-        preference_pairs, trajectory1, trajectory2 = sample_preferences(env_rl, building_name, num_preferences=100240)
-        preference_pairs.extend(preference_pairs)
-        trajectory_list.extend([trajectory1, trajectory2])
-    os.makedirs(data_loc, exist_ok=True)
+    env_rl = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func)
+    for _len_traj in len_traj_list: os.makedirs(data_loc.format(building_name, _len_traj), exist_ok=True)
     os.makedirs(traj_data_loc, exist_ok=True)
-    with open(f'{data_loc}/preference_data_{round*preference_per_round}_{(round+1)*preference_per_round}.pkl', 'wb') as f:
-        np.save(f, preference_pairs)
-    with open(f"{traj_data_loc}/{round}.pkl", "wb") as f:
-        pickle.dump(trajectory_list, f)
+    for i in range(preference_per_round):
+        _preference_pairs, trajectory1, trajectory2 = sample_preferences(env_rl, building_name, num_preferences=100240)
+        trajectory_list.extend([trajectory1, trajectory2])
+        for j, _len_traj in enumerate(len_traj_list):
+            preference_pairs[j].extend(_preference_pairs[j])
+            _data_loc = data_loc.format(building_name, _len_traj)
+            with open(f'{_data_loc}/preference_data_{round*preference_per_round}_{(round+1)*preference_per_round}.pkl', 'wb') as f:
+                np.save(f, preference_pairs[j])
+        with open(f"{traj_data_loc}/{round}.pkl", "wb") as f:
+            pickle.dump(trajectory_list, f)
+        print(f"round {round}, preference {i+1} done!")
     print(f"round {round} done!")
     env_rl.close()
 
 
 len_traj = 1
+len_traj_list = list(range(1, 9))
 num_workers = 8
-preference_per_round = 30
+preference_per_round = 100
 
 # buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
 #                   "Apartments2Grid-v0", "OfficesThermostat-v0", "MixedUseFanFCU-v0",
@@ -163,15 +170,15 @@ parser.add_argument('--round', type=str, help='round', default="")
 if __name__ == "__main__":
     args = parser.parse_args()
     building_name = args.building
-    min_kpis, max_kpis = collect_baseline_kpi(building_name)
+    min_kpis, max_kpis, min_outputs, max_outputs = collect_baseline_kpi(building_name)
     if args.round == "": rounds_list = list(range(num_workers))
     else: rounds_list = [int(c) for c in args.round.split(",")]
     if (not building_name.startswith("Simple")) and (not building_name.startswith("Swiss")):
-        for i in rounds_list: generate_offline_data_worker(args.amlt, building_name, min_kpis, max_kpis, i, preference_per_round)
+        for i in rounds_list: generate_offline_data_worker(args.amlt, building_name, min_kpis, max_kpis, min_outputs, max_outputs, i, preference_per_round)
     else:
         jobs = []
         for i in rounds_list:
-            p = mp.Process(target=generate_offline_data_worker, args=(args.amlt, building_name, min_kpis, max_kpis, i, preference_per_round))
+            p = mp.Process(target=generate_offline_data_worker, args=(args.amlt, building_name, min_kpis, max_kpis, min_outputs, max_outputs, i, preference_per_round))
             jobs.append(p)
             p.start()
 

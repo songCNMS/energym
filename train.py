@@ -37,6 +37,8 @@ class EnergymEvalCallback(BaseCallback):
         log_loc,
         min_kpis,
         max_kpis,
+        min_outputs,
+        max_outputs,
         reward_function,
         simulation_days: int = 14,
         verbose: int = 0
@@ -47,6 +49,8 @@ class EnergymEvalCallback(BaseCallback):
         self.log_loc = log_loc
         self.min_kpis = min_kpis
         self.max_kpis = max_kpis
+        self.min_outputs = min_outputs,
+        self.max_outputs = max_outputs,
         self.reward_function = reward_function
         super().init_callback(model)
     
@@ -57,10 +61,10 @@ class EnergymEvalCallback(BaseCallback):
         default_control = default_controls[building_idx]
         exp_name = f"{datetime.today().time().strftime('%m%d-%H%M%S')}"
         
-        wandb.init(project="Energym", config={}, group=building_name, name=f"{self.num_timesteps}_{exp_name}")
+        if is_wandb: wandb.init(project="Energym", config={}, group=building_name, name=f"{self.num_timesteps}_{exp_name}")
 
         bs_eval_env = make(self.building_name, weather=weather, simulation_days=self.simulation_days, eval_mode=True)
-        eval_env_down_RL = StableBaselinesRLWrapper(self.building_name, self.min_kpis, self.max_kpis, self.reward_function, eval=True)
+        eval_env_down_RL = StableBaselinesRLWrapper(self.building_name, self.min_kpis, self.max_kpis, self.min_outputs, self.max_outputs, self.reward_function, eval=True)
         inputs = get_inputs(building_name, bs_eval_env)
         
 
@@ -110,7 +114,7 @@ class EnergymEvalCallback(BaseCallback):
             for key in control:
                 res[f"baseline_{key}"] = bs_control[key][0]
                 res[key] = control[key][0]
-            wandb.log(res)
+            if is_wandb: wandb.log(res)
             step += 1
 
             if self.verbose:
@@ -166,11 +170,12 @@ class EnergymEvalCallback(BaseCallback):
             
             vals = out_df[col].tolist()
             bs_vals = bs_out_df[col].tolist()
-            for j in range(min(len(vals), len(bs_vals))):
-                wandb.log({f"{col}_out_lower_bound": intervals[0], 
-                           f"{col}_out_upper_bound": intervals[1],
-                           f"baseline_out_{col}": bs_vals[j],
-                           f"out_{col}": vals[j]})
+            if is_wandb:
+                for j in range(min(len(vals), len(bs_vals))):
+                    wandb.log({f"{col}_out_lower_bound": intervals[0], 
+                            f"{col}_out_upper_bound": intervals[1],
+                            f"baseline_out_{col}": bs_vals[j],
+                            f"out_{col}": vals[j]})
             
         axs[-1].plot(np.cumsum(reward_list), 'r--', np.cumsum(bs_reward_list), 'b--')
         axs[-1].set_ylabel('Reward')
@@ -197,11 +202,12 @@ class EnergymEvalCallback(BaseCallback):
             
             vals = cmd_df[col].tolist()
             bs_vals = bs_cmd_df[col].tolist()
-            for j in range(min(len(vals), len(bs_vals))):
-                wandb.log({f"{col}_cmd_lower_bound": intervals[0], 
-                           f"{col}_cmd_upper_bound": intervals[1],
-                           f"baseline_cmd_{col}": bs_vals[j],
-                           f"cmd_{col}": vals[j]})
+            if is_wandb:
+                for j in range(min(len(vals), len(bs_vals))):
+                    wandb.log({f"{col}_cmd_lower_bound": intervals[0], 
+                            f"{col}_cmd_upper_bound": intervals[1],
+                            f"baseline_cmd_{col}": bs_vals[j],
+                            f"cmd_{col}": vals[j]})
         
         reward_df = pd.DataFrame(data={"eval_episode_reward": eval_total_reward_list,
                                        "baseline_eval_episode_reward": bs_total_reward_list,
@@ -209,11 +215,12 @@ class EnergymEvalCallback(BaseCallback):
                                        "manual_baseline_eval_episode_reward": ori_bs_total_reward_list})
         for _data_dir in out_dirs: reward_df.to_csv(f"{_data_dir}/rewards.csv", index=False)
         
-        for i in range(len(eval_total_reward_list)):
-            wandb.log({"eval_episode_reward": eval_total_reward_list[i],
-                       "baseline_eval_episode_reward": bs_total_reward_list[i],
-                       "manual_eval_episode_reward": ori_eval_total_reward_list[i],
-                       "manual_baseline_eval_episode_reward": ori_bs_total_reward_list[i]})
+        if is_wandb:
+            for i in range(len(eval_total_reward_list)):
+                wandb.log({"eval_episode_reward": eval_total_reward_list[i],
+                        "baseline_eval_episode_reward": bs_total_reward_list[i],
+                        "manual_eval_episode_reward": ori_eval_total_reward_list[i],
+                        "manual_baseline_eval_episode_reward": ori_bs_total_reward_list[i]})
         
         plt.subplots_adjust(hspace=0.4)
         for _data_dir in out_dirs: plt.savefig(f"{_data_dir}/Control_RL.png")
@@ -233,7 +240,7 @@ class EnergymEvalCallback(BaseCallback):
         for _data_dir in out_dirs: plt.savefig(f"{_data_dir}/reward.png")
         eval_env_down_RL.close()
         bs_eval_env.close()
-        wandb.finish()
+        if is_wandb: wandb.finish()
 
 # buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
 #                   "Apartments2Grid-v0", "OfficesThermostat-v0", "MixedUseFanFCU-v0",
@@ -247,21 +254,24 @@ from datetime import datetime
 parser = argparse.ArgumentParser()
 parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
 parser.add_argument('--building', type=str, help='building name', required=True)
-parser.add_argument('--iter', type=int, help='learning steps', default=1000000)
+parser.add_argument('--iter', type=int, help='learning steps', default=204800)
 parser.add_argument("--exp_name", default=f"{datetime.today().date().strftime('%m%d-%H%M')}")
 parser.add_argument('--logdir', type=str, help='dir of results', default="models")
 parser.add_argument('--rm', action='store_true', help="whether using learnt reward model")
 parser.add_argument('--dm', action='store_true', help="whether using learnt dynamics model")
 parser.add_argument('--seed', type=int, help='seed', default=7)
+parser.add_argument('--wandb', action='store_true', help="whether using wandb")
 
 
 if __name__ == "__main__":
-    os.environ["WANDB_API_KEY"] = "116a4f287fd4fbaa6f790a50d2dd7f97ceae4a03"
-    wandb.login()
-
     args = parser.parse_args()
+    is_wandb = args.wandb
+    if is_wandb:
+        os.environ["WANDB_API_KEY"] = "116a4f287fd4fbaa6f790a50d2dd7f97ceae4a03"
+        wandb.login()
+
     building_name = args.building
-    min_kpis, max_kpis = collect_baseline_kpi(building_name)
+    min_kpis, max_kpis, min_outputs, max_outputs = collect_baseline_kpi(building_name)
 
     reward_path_suffix = ("rewards" if args.rm else "manual")
     reward_path_suffix += ("_predictor" if args.dm else "_simulator")
@@ -277,7 +287,7 @@ if __name__ == "__main__":
     
     log_loc = f"{model_loc}/logs/"
     os.makedirs(log_loc, exist_ok=True)
-    env_down_RL = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, reward_func)
+    env_down_RL = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func)
     
     if args.rm:
         input_dim = env_down_RL.observation_space.shape[0]
@@ -303,7 +313,7 @@ if __name__ == "__main__":
                 learning_starts=5120, batch_size=512, gradient_steps=8, seed=args.seed)
     # model = PPO('MlpPolicy', env_down_RL, verbose=1, device='auto', batch_size=64, seed=43)
     checkpoint_callback = CheckpointCallback(save_freq=5120, save_path=model_loc)
-    post_eval_callback = EnergymEvalCallback(model, building_name, log_loc, min_kpis, max_kpis, env_down_RL.reward_function, verbose=0)
+    post_eval_callback = EnergymEvalCallback(model, building_name, log_loc, min_kpis, max_kpis, min_outputs, max_outputs, env_down_RL.reward_function, verbose=0)
     eval_callback = EvalCallback(env_down_RL, best_model_save_path=model_loc + "/best_model/",
                                  log_path=log_loc, eval_freq=5120, callback_after_eval=post_eval_callback)
     
