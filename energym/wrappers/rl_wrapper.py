@@ -6,6 +6,7 @@ import numpy as np
 from energym.envs.utils.kpi import KPI
 from collections import OrderedDict
 from buildings_factory import *
+import sys
 
 
 def transform(val, l, u):
@@ -113,12 +114,11 @@ class StableBaselinesRLWrapper(RLWrapper):
                         for a_name in self.action_keys]
     
     def inverse_transform_state(self, state):
-        return OrderedDict({a_name: inverse_transform(a, self.env.output_specs[a_name]['lower_bound'], self.env.output_specs[a_name]['upper_bound'])
+        return OrderedDict({a_name: inverse_transform(a, self.min_outputs[a_name], self.max_outputs[a_name])
                         for a, a_name in zip(state, self.env.output_keys)})
     
     def transform_state(self, state):
-        return [transform(state[a_name], self.env.output_specs[a_name]['lower_bound'], self.env.output_specs[a_name]['upper_bound'])
-                        for a_name in self.env.output_keys]
+        return [transform(state[a_name], self.min_outputs[a_name], self.max_outputs[a_name]) for a_name in self.env.output_keys]
 
     def seed(self, s):
         pass

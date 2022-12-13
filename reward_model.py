@@ -50,7 +50,7 @@ def preference_loss(outputs, labels):
 class PreferencDataset(Dataset):
     def __init__(self, round, building_name, parent_loc):
         self.round = round
-        with open(f'{parent_loc}/data/offline_data/preferences_data_{building_name}/{len_traj}/preference_data_{round*preference_per_round}_{(round+1)*preference_per_round}.pkl', 'rb') as f:
+        with open(f'{parent_loc}/data/offline_data/{building_name}/preferences_data/{len_traj}/preference_data_{round*preference_per_round}_{(round+1)*preference_per_round}.pkl', 'rb') as f:
             _raw_data = np.load(f, allow_pickle=True)
             self.raw_data = _raw_data[_raw_data[:, -1] != 0.5, :]
         self.data = torch.from_numpy(self.raw_data[:, :-2]).to(torch.float)
@@ -167,7 +167,6 @@ def run_train(i, input_dim, parent_loc, building_name):
     for t in range(epochs):
         print(f"Epoch {t+1}\n-------------------------------")
         total_loss = train_loop(building_name, model, loss_fn, optimizer, train_round_list, parent_loc)
-        torch.save(model.state_dict(), f"{model_loc}/reward_model_best_{i}.pkl")
         loss_list.append(total_loss)
         fig, axs = plt.subplots(3, 1)
         axs[0].plot(loss_list)
@@ -177,6 +176,7 @@ def run_train(i, input_dim, parent_loc, building_name):
         axs[1].plot(test_loss_list)
         axs[2].plot(correct_list)
         plt.savefig(f"{model_loc}/reward_model_cost_{i}.png")
+        if np.min(test_loss_list) == test_loss: torch.save(model.state_dict(), f"{model_loc}/reward_model_best_{i}.pkl")
     print(f"Round {i} done!")
 
 
@@ -194,13 +194,13 @@ if __name__ == "__main__":
     env_rl = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func)
     input_dim = env_rl.observation_space.shape[0]
     
-    for i in range(ensemble_num): run_train(i, input_dim, parent_loc, building_name)
-    # jobs = []
-    # for i in range(ensemble_num):
-    #     p = mp.Process(target=run_train, args=(i, input_dim, parent_loc, building_name))
-    #     jobs.append(p)
-    #     p.start()
-    # for proc in jobs:
-    #     proc.join()
+    # for i in range(ensemble_num): run_train(i, input_dim, parent_loc, building_name)
+    jobs = []
+    for i in range(ensemble_num):
+        p = mp.Process(target=run_train, args=(i, input_dim, parent_loc, building_name))
+        jobs.append(p)
+        p.start()
+    for proc in jobs:
+        proc.join()
 
 

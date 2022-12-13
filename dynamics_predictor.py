@@ -36,7 +36,7 @@ class DynamicsDataset(Dataset):
     def __init__(self, round, building_name):
         self.round = round
         # state, actions, reward, kpis, next_state
-        with open(f'{parent_loc}/data/offline_data/traj_data_{building_name}/{round}.pkl', 'rb') as f:
+        with open(f'{parent_loc}/data/offline_data/{building_name}/traj_data/{round}.pkl', 'rb') as f:
             raw_data = pickle.load(f)
         num_samples = (len(raw_data)*len(raw_data[0])) // 4
         state_dim = len(raw_data[0][0])
@@ -159,7 +159,6 @@ if __name__ == "__main__":
     for t in range(epochs):
         print(f"Epoch {t+1}\n-------------------------------")
         total_loss = train_loop(building_name, model, loss_fn, optimizer, train_round_list)
-        torch.save(model.state_dict(), f"{model_loc}/dynamics_model_best.pkl")
         loss_list.append(total_loss)
         fig, axs = plt.subplots(2, 1)
         axs[0].plot(loss_list)
@@ -167,6 +166,7 @@ if __name__ == "__main__":
         test_loss_list.append(test_loss)
         axs[1].plot(test_loss_list)
         plt.savefig(f"{model_loc}/dynamics_model_cost.png")
+        if test_loss == np.min(test_loss_list): torch.save(model.state_dict(), f"{model_loc}/dynamics_model_best.pkl")
     print("Done!")
 
 

@@ -38,40 +38,40 @@ data:
 
 
 jobs:
-- name: ApartmentsThermal-v0
-  sku: G1
-  command:
-  - python train.py --building ApartmentsThermal-v0 --amlt
+# - name: ApartmentsThermal-v0
+#   sku: G1
+#   command:
+#   - python train.py --building ApartmentsThermal-v0 --amlt
 
-- name: ApartmentsGrid-v0
-  sku: G1
-  command:
-  - python train.py --building ApartmentsGrid-v0 --amlt
+# - name: ApartmentsGrid-v0
+#   sku: G1
+#   command:
+#   - python train.py --building ApartmentsGrid-v0 --amlt
 
-- name: Apartments2Thermal-v0
-  sku: G1
-  command:
-  - python train.py --building Apartments2Thermal-v0 --amlt
+# - name: Apartments2Thermal-v0
+#   sku: G1
+#   command:
+#   - python train.py --building Apartments2Thermal-v0 --amlt
 
-- name: Apartments2Grid-v0
-  sku: G1
-  command:
-  - python train.py --building Apartments2Grid-v0 --amlt
+# - name: Apartments2Grid-v0
+#   sku: G1
+#   command:
+#   - python train.py --building Apartments2Grid-v0 --amlt
 
-- name: OfficesThermostat-v0
-  sku: G1
-  command:
-  - python train.py --building OfficesThermostat-v0 --amlt
+# - name: OfficesThermostat-v0
+#   sku: G1
+#   command:
+#   - python train.py --building OfficesThermostat-v0 --amlt
 
-- name: MixedUseFanFCU-v0
-  sku: G1
-  command:
-  - python train.py --building MixedUseFanFCU-v0 --amlt
+# - name: MixedUseFanFCU-v0
+#   sku: G1
+#   command:
+#   - python train.py --building MixedUseFanFCU-v0 --amlt
 
-- name: SeminarcenterThermostat-v0
-  sku: G1
-  command:
-  - python train.py --building SeminarcenterThermostat-v0 --amlt
+# - name: SeminarcenterThermostat-v0
+#   sku: G1
+#   command:
+#   - python train.py --building SeminarcenterThermostat-v0 --amlt
   
 - name: SeminarcenterFull-v0
   sku: G1

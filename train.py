@@ -40,7 +40,7 @@ class EnergymEvalCallback(BaseCallback):
         min_outputs,
         max_outputs,
         reward_function,
-        simulation_days: int = 14,
+        simulation_days: int = 28,
         verbose: int = 0
     ):
         super().__init__(verbose=verbose)
@@ -49,8 +49,8 @@ class EnergymEvalCallback(BaseCallback):
         self.log_loc = log_loc
         self.min_kpis = min_kpis
         self.max_kpis = max_kpis
-        self.min_outputs = min_outputs,
-        self.max_outputs = max_outputs,
+        self.min_outputs = min_outputs
+        self.max_outputs = max_outputs
         self.reward_function = reward_function
         super().init_callback(model)
     
@@ -292,7 +292,7 @@ if __name__ == "__main__":
     if args.rm:
         input_dim = env_down_RL.observation_space.shape[0]
         reward_models = []
-        for i in range(ensemble_num):
+        for i in range(4):
             reward_model = RewardNet(input_dim)
             _reward_model_loc = reward_model_loc.format(building_name, i)
             reward_model.load_state_dict(torch.load(_reward_model_loc))

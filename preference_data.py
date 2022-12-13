@@ -9,6 +9,7 @@ import numpy as np
 import os
 from buildings_factory import *
 from energym.wrappers.rl_wrapper import StableBaselinesRLWrapper
+from stable_baselines3 import PPO, SAC
 
 
 def add_kpi(cur_kpi, kpi):
@@ -82,16 +83,23 @@ def sample_trajectory(env, building_name, controller=None):
     state = env.reset()
     step = 0
     trajectory = [state]
-    
+    rule_controller = controller_list[building_idx]
 
     # trajectory.append(state)
     while not done:
-        if controller is None: control = env.unwrapped.sample_random_action()
-        else:
-            _,hour,_,_ = env.unwrapped.get_date()
-            outputs = env.inverse_transform_state(state)
-            control = controller(env.action_keys, step)(outputs, control_values[building_idx], hour)
-        actions = env.transform_action(control)
+        # if controller is None: 
+        control = env.unwrapped.sample_random_action()
+        random_actions = env.transform_action(control)
+        if controller is not None:
+            actions, _ = controller.predict(state, deterministic=True)
+            # _,hour,_,_ = env.unwrapped.get_date()
+            # outputs = env.inverse_transform_state(state)
+            # control = rule_controller(env.action_keys, step)(outputs, control_values[building_idx], hour)
+            # rule_actions = env.transform_action(control)
+            noisy_delta = 0.1
+            actions = [noisy_delta*ra+(1-noisy_delta)*a for ra,a in zip(random_actions, actions)]
+        else: actions = random_actions
+            
         state, reward, done, info = env.step(actions)
         kpis = env.unwrapped.get_kpi(start_ind=step, end_ind=step+1)
         trajectory.extend([actions, reward, kpis, state])
@@ -101,10 +109,18 @@ def sample_trajectory(env, building_name, controller=None):
     return trajectory
 
 
-def sample_preferences(env, building_name, num_preferences=8):
+def sample_preferences(is_remote, env, building_name, num_preferences=8):
     building_idx = buildings_list.index(building_name)
-    controller1 = (None if np.random.random() <= 0.95 else controller_list[building_idx])
-    controller2 = (None if np.random.random() <= 0.95 else controller_list[building_idx])
+    model = SAC('MlpPolicy', env, device='auto')
+    if is_remote: model_loc = f"{os.environ['AMLT_DATA_DIR']}/data/models/{building_name}/manual_simulator_seed7/best_model/best_model.zip"
+    else: model_loc = f"data/models/{building_name}/manual_simulator_seed7/best_model/best_model.zip"
+    model.load(model_loc)
+    controller1 = model
+    controller2 = model
+    # controller1 = (None if np.random.random() <= 0.3 else model)
+    # controller2 = (None if np.random.random() <= 0.3 else model)
+    # controller1 = (None if np.random.random() <= 0.5 else controller_list[building_idx])
+    # controller2 = (None if np.random.random() <= 0.5 else controller_list[building_idx])
     trajectory1 = sample_trajectory(env, building_name, controller=controller1)
     trajectory2 = sample_trajectory(env, building_name, controller=controller2)
     
@@ -125,16 +141,16 @@ def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, m
     trajectory_list = []
     preference_pairs = [[] for _ in len_traj_list]
     if is_remote: 
-        data_loc = os.environ['AMLT_DATA_DIR'] + "/data/offline_data/preferences_data_{}/{}/"
-        traj_data_loc = f"{os.environ['AMLT_DATA_DIR']}/data/offline_data/traj_data_{building_name}/"
+        data_loc = os.environ['AMLT_DATA_DIR'] + "/data/offline_data/{}/preferences_data/{}/"
+        traj_data_loc = f"{os.environ['AMLT_DATA_DIR']}/data/offline_data/{building_name}/traj_data/"
     else: 
-        data_loc = "data/offline_data/preferences_data_{}/{}/"
-        traj_data_loc = f"data/offline_data/traj_data_{building_name}/"
+        data_loc = "data/offline_data/{}/preferences_data/{}/"
+        traj_data_loc = f"data/offline_data/{building_name}/traj_data/"
     env_rl = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func)
     for _len_traj in len_traj_list: os.makedirs(data_loc.format(building_name, _len_traj), exist_ok=True)
     os.makedirs(traj_data_loc, exist_ok=True)
     for i in range(preference_per_round):
-        _preference_pairs, trajectory1, trajectory2 = sample_preferences(env_rl, building_name, num_preferences=100240)
+        _preference_pairs, trajectory1, trajectory2 = sample_preferences(is_remote, env_rl, building_name, num_preferences=102400)
         trajectory_list.extend([trajectory1, trajectory2])
         for j, _len_traj in enumerate(len_traj_list):
             preference_pairs[j].extend(_preference_pairs[j])

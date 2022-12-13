@@ -74,10 +74,10 @@ def collect_baseline_kpi(building_name):
             max_kpis[key]['kpi'] = max(max_kpis[key]['kpi'], val['kpi'])
             min_kpis[key]['kpi'] = min(min_kpis[key]['kpi'], val['kpi'])
         for key, val in outputs.items():
-            if key not in max_kpis: max_kpis[key] = val
-            if key not in min_kpis: min_kpis[key] = val
-            max_kpis[key] = max(max_kpis[key], val)
-            min_kpis[key] = min(min_kpis[key], val)
+            if key not in min_outputs: min_outputs[key] = val
+            if key not in max_outputs: max_outputs[key] = val
+            max_outputs[key] = max(max_outputs[key], val)
+            min_outputs[key] = min(min_outputs[key], val)
     return min_kpis, max_kpis, min_outputs, max_outputs
 
 
@@ -101,7 +101,7 @@ def learnt_reward_func(reward_models, min_kpi, max_kpi, kpi, state):
             reward_list.append(new_reward)
     reward_mean = np.mean(reward_list)
     reward_std = (0.0 if len(reward_list) <= 1 else np.std(reward_list)) 
-    print(reward_mean, reward_std, reward_list)
+    # print(reward_mean, reward_std, reward_list)
     return reward_mean - reward_std
     
 
