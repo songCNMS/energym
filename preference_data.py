@@ -96,7 +96,7 @@ def sample_trajectory(env, building_name, controller=None):
             # outputs = env.inverse_transform_state(state)
             # control = rule_controller(env.action_keys, step)(outputs, control_values[building_idx], hour)
             # rule_actions = env.transform_action(control)
-            noisy_delta = 0.0
+            noisy_delta = 0.1
             actions = [noisy_delta*ra+(1.0-noisy_delta)*a for ra,a in zip(random_actions, actions)]
         else: actions = random_actions
             
@@ -111,12 +111,10 @@ def sample_trajectory(env, building_name, controller=None):
 
 def sample_preferences(is_remote, env, building_name, num_preferences=8):
     building_idx = buildings_list.index(building_name)
-    model = SAC('MlpPolicy', env, device='auto')
     if is_remote: model_loc = f"{os.environ['AMLT_DATA_DIR']}/data/models/{building_name}/manual_simulator_seed7/best_model/best_model.zip"
     else: model_loc = f"data/models/{building_name}/manual_simulator_seed7/best_model/best_model.zip"
-    model.load(model_loc)
-    controller1 = model
-    controller2 = model
+    controller1 = SAC.load(model_loc)
+    controller2 = SAC.load(model_loc)
     # controller1 = (None if np.random.random() <= 0.3 else model)
     # controller2 = (None if np.random.random() <= 0.3 else model)
     # controller1 = (None if np.random.random() <= 0.5 else controller_list[building_idx])
@@ -138,8 +136,6 @@ def sample_preferences(is_remote, env, building_name, num_preferences=8):
 
 
 def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, min_outputs, max_outputs, round, preference_per_round):
-    trajectory_list = []
-    preference_pairs = [[] for _ in len_traj_list]
     if is_remote: 
         data_loc = os.environ['AMLT_DATA_DIR'] + "/data/offline_data/{}/preferences_data/{}/"
         traj_data_loc = f"{os.environ['AMLT_DATA_DIR']}/data/offline_data/{building_name}/traj_data/"
@@ -150,15 +146,25 @@ def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, m
     for _len_traj in len_traj_list: os.makedirs(data_loc.format(building_name, _len_traj), exist_ok=True)
     os.makedirs(traj_data_loc, exist_ok=True)
     for i in range(preference_per_round):
-        _preference_pairs, trajectory1, trajectory2 = sample_preferences(is_remote, env_rl, building_name, num_preferences=102400)
-        trajectory_list.extend([trajectory1, trajectory2])
+        preference_pairs, trajectory1, trajectory2 = sample_preferences(is_remote, env_rl, building_name, num_preferences=102400)
         for j, _len_traj in enumerate(len_traj_list):
-            preference_pairs[j].extend(_preference_pairs[j])
             _data_loc = data_loc.format(building_name, _len_traj)
-            with open(f'{_data_loc}/preference_data_{round*preference_per_round}_{(round+1)*preference_per_round}.pkl', 'wb') as f:
-                np.save(f, preference_pairs[j])
-        with open(f"{traj_data_loc}/{round}.pkl", "wb") as f:
-            pickle.dump(trajectory_list, f)
+            file_loc = f'{_data_loc}/preference_data_{round*preference_per_round}_{(round+1)*preference_per_round}.pkl'
+            if os.path.exists(file_loc):
+                with open(file_loc, 'rb') as f:
+                    pre_preference = np.load(f)
+                    preferences = np.concatenate((pre_preference, np.array(preference_pairs[j])), axis=0)
+            else: preferences = preference_pairs[j]
+            with open(file_loc, 'wb') as f:
+                np.save(f, preferences)
+        traj_file_loc = f"{traj_data_loc}/{round}.pkl"
+        if os.path.exists(traj_file_loc):
+            with open(traj_file_loc, 'rb') as f:
+                pre_trajectory_list = pickle.load(f)
+                trajectories = pre_trajectory_list + [trajectory1, trajectory2]
+        else: trajectories = [trajectory1, trajectory2]
+        with open(traj_file_loc, "wb") as f:
+            pickle.dump(trajectories, f)
         print(f"round {round}, preference {i+1} done!")
     print(f"round {round} done!")
     env_rl.close()
