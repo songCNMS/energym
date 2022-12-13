@@ -96,8 +96,8 @@ def sample_trajectory(env, building_name, controller=None):
             # outputs = env.inverse_transform_state(state)
             # control = rule_controller(env.action_keys, step)(outputs, control_values[building_idx], hour)
             # rule_actions = env.transform_action(control)
-            noisy_delta = 0.1
-            actions = [noisy_delta*ra+(1-noisy_delta)*a for ra,a in zip(random_actions, actions)]
+            noisy_delta = 0.0
+            actions = [noisy_delta*ra+(1.0-noisy_delta)*a for ra,a in zip(random_actions, actions)]
         else: actions = random_actions
             
         state, reward, done, info = env.step(actions)

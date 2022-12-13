@@ -47,7 +47,7 @@ simulation_days = 60
 def collect_baseline_kpi(building_name):
     max_kpis, min_kpis = {}, {}
     max_outputs, min_outputs = {}, {}
-    _env = get_env(building_name)
+    _env = get_env(building_name, eval=True)
     building_idx = buildings_list.index(building_name)
     controller = controller_list[building_idx]
     default_control = default_controls[building_idx]
