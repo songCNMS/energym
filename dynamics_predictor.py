@@ -33,10 +33,11 @@ def predictor_loss(outputs, labels):
 
 
 class DynamicsDataset(Dataset):
-    def __init__(self, round, building_name):
+    def __init__(self, round, traj_idx, building_name):
         self.round = round
+        self.traj_idx = traj_idx
         # state, actions, reward, kpis, next_state
-        with open(f'{parent_loc}/data/offline_data/{building_name}/traj_data/{round}.pkl', 'rb') as f:
+        with open(f'{parent_loc}/data/offline_data/{building_name}/traj_data/{round}_{traj_idx}.pkl', 'rb') as f:
             raw_data = pickle.load(f)
         num_samples = (len(raw_data)*len(raw_data[0])) // 4
         state_dim = len(raw_data[0][0])
@@ -66,23 +67,25 @@ def train_loop(building_name, model, loss_fn, optimizer, round_list):
     total_loss = 0.0
     total_size = 0
     for round in round_list:
-        training_dataset = DynamicsDataset(round, building_name)
-        dataloader = DataLoader(training_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
-        size = len(dataloader.dataset)
-        for batch, (X, y) in enumerate(dataloader):
-            # Compute prediction and loss
-            pred = model(X.to(device))
-            loss = loss_fn(pred, y.to(device))
-            # Backpropagation
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            total_loss += loss.cpu().item()
-            total_size += 1
-            if (not is_remote) and (batch % 10 == 0):
-                print(pred[:5, :], y[:5, :])
-                loss, current = loss.cpu().item(), batch * len(X)
-                print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+        for traj_idx in range(preference_per_round):
+            if not os.path.exists(f'{parent_loc}/data/offline_data/{building_name}/traj_data/{round}_{traj_idx}.pkl'): continue
+            training_dataset = DynamicsDataset(round, traj_idx, building_name)
+            dataloader = DataLoader(training_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
+            size = len(dataloader.dataset)
+            for batch, (X, y) in enumerate(dataloader):
+                # Compute prediction and loss
+                pred = model(X.to(device))
+                loss = loss_fn(pred, y.to(device))
+                # Backpropagation
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                total_loss += loss.cpu().item()
+                total_size += 1
+                if (not is_remote) and (batch % 10 == 0):
+                    print(pred[:5, :], y[:5, :])
+                    loss, current = loss.cpu().item(), batch * len(X)
+                    print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
     return total_loss / total_size
 
 def test_loop(building_name, model, loss_fn, round_list):
@@ -91,18 +94,19 @@ def test_loop(building_name, model, loss_fn, round_list):
     total_size = 0
     model.eval()
     for round in round_list:
-        training_dataset = DynamicsDataset(round, building_name)
-        dataloader = DataLoader(training_dataset, batch_size=batch_size, shuffle=False)
-        num_batches = len(dataloader)
-        total_num_batches += num_batches
-        with torch.no_grad():
-            for X, y in dataloader:
-                y = y.to(device)
-                pred = model(X.to(device))
-                test_loss += loss_fn(pred, y).cpu().item()
-                total_size += 1
+        for traj_idx in range(preference_per_round):
+            if not os.path.exists(f'{parent_loc}/data/offline_data/{building_name}/traj_data/{round}_{traj_idx}.pkl'): continue
+            training_dataset = DynamicsDataset(round, traj_idx, building_name)
+            dataloader = DataLoader(training_dataset, batch_size=batch_size, shuffle=False)
+            total_size += len(dataloader)
+            with torch.no_grad():
+                for X, y in dataloader:
+                    y = y.to(device)
+                    pred = model(X.to(device))
+                    test_loss += loss_fn(pred, y).cpu().item()
+                    total_num_batches += 1
     model.train()
-    test_loss /= total_size
+    test_loss /= total_num_batches
     print(f"Test Avg loss: {test_loss:>8f} \n")
     return test_loss
     

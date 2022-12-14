@@ -48,9 +48,10 @@ def preference_loss(outputs, labels):
 
 
 class PreferencDataset(Dataset):
-    def __init__(self, round, building_name, parent_loc):
+    def __init__(self, round, traj_idx, building_name, parent_loc):
         self.round = round
-        with open(f'{parent_loc}/data/offline_data/{building_name}/preferences_data/{len_traj}/preference_data_{round*preference_per_round}_{(round+1)*preference_per_round}.pkl', 'rb') as f:
+        self.traj_idx = traj_idx
+        with open(f'{parent_loc}/data/offline_data/{building_name}/preferences_data/{len_traj}/preference_data_{round}_{traj_idx}.pkl', 'rb') as f:
             _raw_data = np.load(f, allow_pickle=True)
             self.raw_data = _raw_data[_raw_data[:, -1] != 0.5, :]
         self.data = torch.from_numpy(self.raw_data[:, :-2]).to(torch.float)
@@ -68,47 +69,14 @@ def train_loop(building_name, model, loss_fn, optimizer, round_list, parent_loc)
     total_loss = 0.0
     total_size = 0
     for round in round_list:
-        training_dataset = PreferencDataset(round, building_name, parent_loc)
-        dataloader = DataLoader(training_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
-        size = len(dataloader.dataset)
-        # total_size += size
-        for batch, (X, y) in enumerate(dataloader):
-            # Compute prediction and loss
-            num_samples = X.size(0)
-            X = X.reshape(num_samples, 2, -1)
-            X_left = X[:, 0, :].reshape(num_samples, len_traj, -1)
-            X_right = X[:, 1, :].reshape(num_samples, len_traj, -1)
-            pred = torch.zeros(X.size(0), 2, requires_grad=True).to(device)
-            for i in range(len_traj):
-                model_in = torch.cat((X_left[:, i, :], X_right[:, i, :]), axis=1).to(device)
-                model_out = model(model_in)
-                pred = pred + model_out
-            pred /= len_traj
-            loss = loss_fn(pred, y.to(device))
-            # Backpropagation
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            total_loss += loss.cpu().item()
-            total_size += 1
-            if (batch % 10 == 0):
-                loss, current = loss.cpu().item(), batch * len(X)
-                print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
-    return total_loss / total_size
-
-def test_loop(building_name, model, loss_fn, round_list, parent_loc):
-    total_num_batches = 0
-    test_loss, correct = 0, 0
-    total_size = 0
-    model.eval()
-    for round in round_list:
-        testing_dataset = PreferencDataset(round, building_name, parent_loc)
-        dataloader = DataLoader(testing_dataset, batch_size=batch_size, shuffle=False)
-        num_batches = len(dataloader)
-        total_num_batches += num_batches
-        with torch.no_grad():
-            for X, y in dataloader:
-                y = y.to(device)
+        for traj_idx in range(preference_per_round):
+            if not os.path.exists(f'{parent_loc}/data/offline_data/{building_name}/preferences_data/{len_traj}/preference_data_{round}_{traj_idx}.pkl'): continue
+            training_dataset = PreferencDataset(round, traj_idx, building_name, parent_loc)
+            dataloader = DataLoader(training_dataset, batch_size=batch_size, shuffle=True)
+            size = len(dataloader.dataset)
+            # total_size += size
+            for batch, (X, y) in enumerate(dataloader):
+                # Compute prediction and loss
                 num_samples = X.size(0)
                 X = X.reshape(num_samples, 2, -1)
                 X_left = X[:, 0, :].reshape(num_samples, len_traj, -1)
@@ -118,12 +86,48 @@ def test_loop(building_name, model, loss_fn, round_list, parent_loc):
                     model_in = torch.cat((X_left[:, i, :], X_right[:, i, :]), axis=1).to(device)
                     model_out = model(model_in)
                     pred = pred + model_out
-                test_loss += loss_fn(pred, y).cpu().item()
-                correct += (pred.argmax(1) == y.argmax(1)).type(torch.float).sum().cpu().item()
+                pred /= len_traj
+                loss = loss_fn(pred, y.to(device))
+                # Backpropagation
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                total_loss += loss.cpu().item()
                 total_size += 1
+                if (batch % 10 == 0):
+                    loss, current = loss.cpu().item(), batch * len(X)
+                    print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+    return total_loss / total_size
+
+def test_loop(building_name, model, loss_fn, round_list, parent_loc):
+    total_num_batches = 0
+    test_loss, correct = 0, 0
+    total_size = 0
+    model.eval()
+    for round in round_list:
+        for traj_idx in range(preference_per_round):
+            if not os.path.exists(f'{parent_loc}/data/offline_data/{building_name}/preferences_data/{len_traj}/preference_data_{round}_{traj_idx}.pkl'): continue
+            testing_dataset = PreferencDataset(round, traj_idx, building_name, parent_loc)
+            dataloader = DataLoader(testing_dataset, batch_size=batch_size, shuffle=False)
+            total_size += len(dataloader)
+            with torch.no_grad():
+                for X, y in dataloader:
+                    y = y.to(device)
+                    num_samples = X.size(0)
+                    X = X.reshape(num_samples, 2, -1)
+                    X_left = X[:, 0, :].reshape(num_samples, len_traj, -1)
+                    X_right = X[:, 1, :].reshape(num_samples, len_traj, -1)
+                    pred = torch.zeros(X.size(0), 2, requires_grad=True).to(device)
+                    for i in range(len_traj):
+                        model_in = torch.cat((X_left[:, i, :], X_right[:, i, :]), axis=1).to(device)
+                        model_out = model(model_in)
+                        pred = pred + model_out
+                    test_loss += loss_fn(pred, y).cpu().item()
+                    correct += (pred.argmax(1) == y.argmax(1)).type(torch.float).sum().cpu().item()
+                    total_num_batches += 1
     model.train()
-    correct /= len(testing_dataset)
-    test_loss /= total_size
+    correct /= total_size
+    test_loss /= total_num_batches
     print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
     return test_loss, correct
     
@@ -133,7 +137,7 @@ from buildings_factory import *
 from energym.wrappers.rl_wrapper import StableBaselinesRLWrapper
 
 
-ensemble_num = 3
+ensemble_num = 2
 batch_size = 1024
 device = ("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)

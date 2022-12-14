@@ -148,20 +148,11 @@ def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, m
         preference_pairs, trajectory1, trajectory2 = sample_preferences(is_remote, env_rl, building_name, num_preferences=102400)
         for j, _len_traj in enumerate(len_traj_list):
             _data_loc = data_loc.format(building_name, _len_traj)
-            file_loc = f'{_data_loc}/preference_data_{round*preference_per_round}_{(round+1)*preference_per_round}.pkl'
-            if os.path.exists(file_loc):
-                with open(file_loc, 'rb') as f:
-                    pre_preference = np.load(f)
-                    preferences = np.concatenate((pre_preference, np.array(preference_pairs[j])), axis=0)
-            else: preferences = preference_pairs[j]
+            file_loc = f'{_data_loc}/preference_data_{round}_{i}.pkl'
             with open(file_loc, 'wb') as f:
-                np.save(f, preferences)
-        traj_file_loc = f"{traj_data_loc}/{round}.pkl"
-        if os.path.exists(traj_file_loc):
-            with open(traj_file_loc, 'rb') as f:
-                pre_trajectory_list = pickle.load(f)
-                trajectories = pre_trajectory_list + [trajectory1, trajectory2]
-        else: trajectories = [trajectory1, trajectory2]
+                np.save(f, preference_pairs[j])
+        traj_file_loc = f"{traj_data_loc}/{round}_{i}.pkl"
+        trajectories = [trajectory1, trajectory2]
         with open(traj_file_loc, "wb") as f:
             pickle.dump(trajectories, f)
         print(f"round {round}, preference {i+1} done!")
