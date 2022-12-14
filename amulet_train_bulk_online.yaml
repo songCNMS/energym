@@ -1,4 +1,4 @@
-description: Energym Train Bulk
+description: Energym Train Bulk Online RL
 
 target:
   # service: sing
@@ -41,42 +41,38 @@ jobs:
 - name: ApartmentsThermal-v0
   sku: G1
   command:
-  - python train_bulk.py --building ApartmentsThermal-v0 --amlt --seed 7
+  - python train_bulk.py --building ApartmentsThermal-v0 --amlt --seed 7,13,17,19,23,37,53,71
 
 - name: ApartmentsGrid-v0
   sku: G1
   command:
-  - python train_bulk.py --building ApartmentsGrid-v0 --amlt --seed 7
+  - python train_bulk.py --building ApartmentsGrid-v0 --amlt --seed 7,13,17,19,23,37,53,71
 
 - name: Apartments2Thermal-v0
   sku: G1
   command:
-  - python train_bulk.py --building Apartments2Thermal-v0 --amlt --seed 7
+  - python train_bulk.py --building Apartments2Thermal-v0 --amlt --seed 7,13,17,19,23,37,53,71
 
 - name: Apartments2Grid-v0
   sku: G1
   command:
-  - python train_bulk.py --building Apartments2Grid-v0 --amlt --seed 7
+  - python train_bulk.py --building Apartments2Grid-v0 --amlt --seed 7,13,17,19,23,37,53,71
 
 - name: OfficesThermostat-v0
   sku: G1
   command:
-  - python train_bulk.py --building OfficesThermostat-v0 --amlt --seed 7
+  - python train_bulk.py --building OfficesThermostat-v0 --amlt --seed 7,13,17,19,23,37,53,71
 
 - name: MixedUseFanFCU-v0
   sku: G1
   command:
-  - python train_bulk.py --building MixedUseFanFCU-v0 --amlt --seed 7
+  - python train_bulk.py --building MixedUseFanFCU-v0 --amlt --seed 7,13,17,19,23,37,53,71
 
 - name: SeminarcenterThermostat-v0
   sku: G1
   command:
-  - python train_bulk.py --building SeminarcenterThermostat-v0 --amlt --seed 7
+  - python train_bulk.py --building SeminarcenterThermostat-v0 --amlt --seed 7,13,17,19,23,37,53,71
   
-# - name: SeminarcenterFull-v0
-#   sku: G1
-#   command:
-#   - python train_bulk.py --building SeminarcenterFull-v0 --amlt --seed 7
 
 # - name: SimpleHouseRad-v0
 #   sku: G1
