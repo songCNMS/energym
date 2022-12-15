@@ -102,14 +102,12 @@ def train_loop(building_name, model, loss_fn, optimizer, round_list, parent_loc)
 def test_loop(building_name, model, loss_fn, round_list, parent_loc):
     total_num_batches = 0
     test_loss, correct = 0, 0
-    total_size = 0
     model.eval()
     for round in round_list:
         for traj_idx in range(preference_per_round):
             if not os.path.exists(f'{parent_loc}/data/offline_data/{building_name}/preferences_data/{len_traj}/preference_data_{round}_{traj_idx}.pkl'): continue
             testing_dataset = PreferencDataset(round, traj_idx, building_name, parent_loc)
             dataloader = DataLoader(testing_dataset, batch_size=batch_size, shuffle=False)
-            total_size += len(dataloader)
             with torch.no_grad():
                 for X, y in dataloader:
                     y = y.to(device)
@@ -126,7 +124,7 @@ def test_loop(building_name, model, loss_fn, round_list, parent_loc):
                     correct += (pred.argmax(1) == y.argmax(1)).type(torch.float).sum().cpu().item()
                     total_num_batches += 1
     model.train()
-    correct /= total_size
+    correct /= (total_num_batches*batch_size)
     test_loss /= total_num_batches
     print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
     return test_loss, correct

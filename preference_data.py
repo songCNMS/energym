@@ -33,17 +33,20 @@ def constraint_violate(kpis):
 
 def constraint_violate_compare(kpi1, kpi2):
     preference = 0
-    for key in kpi1['avg_dev'].keys():
-        val1 = kpi1['avg_dev'][key]
-        val2 = kpi2['avg_dev'][key]
-        if val1 > val2 and preference <= 0: preference = -1.0
-        elif val1 > val2 and preference == 1.0:
-            preference = 0.0
-            break
-        elif val1 < val2 and preference >= 0: preference = 1.0
-        elif val1 < val2 and preference == -1.0:
-            preference = 0.0
-            break
+    # for key in kpi1['avg_dev'].keys():
+    #     val1 = kpi1['avg_dev'][key]
+    #     val2 = kpi2['avg_dev'][key]
+    #     if val1 > val2 and preference <= 0: preference = -1.0
+    #     elif val1 > val2 and preference == 1.0:
+    #         preference = 0.0
+    #         break
+    #     elif val1 < val2 and preference >= 0: preference = 1.0
+    #     elif val1 < val2 and preference == -1.0:
+    #         preference = 0.0
+    #         break
+    val1 = np.sum(list(kpi1['avg_dev'].values()))
+    val2 = np.sum(list(kpi2['avg_dev'].values()))
+    preference = (1.0 if val1 < val2 else (0.0 if val1 == val2 else -1.0))
     return preference
 
 def get_info_from_trajectory(trajectory, _len_traj):
@@ -84,7 +87,8 @@ def sample_trajectory(env, building_name, controller=None):
     step = 0
     trajectory = [state]
     rule_controller = controller_list[building_idx]
-    noisy_delta = np.random.choice([1.0, 0.7, 0.5, 0.3, 0.0])
+    # noisy_delta = np.random.choice([1.0, 0.7, 0.5, 0.3, 0.0])
+    noisy_delta = np.random.choice([1.0, 0.0], p=[0.5, 0.5])
     # trajectory.append(state)
     while not done:
         # if controller is None: 
@@ -108,19 +112,7 @@ def sample_trajectory(env, building_name, controller=None):
     return trajectory
 
 
-def sample_preferences(is_remote, env, building_name, num_preferences=8):
-    building_idx = buildings_list.index(building_name)
-    if is_remote: model_loc = f"{os.environ['AMLT_DATA_DIR']}/data/models/{building_name}/manual_simulator_seed7/best_model/best_model.zip"
-    else: model_loc = f"data/models/{building_name}/manual_simulator_seed7/best_model/best_model.zip"
-    controller1 = SAC.load(model_loc)
-    controller2 = SAC.load(model_loc)
-    # controller1 = (None if np.random.random() <= 0.3 else model)
-    # controller2 = (None if np.random.random() <= 0.3 else model)
-    # controller1 = (None if np.random.random() <= 0.5 else controller_list[building_idx])
-    # controller2 = (None if np.random.random() <= 0.5 else controller_list[building_idx])
-    trajectory1 = sample_trajectory(env, building_name, controller=controller1)
-    trajectory2 = sample_trajectory(env, building_name, controller=controller2)
-    
+def sample_preferences(trajectory1, trajectory2, num_preferences=8):
     trajectory_len1 = len(trajectory1) // 4
     trajectory_len2 = len(trajectory2) // 4
     preference_pairs = [[] for _ in len_traj_list]
@@ -131,37 +123,49 @@ def sample_preferences(is_remote, env, building_name, num_preferences=8):
             traj1, traj2 = trajectory1[start_idx1*4:(start_idx1+_len_traj)*4+1], trajectory2[start_idx2*4:(start_idx2+_len_traj)*4+1]
             state1, state2, mu = compare_trajectory(traj1, traj2, _len_traj)
             preference_pairs[i].append(np.concatenate((state1, state2, np.array(mu))))
-    return preference_pairs, trajectory1, trajectory2
+    return preference_pairs
 
 
 def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, min_outputs, max_outputs, round, preference_per_round):
     if is_remote: 
         data_loc = os.environ['AMLT_DATA_DIR'] + "/data/offline_data/{}/preferences_data/{}/"
         traj_data_loc = f"{os.environ['AMLT_DATA_DIR']}/data/offline_data/{building_name}/traj_data/"
+        model_loc = f"{os.environ['AMLT_DATA_DIR']}/data/models/{building_name}/manual_simulator_seed7/best_model/best_model.zip"
     else: 
         data_loc = "data/offline_data/{}/preferences_data/{}/"
         traj_data_loc = f"data/offline_data/{building_name}/traj_data/"
+        model_loc = f"data/models/{building_name}/manual_simulator_seed7/best_model/best_model.zip"
     env_rl = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func)
     for _len_traj in len_traj_list: os.makedirs(data_loc.format(building_name, _len_traj), exist_ok=True)
     os.makedirs(traj_data_loc, exist_ok=True)
-    for i in range(preference_per_round):
-        preference_pairs, trajectory1, trajectory2 = sample_preferences(is_remote, env_rl, building_name, num_preferences=102400)
+    for i in range(preference_per_round):        
+        traj_file_loc = f"{traj_data_loc}/{round}_{i}.pkl"
+        if not os.path.exists(traj_file_loc):
+            controller1 = SAC.load(model_loc)
+            controller2 = SAC.load(model_loc)
+            trajectory1 = sample_trajectory(env_rl, building_name, controller=controller1)
+            trajectory2 = sample_trajectory(env_rl, building_name, controller=controller2)
+            trajectories = [trajectory1, trajectory2]
+            with open(traj_file_loc, "wb") as f:
+                pickle.dump(trajectories, f)
+        else:
+            with open(traj_file_loc, "rb") as f:
+                trajectories = pickle.load(f)
+            trajectory1, trajectory2 = trajectories[0], trajectories[1]
+        preference_pairs = sample_preferences(trajectory1, trajectory2, num_preferences=102400)
         for j, _len_traj in enumerate(len_traj_list):
             _data_loc = data_loc.format(building_name, _len_traj)
             file_loc = f'{_data_loc}/preference_data_{round}_{i}.pkl'
             with open(file_loc, 'wb') as f:
                 np.save(f, preference_pairs[j])
-        traj_file_loc = f"{traj_data_loc}/{round}_{i}.pkl"
-        trajectories = [trajectory1, trajectory2]
-        with open(traj_file_loc, "wb") as f:
-            pickle.dump(trajectories, f)
         print(f"round {round}, preference {i+1} done!")
     print(f"round {round} done!")
     env_rl.close()
 
 
 len_traj = 1
-len_traj_list = list(range(1, 9))
+len_traj_list = [1]
+# len_traj_list = list(range(1, 9))
 num_workers = 8
 preference_per_round = 100
 
