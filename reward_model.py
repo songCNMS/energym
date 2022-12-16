@@ -20,15 +20,13 @@ class RewardNet(nn.Module):
         super(RewardNet, self).__init__()
         self.linear_relu_stack = NN(input_dim=input_dim, 
                       layers_info= [256, 256, 256, 1],
-                      output_activation="sigmoid",
+                      output_activation="tanh",
                       batch_norm=False, dropout=0.2,
-                      hidden_activations=['tanh', 'relu', 'relu', 'relu'], initialiser="Xavier", random_seed=43)
+                      hidden_activations=['LeakyReLU', 'LeakyReLU', 'LeakyReLU', 'LeakyReLU'], initialiser="Xavier", random_seed=43)
         
     def get_reward(self, x):
         x_out = self.linear_relu_stack(x)
-        return 10.0*x_out
-        # return 5.0*torch.nn.Sigmoid()(x_out)
-        # return torch.clamp(x_out, 0.0, 10.0)
+        return 5.0*x_out
 
     def forward(self, x):
         num_sample = x.size(0)
@@ -95,8 +93,8 @@ def train_loop(building_name, model, loss_fn, optimizer, round_list, parent_loc)
                 total_loss += loss.cpu().item()
                 total_size += 1
                 if (batch % 10 == 0):
-                    loss, current = loss.cpu().item(), batch * len(X)
-                    print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+                    loss, current = loss.cpu().item(), batch * batch_size
+                    print(f"round: {round}, traj_idx: {traj_idx}, loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
     return total_loss / total_size
 
 def test_loop(building_name, model, loss_fn, round_list, parent_loc):
@@ -135,7 +133,7 @@ from buildings_factory import *
 from energym.wrappers.rl_wrapper import StableBaselinesRLWrapper
 
 
-ensemble_num = 2
+ensemble_num = 1
 batch_size = 1024
 device = ("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)

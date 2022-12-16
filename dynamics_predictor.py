@@ -84,8 +84,8 @@ def train_loop(building_name, model, loss_fn, optimizer, round_list):
                 total_size += 1
                 if (not is_remote) and (batch % 10 == 0):
                     print(pred[:5, :], y[:5, :])
-                    loss, current = loss.cpu().item(), batch * len(X)
-                    print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+                    loss, current = loss.cpu().item(), batch * batch_size
+                    print(f"round: {round}, traj_idx: {traj_idx}, loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
     return total_loss / total_size
 
 def test_loop(building_name, model, loss_fn, round_list):
