@@ -20,13 +20,13 @@ class RewardNet(nn.Module):
         super(RewardNet, self).__init__()
         self.linear_relu_stack = NN(input_dim=input_dim, 
                       layers_info= [256, 256, 256, 1],
-                      output_activation="tanh",
+                      output_activation="sigmoid",
                       batch_norm=False, dropout=0.2,
                       hidden_activations=['LeakyReLU', 'LeakyReLU', 'LeakyReLU', 'LeakyReLU'], initialiser="Xavier", random_seed=43)
         
     def get_reward(self, x):
         x_out = self.linear_relu_stack(x)
-        return 5.0*x_out
+        return 10.0*x_out
 
     def forward(self, x):
         num_sample = x.size(0)
@@ -133,7 +133,7 @@ from buildings_factory import *
 from energym.wrappers.rl_wrapper import StableBaselinesRLWrapper
 
 
-ensemble_num = 1
+ensemble_num = 4
 batch_size = 1024
 device = ("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)

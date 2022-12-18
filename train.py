@@ -17,6 +17,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import torch
 from dynamics_predictor import DynamicsPredictor
+from stable_baselines3.common.noise import NormalActionNoise
 
 
 import wandb
@@ -254,7 +255,7 @@ from datetime import datetime
 parser = argparse.ArgumentParser()
 parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
 parser.add_argument('--building', type=str, help='building name', required=True)
-parser.add_argument('--iter', type=int, help='learning steps', default=204800)
+parser.add_argument('--iter', type=int, help='learning steps', default=1024000)
 parser.add_argument("--exp_name", default=f"{datetime.today().date().strftime('%m%d-%H%M')}")
 parser.add_argument('--logdir', type=str, help='dir of results', default="models")
 parser.add_argument('--rm', action='store_true', help="whether using learnt reward model")
@@ -272,8 +273,9 @@ if __name__ == "__main__":
 
     building_name = args.building
     min_kpis, max_kpis, min_outputs, max_outputs = collect_baseline_kpi(building_name)
-
-    reward_path_suffix = ("rewards" if args.rm else "manual")
+    policy_name = "PPO"
+    reward_path_suffix = f"{policy_name}_"
+    reward_path_suffix += ("rewards" if args.rm else "manual")
     reward_path_suffix += ("_predictor" if args.dm else "_simulator")
     reward_path_suffix += f"_seed{args.seed}"
     if args.amlt:
@@ -308,10 +310,17 @@ if __name__ == "__main__":
         dynamics_predictor.eval()
         env_down_RL.dynamics_predictor = dynamics_predictor
         
-
-    model = SAC('MlpPolicy', env_down_RL, verbose=1, device='auto', train_freq=256, 
-                learning_starts=5120, batch_size=512, gradient_steps=8, seed=args.seed)
-    # model = PPO('MlpPolicy', env_down_RL, verbose=1, device='auto', batch_size=64, seed=43)
+    batch_size = 512
+    n_actions = env_down_RL.action_space.shape[-1]
+    action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
+    if policy_name == "SAC":
+        model = SAC('MlpPolicy', env_down_RL, verbose=1, device='auto', train_freq=32, 
+                    buffer_size=batch_size*100, gamma=0.99, action_noise=action_noise,
+                    learning_starts=5120, batch_size=batch_size, gradient_steps=1, seed=args.seed,
+                    policy_kwargs=dict(net_arch=[512, 512, 512], activation_fn=torch.nn.ReLU))
+    else:
+        model = PPO('MlpPolicy', env_down_RL, verbose=1, device='auto', batch_size=batch_size, seed=args.seed,
+                    policy_kwargs=dict(net_arch=[512, 512, 512], activation_fn=torch.nn.ReLU))
     checkpoint_callback = CheckpointCallback(save_freq=5120, save_path=model_loc)
     post_eval_callback = EnergymEvalCallback(model, building_name, log_loc, min_kpis, max_kpis, min_outputs, max_outputs, env_down_RL.reward_function, verbose=0)
     eval_callback = EvalCallback(env_down_RL, best_model_save_path=model_loc + "/best_model/",

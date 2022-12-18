@@ -18,7 +18,7 @@ def add_kpi(cur_kpi, kpi, min_kpis, max_kpis):
         min_v, max_v = min_kpis[key]['kpi'], max_kpis[key]['kpi']
         if val["type"] not in cur_kpi: cur_kpi[val["type"]] = {}
         if val["name"] not in cur_kpi[val["type"]]: cur_kpi[val["type"]][val["name"]] = 0
-        cur_kpi[val["type"]][val["name"]] += (val["kpi"]-min_v)/max(1.0, max_v-min_v)
+        cur_kpi[val["type"]][val["name"]] += abs(val["kpi"]-min_v)/max(1.0, max_v-min_v)
     return cur_kpi
 
 def objective_compare(kpi1, kpi2):
@@ -29,7 +29,7 @@ def objective_compare(kpi1, kpi2):
     else: return 0.0
 
 def constraint_violate(kpis):
-    if "avg_dev" in kpis: return np.sum([v for v in kpis['avg_dev'].values()]) > 0.0
+    if "avg_dev" in kpis: return np.sum([abs(v) for v in kpis['avg_dev'].values()]) > 0.0
     return False
 
 def constraint_violate_compare(kpi1, kpi2):

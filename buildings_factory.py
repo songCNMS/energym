@@ -102,7 +102,7 @@ def learnt_reward_func(reward_models, min_kpi, max_kpi, kpi, state):
     reward_mean = np.mean(reward_list)
     reward_std = (0.0 if len(reward_list) <= 1 else np.std(reward_list)) 
     # print(reward_mean, reward_std, reward_list)
-    return reward_mean - reward_std
+    return reward_mean - 2.0*reward_std
     
 
 def get_env(building_name, eval=False):
