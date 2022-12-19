@@ -138,3 +138,44 @@ jobs:
   sku: G1
   command:
   - python train_bulk.py --building SimpleHouseRSla-v0 --amlt --seed 43,67
+
+
+- name: SwissHouseRSlaW2W-v0-1
+  sku: G1
+  command:
+  - python train_bulk.py --building SwissHouseRSlaW2W-v0 --amlt --seed 7,13
+
+- name: SwissHouseRSlaTank-v0-1
+  sku: G1
+  command:
+  - python train_bulk.py --building SwissHouseRSlaTank-v0 --amlt --seed 7,13
+
+- name: SwissHouseRSlaW2W-v0-2
+  sku: G1
+  command:
+  - python train_bulk.py --building SwissHouseRSlaW2W-v0 --amlt --seed 19,23
+
+- name: SwissHouseRSlaTank-v0-2
+  sku: G1
+  command:
+  - python train_bulk.py --building SwissHouseRSlaTank-v0 --amlt --seed 19,23
+
+- name: SwissHouseRSlaW2W-v0-3
+  sku: G1
+  command:
+  - python train_bulk.py --building SwissHouseRSlaW2W-v0 --amlt --seed 29,31
+
+- name: SwissHouseRSlaTank-v0-3
+  sku: G1
+  command:
+  - python train_bulk.py --building SwissHouseRSlaTank-v0 --amlt --seed 29,31
+
+- name: SwissHouseRSlaW2W-v0-4
+  sku: G1
+  command:
+  - python train_bulk.py --building SwissHouseRSlaW2W-v0 --amlt --seed 43,67
+
+- name: SwissHouseRSlaTank-v0-4
+  sku: G1
+  command:
+  - python train_bulk.py --building SwissHouseRSlaTank-v0 --amlt --seed 43,67

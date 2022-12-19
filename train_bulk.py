@@ -21,10 +21,10 @@ if __name__ == "__main__":
     for seed in seed_list:
         cmd_prefix = f"python train.py --building {building_name} --seed {seed} "
         if args.amlt: cmd_prefix += "--amlt "
-        cmds.extend([cmd_prefix+" --dm --rm"])
+        # cmds.extend([cmd_prefix+" --dm --rm"])
         # cmds.append(cmd_prefix)
         # cmds.extend([cmd_prefix+" --dm", cmd_prefix+" --dm --rm"])
-        # cmds.extend([cmd_prefix, cmd_prefix+" --rm", cmd_prefix+" --dm", cmd_prefix+" --dm --rm"])
+        cmds.extend([cmd_prefix+" --dm", cmd_prefix+" --dm --rm"])
     if building_name.startswith("Swiss") or building_name.startswith("Simple"):
         jobs = []
         for cmd in cmds:

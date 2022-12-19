@@ -42,7 +42,9 @@ class EnergymEvalCallback(BaseCallback):
         max_outputs,
         reward_function,
         simulation_days: int = 28,
-        verbose: int = 0
+        verbose: int = 0,
+        is_wandb: bool = False,
+        is_d3rl: bool = False,
     ):
         super().__init__(verbose=verbose)
         self.building_name = building_name
@@ -52,8 +54,12 @@ class EnergymEvalCallback(BaseCallback):
         self.max_kpis = max_kpis
         self.min_outputs = min_outputs
         self.max_outputs = max_outputs
+        self.is_wandb = is_wandb
         self.reward_function = reward_function
-        super().init_callback(model)
+        self.is_d3rl = is_d3rl
+        if not self.is_d3rl:
+            super().init_callback(model)
+        else: self.model = model
     
     def _on_step(self) -> bool:
         building_idx = buildings_list.index(self.building_name)
@@ -62,11 +68,11 @@ class EnergymEvalCallback(BaseCallback):
         default_control = default_controls[building_idx]
         exp_name = f"{datetime.today().time().strftime('%m%d-%H%M%S')}"
         
-        if is_wandb: wandb.init(project="Energym", config={}, group=building_name, name=f"{self.num_timesteps}_{exp_name}")
+        if self.is_wandb: wandb.init(project="Energym", config={}, group=self.building_name, name=f"{self.num_timesteps}_{exp_name}")
 
         bs_eval_env = make(self.building_name, weather=weather, simulation_days=self.simulation_days, eval_mode=True)
         eval_env_down_RL = StableBaselinesRLWrapper(self.building_name, self.min_kpis, self.max_kpis, self.min_outputs, self.max_outputs, self.reward_function, eval=True)
-        inputs = get_inputs(building_name, bs_eval_env)
+        inputs = get_inputs(self.building_name, bs_eval_env)
         
 
         out_list = []
@@ -99,7 +105,8 @@ class EnergymEvalCallback(BaseCallback):
             ori_bs_reward_list.append(ori_bs_reward)
             done = (done | (bs_eval_env.time >= bs_eval_env.stop_time))
             
-            actions, _ = self.model.predict(state, deterministic=True)
+            if self.is_d3rl: actions = self.model.predict(state)
+            else: actions, _ = self.model.predict(state, deterministic=True)
             state, reward, _done, info = eval_env_down_RL.step(actions)
             done = (done | _done)
             outputs = eval_env_down_RL.inverse_transform_state(state)
@@ -115,7 +122,7 @@ class EnergymEvalCallback(BaseCallback):
             for key in control:
                 res[f"baseline_{key}"] = bs_control[key][0]
                 res[key] = control[key][0]
-            if is_wandb: wandb.log(res)
+            if self.is_wandb: wandb.log(res)
             step += 1
 
             if self.verbose:
@@ -171,7 +178,7 @@ class EnergymEvalCallback(BaseCallback):
             
             vals = out_df[col].tolist()
             bs_vals = bs_out_df[col].tolist()
-            if is_wandb:
+            if self.is_wandb:
                 for j in range(min(len(vals), len(bs_vals))):
                     wandb.log({f"{col}_out_lower_bound": intervals[0], 
                             f"{col}_out_upper_bound": intervals[1],
@@ -203,7 +210,7 @@ class EnergymEvalCallback(BaseCallback):
             
             vals = cmd_df[col].tolist()
             bs_vals = bs_cmd_df[col].tolist()
-            if is_wandb:
+            if self.is_wandb:
                 for j in range(min(len(vals), len(bs_vals))):
                     wandb.log({f"{col}_cmd_lower_bound": intervals[0], 
                             f"{col}_cmd_upper_bound": intervals[1],
@@ -216,7 +223,7 @@ class EnergymEvalCallback(BaseCallback):
                                        "manual_baseline_eval_episode_reward": ori_bs_total_reward_list})
         for _data_dir in out_dirs: reward_df.to_csv(f"{_data_dir}/rewards.csv", index=False)
         
-        if is_wandb:
+        if self.is_wandb:
             for i in range(len(eval_total_reward_list)):
                 wandb.log({"eval_episode_reward": eval_total_reward_list[i],
                         "baseline_eval_episode_reward": bs_total_reward_list[i],
@@ -241,7 +248,7 @@ class EnergymEvalCallback(BaseCallback):
         for _data_dir in out_dirs: plt.savefig(f"{_data_dir}/reward.png")
         eval_env_down_RL.close()
         bs_eval_env.close()
-        if is_wandb: wandb.finish()
+        if self.is_wandb: wandb.finish()
 
 # buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
 #                   "Apartments2Grid-v0", "OfficesThermostat-v0", "MixedUseFanFCU-v0",
@@ -273,7 +280,7 @@ if __name__ == "__main__":
 
     building_name = args.building
     min_kpis, max_kpis, min_outputs, max_outputs = collect_baseline_kpi(building_name)
-    policy_name = "PPO"
+    policy_name = "SAC"
     reward_path_suffix = f"{policy_name}_"
     reward_path_suffix += ("rewards" if args.rm else "manual")
     reward_path_suffix += ("_predictor" if args.dm else "_simulator")

@@ -171,7 +171,7 @@ len_traj = 1
 len_traj_list = [1]
 # len_traj_list = list(range(1, 9))
 num_workers = 8
-preference_per_round = 100
+preference_per_round = 20
 
 # buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
 #                   "Apartments2Grid-v0", "OfficesThermostat-v0", "MixedUseFanFCU-v0",

@@ -138,3 +138,4 @@ amlt
 wandb
 data
 test_models
+d3rlpy_logs
