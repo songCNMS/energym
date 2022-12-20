@@ -313,7 +313,7 @@ if __name__ == "__main__":
         for i in range(ensemble_num):
             reward_model = RewardNet(input_dim)
             _reward_model_loc = reward_model_loc.format(building_name, i)
-            reward_model.load_state_dict(torch.load(_reward_model_loc))
+            reward_model.load_state_dict(torch.load(_reward_model_loc, map_location=torch.device('cpu')))
             reward_model.eval()
             reward_models.append(reward_model)
         env_RL.reward_function = lambda min_kip, max_kpi, kpi, state: learnt_reward_func(reward_models, min_kip, max_kpi, kpi, state)
@@ -322,7 +322,7 @@ if __name__ == "__main__":
         input_dim = env_RL.observation_space.shape[0]
         action_dim=env_RL.action_space.shape[0]
         dynamics_predictor = DynamicsPredictor(input_dim+action_dim, input_dim)
-        dynamics_predictor.load_state_dict(torch.load(dynamics_model_loc))
+        dynamics_predictor.load_state_dict(torch.load(dynamics_model_loc, map_location=torch.device('cpu')))
         dynamics_predictor.eval()
         env_RL.dynamics_predictor = dynamics_predictor
         

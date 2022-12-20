@@ -99,13 +99,17 @@ if __name__ == "__main__":
     env_RL = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func)
     eval_env_RL = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func, eval=True)
     
+    is_gpu_on = torch.cuda.is_available()
+    if is_gpu_on: device = torch.device("cuda")
+    else: device = torch.device("cpu")
+    
     if args.rm:
         input_dim = env_RL.observation_space.shape[0]
         reward_models = []
         for i in range(ensemble_num):
             reward_model = RewardNet(input_dim)
             _reward_model_loc = reward_model_loc.format(building_name, i)
-            reward_model.load_state_dict(torch.load(_reward_model_loc))
+            reward_model.load_state_dict(torch.load(_reward_model_loc, map_location=device))
             reward_model.eval()
             reward_models.append(reward_model)
         reward_function = lambda kpi, state: learnt_reward_func(reward_models, min_kpis, max_kpis, kpi, state)
@@ -114,20 +118,21 @@ if __name__ == "__main__":
         input_dim = env_RL.observation_space.shape[0]
         action_dim=env_RL.action_space.shape[0]
         dynamics_predictor = DynamicsPredictor(input_dim+action_dim, input_dim)
-        dynamics_predictor.load_state_dict(torch.load(dynamics_model_loc))
+        dynamics_predictor.load_state_dict(torch.load(dynamics_model_loc, map_location=device))
         dynamics_predictor.eval()
         env_RL.dynamics_predictor = dynamics_predictor
     
     dataset = get_d3rlpy_dataset(building_name, list(range(num_workers)),
                                  list(range(preference_per_round)), reward_function)
     
+    d3rlpy.seed(args.seed)
     assert args.algo in ["TD3PlusBC", "SAC", "MOPO"], "wrong algorithm"
     if args.algo == "TD3PlusBC":
-        algo = d3rlpy.algos.TD3PlusBC(action_scaler="min_max", use_gpu=True, seed=args.seed)
+        algo = d3rlpy.algos.TD3PlusBC(action_scaler="min_max", use_gpu=is_gpu_on)
     elif args.algo == "MOPO":
-        algo = d3rlpy.algos.MOPO(action_scaler="min_max", use_gpu=True, seed=args.seed)
+        algo = d3rlpy.algos.MOPO(action_scaler="min_max", use_gpu=is_gpu_on)
     else:
-        algo = d3rlpy.algos.SAC(action_scaler="min_max", use_gpu=True, seed=args.seed)
+        algo = d3rlpy.algos.SAC(action_scaler="min_max", use_gpu=is_gpu_on)
     
     log_loc = f"{model_loc}/logs/"
     os.makedirs(log_loc, exist_ok=True)
