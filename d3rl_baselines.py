@@ -76,7 +76,7 @@ if __name__ == "__main__":
     is_remote = args.amlt
     parent_loc = (os.environ['AMLT_DATA_DIR'] if is_remote else "./")
     min_kpis, max_kpis, min_outputs, max_outputs = collect_baseline_kpi(building_name)
-    reward_path_suffix = f"baseline_{args.algo}"
+    reward_path_suffix = f"baseline_{args.algo}_" + ("reward" if args.rm else "manual") 
     if args.amlt:
         reward_model_loc = os.environ['AMLT_DATA_DIR'] + "/data/models/{}/reward_model/reward_model_best_{}.pkl"
         model_loc = f"{os.environ['AMLT_DATA_DIR']}/data/models/{building_name}/{reward_path_suffix}/"
@@ -98,25 +98,30 @@ if __name__ == "__main__":
             reward_model.eval()
             reward_models.append(reward_model)
         reward_function = lambda kpi, state: learnt_reward_func(reward_models, min_kpis, max_kpis, kpi, state)
-    algo = d3rlpy.algos.TD3PlusBC()
+    
     dataset = get_d3rlpy_dataset(building_name, [1, 2], list(range(10)), reward_function)
+    algo = d3rlpy.algos.TD3PlusBC(action_scaler="min_max", use_gpu=True)
+    
     
     log_loc = f"{model_loc}/logs/"
     os.makedirs(log_loc, exist_ok=True)
     post_eval_callback = EnergymEvalCallback(algo, building_name, 
                                              log_loc, min_kpis, max_kpis, 
                                              min_outputs, max_outputs, 
-                                             env_RL.reward_function, verbose=0, is_d3rl=True)
+                                             eval_env_RL.reward_function, 
+                                             verbose=0, is_d3rl=True)
     def eval_callback(algo, epoch, total_step):
-        print("eval on epoch", epoch)
-        post_eval_callback._on_step()
-        
+        if epoch % 10 == 0:
+            print("eval on epoch", epoch)
+            post_eval_callback._on_step()
+    
+    
     # start offline training
     algo.fit(
     dataset,
     eval_episodes=dataset.episodes,
     n_steps=1024000,
-    n_steps_per_epoch=32,
+    n_steps_per_epoch=10240,
     callback=eval_callback,
     scorers={'environment': evaluate_on_environment(eval_env_RL),})
     

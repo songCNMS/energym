@@ -81,19 +81,19 @@ jobs:
 - name: SimpleHouseRad-v0
   sku: G1
   command:
-  - python train.py --building SimpleHouseRad-v0 --amlt --rm --dm
+  - python train.py --building SimpleHouseRad-v0 --amlt --rm --dm --seed 313
 
 - name: SimpleHouseRSla-v0
   sku: G1
   command:
-  - python train.py --building SimpleHouseRSla-v0 --amlt --rm --dm
+  - python train.py --building SimpleHouseRSla-v0 --amlt --rm --dm --seed 313
 
 - name: SwissHouseRSlaW2W-v0
   sku: G1
   command:
-  - python train.py --building SwissHouseRSlaW2W-v0 --amlt --rm --dm
+  - python train.py --building SwissHouseRSlaW2W-v0 --amlt --rm --dm --seed 313
 
 - name: SwissHouseRSlaTank-v0
   sku: G1
   command:
-  - python train.py --building SwissHouseRSlaTank-v0 --amlt --rm --dm
+  - python train.py --building SwissHouseRSlaTank-v0 --amlt --rm --dm --seed 313

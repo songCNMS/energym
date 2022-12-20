@@ -8,7 +8,8 @@ from energym.factory import make
 from energym.wrappers.downsample_outputs import DownsampleOutputs
 from energym.wrappers.rescale_outputs import RescaleOutputs
 from energym.wrappers.rl_wrapper import StableBaselinesRLWrapper
-from stable_baselines3 import PPO, SAC
+# from stable_baselines3.ppo2 import PPO2
+from stable_baselines3 import SAC, PPO
 from stable_baselines3.common.callbacks import CallbackList, CheckpointCallback, EvalCallback, BaseCallback
 from buildings_factory import *
 from reward_model import RewardNet, ensemble_num
@@ -70,8 +71,13 @@ class EnergymEvalCallback(BaseCallback):
         
         if self.is_wandb: wandb.init(project="Energym", config={}, group=self.building_name, name=f"{self.num_timesteps}_{exp_name}")
 
-        bs_eval_env = make(self.building_name, weather=weather, simulation_days=self.simulation_days, eval_mode=True)
-        eval_env_down_RL = StableBaselinesRLWrapper(self.building_name, self.min_kpis, self.max_kpis, self.min_outputs, self.max_outputs, self.reward_function, eval=True)
+        bs_eval_env = make(self.building_name, weather=weather, 
+                           simulation_days=self.simulation_days, 
+                           eval_mode=True)
+        eval_env_down_RL = StableBaselinesRLWrapper(self.building_name, 
+                                                    self.min_kpis, self.max_kpis, 
+                                                    self.min_outputs, self.max_outputs, 
+                                                    self.reward_function, eval=True)
         inputs = get_inputs(self.building_name, bs_eval_env)
         
 
@@ -105,8 +111,9 @@ class EnergymEvalCallback(BaseCallback):
             ori_bs_reward_list.append(ori_bs_reward)
             done = (done | (bs_eval_env.time >= bs_eval_env.stop_time))
             
-            if self.is_d3rl: actions = self.model.predict(state)
+            if self.is_d3rl: actions = self.model.predict([state])
             else: actions, _ = self.model.predict(state, deterministic=True)
+            if len(actions.shape) > 1: actions = actions[0]
             state, reward, _done, info = eval_env_down_RL.step(actions)
             done = (done | _done)
             outputs = eval_env_down_RL.inverse_transform_state(state)
