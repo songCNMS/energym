@@ -60,7 +60,9 @@ class EnergymEvalCallback(BaseCallback):
         self.is_d3rl = is_d3rl
         if not self.is_d3rl:
             super().init_callback(model)
-        else: self.model = model
+        else: 
+            self.model = model
+            self.num_timesteps = 0
     
     def _on_step(self) -> bool:
         building_idx = buildings_list.index(self.building_name)
@@ -74,7 +76,7 @@ class EnergymEvalCallback(BaseCallback):
         bs_eval_env = make(self.building_name, weather=weather, 
                            simulation_days=self.simulation_days, 
                            eval_mode=True)
-        eval_env_down_RL = StableBaselinesRLWrapper(self.building_name, 
+        eval_env_RL = StableBaselinesRLWrapper(self.building_name, 
                                                     self.min_kpis, self.max_kpis, 
                                                     self.min_outputs, self.max_outputs, 
                                                     self.reward_function, eval=True)
@@ -93,7 +95,7 @@ class EnergymEvalCallback(BaseCallback):
             
         bs_outputs = bs_eval_env.get_output()
         done = False
-        state = eval_env_down_RL.state
+        state = eval_env_RL.state
         step = 0
         hour = control_values[building_idx]
         res = {}
@@ -104,7 +106,7 @@ class EnergymEvalCallback(BaseCallback):
             bs_outputs = bs_eval_env.step(bs_control)
             _,hour,_,_ = bs_eval_env.get_date()
             bs_out_list.append(bs_outputs)
-            bs_state = eval_env_down_RL.transform_state(bs_outputs)
+            bs_state = eval_env_RL.transform_state(bs_outputs)
             ori_bs_reward = reward_func(self.min_kpis, self.max_kpis, bs_eval_env.get_kpi(start_ind=step, end_ind=step+1), bs_state)
             bs_reward = self.reward_function(self.min_kpis, self.max_kpis, bs_eval_env.get_kpi(start_ind=step, end_ind=step+1), bs_state)
             bs_reward_list.append(bs_reward)
@@ -114,11 +116,11 @@ class EnergymEvalCallback(BaseCallback):
             if self.is_d3rl: actions = self.model.predict([state])
             else: actions, _ = self.model.predict(state, deterministic=True)
             if len(actions.shape) > 1: actions = actions[0]
-            state, reward, _done, info = eval_env_down_RL.step(actions)
+            state, reward, _done, info = eval_env_RL.step(actions)
             done = (done | _done)
-            outputs = eval_env_down_RL.inverse_transform_state(state)
-            ori_reward = reward_func(self.min_kpis, self.max_kpis, eval_env_down_RL.env.get_kpi(start_ind=step, end_ind=step+1), state)
-            control = eval_env_down_RL.inverse_transform_action(actions)
+            outputs = eval_env_RL.inverse_transform_state(state)
+            ori_reward = reward_func(self.min_kpis, self.max_kpis, eval_env_RL.env.get_kpi(start_ind=step, end_ind=step+1), state)
+            control = eval_env_RL.inverse_transform_action(actions)
             controls +=[ {p:control[p][0] for p in control} ]
             out_list.append(outputs)
             reward_list.append(reward)
@@ -134,7 +136,7 @@ class EnergymEvalCallback(BaseCallback):
 
             if self.verbose:
                 print("RL KPIs") 
-                print(eval_env_down_RL.env.get_kpi())
+                print(eval_env_RL.env.get_kpi())
                 print("BS KPIs")
                 print(bs_eval_env.get_kpi()) 
 
@@ -167,7 +169,7 @@ class EnergymEvalCallback(BaseCallback):
         for cols in cols_plot[building_idx]: all_cols_plot.extend(cols)
         
         kpi_targets = {}
-        for key, val in eval_env_down_RL.env.kpis.kpi_options.items():
+        for key, val in eval_env_RL.env.kpis.kpi_options.items():
             if "target" in val: kpi_targets[val["name"]] = val["target"]
         
         # plot key values
@@ -178,7 +180,7 @@ class EnergymEvalCallback(BaseCallback):
             axs[i].set_ylabel(col)
             axs[i].set_xlabel('Steps')
             if col in kpi_targets: intervals = (kpi_targets[col] if isinstance(kpi_targets[col], list) else [kpi_targets[col], kpi_targets[col]])
-            elif eval_env_down_RL.env.output_specs[col]["type"] == "scalar": intervals = [eval_env_down_RL.env.output_specs[col]['lower_bound'], eval_env_down_RL.env.output_specs[col]['upper_bound']]
+            elif eval_env_RL.env.output_specs[col]["type"] == "scalar": intervals = [eval_env_RL.env.output_specs[col]['lower_bound'], eval_env_RL.env.output_specs[col]['upper_bound']]
             else: intervals = [0, 0]
             axs[i].plot([0, out_df.shape[0]], [intervals[0], intervals[0]], color='g', linestyle='--', linewidth=2)
             axs[i].plot([0, out_df.shape[0]], [intervals[1], intervals[1]], color='g', linestyle='--', linewidth=2)
@@ -209,8 +211,8 @@ class EnergymEvalCallback(BaseCallback):
             axs[i].plot(cmd_df[col], 'r', bs_cmd_df[col], 'b')
             axs[i].set_ylabel(col)
             axs[i].set_xlabel('Steps')
-            if eval_env_down_RL.env.input_specs[col]['type'] == 'scalar':
-                intervals = [eval_env_down_RL.env.input_specs[col]['lower_bound'], eval_env_down_RL.env.input_specs[col]['upper_bound']]
+            if eval_env_RL.env.input_specs[col]['type'] == 'scalar':
+                intervals = [eval_env_RL.env.input_specs[col]['lower_bound'], eval_env_RL.env.input_specs[col]['upper_bound']]
             else: intervals = [0, 0]
             axs[i].plot([0, cmd_df.shape[0]], [intervals[0], intervals[0]], color='g', linestyle='--', linewidth=2)
             axs[i].plot([0, cmd_df.shape[0]], [intervals[1], intervals[1]], color='g', linestyle='--', linewidth=2)
@@ -253,7 +255,7 @@ class EnergymEvalCallback(BaseCallback):
         axs[1].set_xlabel('Steps')
         plt.subplots_adjust(hspace=0.4)
         for _data_dir in out_dirs: plt.savefig(f"{_data_dir}/reward.png")
-        eval_env_down_RL.close()
+        eval_env_RL.close()
         bs_eval_env.close()
         if self.is_wandb: wandb.finish()
 
@@ -303,10 +305,10 @@ if __name__ == "__main__":
     
     log_loc = f"{model_loc}/logs/"
     os.makedirs(log_loc, exist_ok=True)
-    env_down_RL = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func)
+    env_RL = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func)
     
     if args.rm:
-        input_dim = env_down_RL.observation_space.shape[0]
+        input_dim = env_RL.observation_space.shape[0]
         reward_models = []
         for i in range(ensemble_num):
             reward_model = RewardNet(input_dim)
@@ -314,35 +316,35 @@ if __name__ == "__main__":
             reward_model.load_state_dict(torch.load(_reward_model_loc))
             reward_model.eval()
             reward_models.append(reward_model)
-        env_down_RL.reward_function = lambda min_kip, max_kpi, kpi, state: learnt_reward_func(reward_models, min_kip, max_kpi, kpi, state)
+        env_RL.reward_function = lambda min_kip, max_kpi, kpi, state: learnt_reward_func(reward_models, min_kip, max_kpi, kpi, state)
     
     if args.dm:
-        input_dim = env_down_RL.observation_space.shape[0]
-        action_dim=env_down_RL.action_space.shape[0]
+        input_dim = env_RL.observation_space.shape[0]
+        action_dim=env_RL.action_space.shape[0]
         dynamics_predictor = DynamicsPredictor(input_dim+action_dim, input_dim)
         dynamics_predictor.load_state_dict(torch.load(dynamics_model_loc))
         dynamics_predictor.eval()
-        env_down_RL.dynamics_predictor = dynamics_predictor
+        env_RL.dynamics_predictor = dynamics_predictor
         
     batch_size = 512
-    n_actions = env_down_RL.action_space.shape[-1]
+    n_actions = env_RL.action_space.shape[-1]
     action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
     if policy_name == "SAC":
-        model = SAC('MlpPolicy', env_down_RL, verbose=1, device='auto', train_freq=32, 
+        model = SAC('MlpPolicy', env_RL, verbose=1, device='auto', train_freq=batch_size, 
                     buffer_size=batch_size*100, gamma=0.99, action_noise=action_noise,
-                    learning_starts=5120, batch_size=batch_size, gradient_steps=1, seed=args.seed,
+                    learning_starts=batch_size*10, batch_size=batch_size, gradient_steps=32, seed=args.seed,
                     policy_kwargs=dict(net_arch=[512, 512, 512], activation_fn=torch.nn.ReLU))
     else:
-        model = PPO('MlpPolicy', env_down_RL, verbose=1, device='auto', batch_size=batch_size, seed=args.seed,
+        model = PPO('MlpPolicy', env_RL, verbose=1, device='auto', batch_size=batch_size, seed=args.seed,
                     policy_kwargs=dict(net_arch=[512, 512, 512], activation_fn=torch.nn.ReLU))
-    checkpoint_callback = CheckpointCallback(save_freq=5120, save_path=model_loc)
-    post_eval_callback = EnergymEvalCallback(model, building_name, log_loc, min_kpis, max_kpis, min_outputs, max_outputs, env_down_RL.reward_function, verbose=0)
-    eval_callback = EvalCallback(env_down_RL, best_model_save_path=model_loc + "/best_model/",
-                                 log_path=log_loc, eval_freq=5120, callback_after_eval=post_eval_callback)
+    checkpoint_callback = CheckpointCallback(save_freq=batch_size*100, save_path=model_loc)
+    post_eval_callback = EnergymEvalCallback(model, building_name, log_loc, min_kpis, max_kpis, min_outputs, max_outputs, env_RL.reward_function, verbose=0)
+    eval_callback = EvalCallback(env_RL, best_model_save_path=model_loc + "/best_model/",
+                                 log_path=log_loc, eval_freq=batch_size*100, callback_after_eval=post_eval_callback)
     
     # Create the callback list
     callback = CallbackList([checkpoint_callback, eval_callback])
     model.learn(args.iter, callback=callback)
-    # model.load("models/SimpleHouseRad-v0/1669143145.6766512.pkl")
-    env_down_RL.close()
+    env_RL.close()
+
     

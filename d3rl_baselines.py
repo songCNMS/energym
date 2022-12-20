@@ -10,6 +10,7 @@ from energym.wrappers.rl_wrapper import StableBaselinesRLWrapper
 from reward_model import RewardNet, ensemble_num
 from d3rlpy.metrics.scorer import evaluate_on_environment
 from train import EnergymEvalCallback
+from dynamics_predictor import DynamicsPredictor
 
 
 def get_d3rlpy_dataset(building_name, round_list, preference_list, reward_function):
@@ -66,8 +67,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
 parser.add_argument('--building', type=str, help='building name', required=True)
 parser.add_argument('--round', type=str, help='round', default="")
+parser.add_argument('--seed', type=int, help='seed', default=7)
 parser.add_argument('--algo', type=str, help='algorithm to use', default="TD3PlusBC")
+parser.add_argument('--logdir', type=str, help='log location', default="models")
 parser.add_argument('--rm', action='store_true', help="use learnt reward function")
+parser.add_argument('--dm', action='store_true', help="whether using learnt dynamics model")
+
 
 
 if __name__ == "__main__":
@@ -76,13 +81,19 @@ if __name__ == "__main__":
     is_remote = args.amlt
     parent_loc = (os.environ['AMLT_DATA_DIR'] if is_remote else "./")
     min_kpis, max_kpis, min_outputs, max_outputs = collect_baseline_kpi(building_name)
-    reward_path_suffix = f"baseline_{args.algo}_" + ("reward" if args.rm else "manual") 
+    reward_path_suffix = f"{args.algo}"
+    reward_path_suffix += ("_rewards" if args.rm else "_manual")
+    reward_path_suffix += ("_predictor" if args.dm else "_simulator")
+    reward_path_suffix += f"_seed{args.seed}"
     if args.amlt:
+        model_loc = f"{os.environ['AMLT_DATA_DIR']}/data/{args.logdir}/{building_name}/{reward_path_suffix}/"
         reward_model_loc = os.environ['AMLT_DATA_DIR'] + "/data/models/{}/reward_model/reward_model_best_{}.pkl"
-        model_loc = f"{os.environ['AMLT_DATA_DIR']}/data/models/{building_name}/{reward_path_suffix}/"
+        dynamics_model_loc = f"{os.environ['AMLT_DATA_DIR']}/data/models/{building_name}/dynamics_model/dynamics_model_best.pkl"
     else:
+        model_loc = f"data/{args.logdir}/{building_name}/{reward_path_suffix}/"
         reward_model_loc = "data/models/{}/reward_model/reward_model_best_{}.pkl"
-        model_loc = f"data/models/{building_name}/{reward_path_suffix}/"
+        dynamics_model_loc = f"data/models/{building_name}/dynamics_model/dynamics_model_best.pkl"
+    
     
     reward_function = lambda kpi, state: reward_func(min_kpis, max_kpis, kpi, state)
     env_RL = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func)
@@ -99,9 +110,24 @@ if __name__ == "__main__":
             reward_models.append(reward_model)
         reward_function = lambda kpi, state: learnt_reward_func(reward_models, min_kpis, max_kpis, kpi, state)
     
-    dataset = get_d3rlpy_dataset(building_name, [1, 2], list(range(10)), reward_function)
-    algo = d3rlpy.algos.TD3PlusBC(action_scaler="min_max", use_gpu=True)
+    if args.dm:
+        input_dim = env_RL.observation_space.shape[0]
+        action_dim=env_RL.action_space.shape[0]
+        dynamics_predictor = DynamicsPredictor(input_dim+action_dim, input_dim)
+        dynamics_predictor.load_state_dict(torch.load(dynamics_model_loc))
+        dynamics_predictor.eval()
+        env_RL.dynamics_predictor = dynamics_predictor
     
+    dataset = get_d3rlpy_dataset(building_name, list(range(num_workers)),
+                                 list(range(preference_per_round)), reward_function)
+    
+    assert args.algo in ["TD3PlusBC", "SAC", "MOPO"], "wrong algorithm"
+    if args.algo == "TD3PlusBC":
+        algo = d3rlpy.algos.TD3PlusBC(action_scaler="min_max", use_gpu=True, seed=args.seed)
+    elif args.algo == "MOPO":
+        algo = d3rlpy.algos.MOPO(action_scaler="min_max", use_gpu=True, seed=args.seed)
+    else:
+        algo = d3rlpy.algos.SAC(action_scaler="min_max", use_gpu=True, seed=args.seed)
     
     log_loc = f"{model_loc}/logs/"
     os.makedirs(log_loc, exist_ok=True)
@@ -111,10 +137,10 @@ if __name__ == "__main__":
                                              eval_env_RL.reward_function, 
                                              verbose=0, is_d3rl=True)
     def eval_callback(algo, epoch, total_step):
-        if epoch % 10 == 0:
-            print("eval on epoch", epoch)
+        if total_step % 20480 == 0:
+            print("eval on epoch", epoch, "step: ", total_step)
+            post_eval_callback.num_timesteps = total_step
             post_eval_callback._on_step()
-    
     
     # start offline training
     algo.fit(
@@ -122,6 +148,7 @@ if __name__ == "__main__":
     eval_episodes=dataset.episodes,
     n_steps=1024000,
     n_steps_per_epoch=10240,
-    callback=eval_callback,
-    scorers={'environment': evaluate_on_environment(eval_env_RL),})
+    callback=eval_callback)
     
+    scorers={'environment': evaluate_on_environment(eval_env_RL)}
+    print(scorers)

@@ -9,12 +9,20 @@ from buildings_factory import *
 import sys
 
 
-def transform(val, l, u):
-    return (val - l) / max((u - l), 1.0)
+def transform(val, l, u, is_action=False):
+    if not is_action: return (val - l) / max((u - l), 1.0)
+    else: 
+        _l = (l+u)/2.0
+        _val  = (val - _l) / max((u - _l), 1.0)
+        return min(max(_val, -1.0), 1.0)
 
-def inverse_transform(val, l, u):
-    return val*max((u - l), 1.0) + l
-    # return min(u, max(l, val*max((u - l), 1.0) + l))
+def inverse_transform(val, l, u, is_action=False):
+    if not is_action: return val*max((u - l), 1.0) + l
+    else:
+        _val = min(max(val, -1.0), 1.0)
+        _l = (l+u)/2.0
+        _val  = _val*max((u - _l), 1.0) + _l
+        return min(max(_val, l), u)
 
 
 def state_distance(state1, state2):
@@ -82,7 +90,7 @@ class StableBaselinesRLWrapper(RLWrapper):
         self.action_keys = [a_name for a_name in inputs if env.input_specs[a_name]["type"] == "scalar"]
         n_actions = len(self.action_keys)
         n_states = len(env.output_keys)
-        self.action_space = spaces.Box(low=0.0, high=1.0,
+        self.action_space = spaces.Box(low=-1.0, high=1.0,
                                         shape=(n_actions,), dtype=np.float32)
         self.observation_space = spaces.Box(low=0.0, high=1.0,
                                             shape=(n_states,), dtype=np.float32)
@@ -101,7 +109,8 @@ class StableBaselinesRLWrapper(RLWrapper):
         
         
     def inverse_transform_action(self, actions):
-        control =  {a_name: [inverse_transform(a, self.env.input_specs[a_name]['lower_bound'], self.env.input_specs[a_name]['upper_bound'])]
+        control =  {a_name: [inverse_transform(a,  self.env.input_specs[a_name]['lower_bound'],
+                                                   self.env.input_specs[a_name]['upper_bound'], is_action=True)]
                         for a, a_name in zip(actions, self.action_keys)}
         for key in self.baseline_control.keys():
             if key not in self.action_keys: control[key] = self.baseline_control[key]
@@ -110,7 +119,9 @@ class StableBaselinesRLWrapper(RLWrapper):
     
     def transform_action(self, actions):
         actions.update(self.default_control)
-        return np.array([transform(actions[a_name][0], self.env.input_specs[a_name]['lower_bound'], self.env.input_specs[a_name]['upper_bound'])
+        return np.array([transform(actions[a_name][0], 
+                                   self.env.input_specs[a_name]['lower_bound'], 
+                                   self.env.input_specs[a_name]['upper_bound'], is_action=True)
                         for a_name in self.action_keys])
     
     def inverse_transform_state(self, state):
