@@ -133,7 +133,7 @@ from buildings_factory import *
 from energym.wrappers.rl_wrapper import StableBaselinesRLWrapper
 
 
-ensemble_num = 4
+ensemble_num = 8
 batch_size = 1024
 device = ("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
@@ -158,6 +158,7 @@ def run_train(i, input_dim, parent_loc, building_name):
     learning_rate = 0.001
     loss_fn = preference_loss
     model = RewardNet(input_dim).to(device)
+    torch.nn.init.xavier_uniform(model.weight)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     loss_list = []
     test_loss_list = []

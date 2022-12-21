@@ -278,6 +278,7 @@ parser.add_argument('--rm', action='store_true', help="whether using learnt rewa
 parser.add_argument('--dm', action='store_true', help="whether using learnt dynamics model")
 parser.add_argument('--seed', type=int, help='seed', default=7)
 parser.add_argument('--wandb', action='store_true', help="whether using wandb")
+parser.add_argument('--algo', type=str, help='algorithm', default="SAC")
 
 
 if __name__ == "__main__":
@@ -289,7 +290,7 @@ if __name__ == "__main__":
 
     building_name = args.building
     min_kpis, max_kpis, min_outputs, max_outputs = collect_baseline_kpi(building_name)
-    policy_name = "SAC"
+    policy_name = args.algo
     reward_path_suffix = f"{policy_name}_"
     reward_path_suffix += ("rewards" if args.rm else "manual")
     reward_path_suffix += ("_predictor" if args.dm else "_simulator")
@@ -330,17 +331,17 @@ if __name__ == "__main__":
     n_actions = env_RL.action_space.shape[-1]
     action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
     if policy_name == "SAC":
-        model = SAC('MlpPolicy', env_RL, verbose=1, device='auto', train_freq=batch_size, 
-                    buffer_size=batch_size*100, gamma=0.99, action_noise=action_noise,
-                    learning_starts=batch_size*10, batch_size=batch_size, gradient_steps=32, seed=args.seed,
+        model = SAC('MlpPolicy', env_RL, verbose=1, device='auto', train_freq=16, 
+                    buffer_size=args.iter//2, gamma=0.99, action_noise=action_noise,
+                    learning_starts=batch_size*10, batch_size=batch_size, gradient_steps=-1, seed=args.seed,
                     policy_kwargs=dict(net_arch=[512, 512, 512], activation_fn=torch.nn.ReLU))
     else:
         model = PPO('MlpPolicy', env_RL, verbose=1, device='auto', batch_size=batch_size, seed=args.seed,
                     policy_kwargs=dict(net_arch=[512, 512, 512], activation_fn=torch.nn.ReLU))
-    checkpoint_callback = CheckpointCallback(save_freq=batch_size*100, save_path=model_loc)
+    checkpoint_callback = CheckpointCallback(save_freq=args.iter//10, save_path=model_loc)
     post_eval_callback = EnergymEvalCallback(model, building_name, log_loc, min_kpis, max_kpis, min_outputs, max_outputs, env_RL.reward_function, verbose=0)
     eval_callback = EvalCallback(env_RL, best_model_save_path=model_loc + "/best_model/",
-                                 log_path=log_loc, eval_freq=batch_size*100, callback_after_eval=post_eval_callback)
+                                 log_path=log_loc, eval_freq=args.iter//10, callback_after_eval=post_eval_callback)
     
     # Create the callback list
     callback = CallbackList([checkpoint_callback, eval_callback])

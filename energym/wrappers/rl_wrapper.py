@@ -10,19 +10,12 @@ import sys
 
 
 def transform(val, l, u, is_action=False):
-    if not is_action: return (val - l) / max((u - l), 1.0)
-    else: 
-        _l = (l+u)/2.0
-        _val  = (val - _l) / max((u - _l), 1.0)
-        return min(max(_val, -1.0), 1.0)
+    if not is_action: return ((val-l)/(u - l) if u > l else 0.0)
+    else: return ((2.0*(val-l)/(u-l)-1.0) if u > l else 0.0)
 
 def inverse_transform(val, l, u, is_action=False):
-    if not is_action: return val*max((u - l), 1.0) + l
-    else:
-        _val = min(max(val, -1.0), 1.0)
-        _l = (l+u)/2.0
-        _val  = _val*max((u - _l), 1.0) + _l
-        return min(max(_val, l), u)
+    if not is_action: return (val*(u - l)+l if u > l else l)
+    else: return ((val+1.0)*(u-l)*0.5+l if u > l else l)
 
 
 def state_distance(state1, state2):
@@ -158,7 +151,7 @@ class StableBaselinesRLWrapper(RLWrapper):
         _,self.hour,_,_ = self.unwrapped.get_date()
         self.baseline_control = self.controller(self.action_keys, self.cur_step)(self.outputs, control_values[self.building_idx], self.hour)
         ori_inputs = self.inverse_transform_action(inputs)
-        # print("env action: ", ori_inputs)
+        # print("RL actions: ", inputs, "env action: ", ori_inputs)
         if self.dynamics_predictor is not None:
             with torch.no_grad():
                 model_in = torch.from_numpy(np.concatenate((self.state, inputs))).reshape(1, -1).to(torch.float)

@@ -81,7 +81,7 @@ if __name__ == "__main__":
     is_remote = args.amlt
     parent_loc = (os.environ['AMLT_DATA_DIR'] if is_remote else "./")
     min_kpis, max_kpis, min_outputs, max_outputs = collect_baseline_kpi(building_name)
-    reward_path_suffix = f"{args.algo}"
+    reward_path_suffix = f"D3_{args.algo}"
     reward_path_suffix += ("_rewards" if args.rm else "_manual")
     reward_path_suffix += ("_predictor" if args.dm else "_simulator")
     reward_path_suffix += f"_seed{args.seed}"

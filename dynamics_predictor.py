@@ -145,6 +145,7 @@ if __name__ == "__main__":
     input_dim = env_rl.observation_space.shape[0] + env_rl.action_space.shape[0]
     output_dim = env_rl.observation_space.shape[0]
     model = DynamicsPredictor(input_dim, output_dim).to(device)
+    torch.nn.init.xavier_uniform(model.weight)
     learning_rate = 0.001
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     loss_fn = predictor_loss
