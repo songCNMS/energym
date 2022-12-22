@@ -331,10 +331,17 @@ if __name__ == "__main__":
     n_actions = env_RL.action_space.shape[-1]
     action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
     if policy_name == "SAC":
-        model = SAC('MlpPolicy', env_RL, verbose=1, device='auto', train_freq=16, 
-                    buffer_size=args.iter//2, gamma=0.99, action_noise=action_noise,
-                    learning_starts=batch_size*10, batch_size=batch_size, gradient_steps=-1, seed=args.seed,
-                    policy_kwargs=dict(net_arch=[512, 512, 512], activation_fn=torch.nn.ReLU))
+        model = SAC('MlpPolicy', env_RL, verbose=1, device='auto', 
+                    train_freq=64, buffer_size=args.iter//2, 
+                    gamma=0.99, tau=0.01,
+                    action_noise=action_noise,
+                    learning_starts=batch_size*100, 
+                    batch_size=batch_size, 
+                    gradient_steps=32, 
+                    target_update_interval=64,
+                    seed=args.seed,
+                    policy_kwargs=dict(net_arch=[512, 512, 512], 
+                    activation_fn=torch.nn.ReLU))
     else:
         model = PPO('MlpPolicy', env_RL, verbose=1, device='auto', batch_size=batch_size, seed=args.seed,
                     policy_kwargs=dict(net_arch=[512, 512, 512], activation_fn=torch.nn.ReLU))

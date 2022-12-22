@@ -23,6 +23,13 @@ class RewardNet(nn.Module):
                       output_activation="sigmoid",
                       batch_norm=False, dropout=0.2,
                       hidden_activations=['LeakyReLU', 'LeakyReLU', 'LeakyReLU', 'LeakyReLU'], initialiser="Xavier", random_seed=43)
+        self.apply(self._init_weights)
+        
+    def _init_weights(self, module):
+        if isinstance(module, nn.Linear):
+            torch.nn.init.xavier_uniform_(module.weight.data, gain=nn.init.calculate_gain('relu'))
+            if module.bias is not None:
+                module.bias.data.zero_()
         
     def get_reward(self, x):
         x_out = self.linear_relu_stack(x)
@@ -158,7 +165,6 @@ def run_train(i, input_dim, parent_loc, building_name):
     learning_rate = 0.001
     loss_fn = preference_loss
     model = RewardNet(input_dim).to(device)
-    torch.nn.init.xavier_uniform(model.weight)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     loss_list = []
     test_loss_list = []
@@ -195,6 +201,7 @@ if __name__ == "__main__":
     env_rl = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func)
     input_dim = env_rl.observation_space.shape[0]
     
+    # run_train(7, input_dim, parent_loc, building_name)
     # for i in range(ensemble_num): run_train(i, input_dim, parent_loc, building_name)
     jobs = []
     for i in range(ensemble_num):

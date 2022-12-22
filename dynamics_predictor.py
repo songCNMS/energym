@@ -23,7 +23,14 @@ class DynamicsPredictor(nn.Module):
                       output_activation="none",
                       batch_norm=False, dropout=0.0,
                       hidden_activations=['tanh', 'relu', 'relu', 'relu'], initialiser="Xavier", random_seed=43)
+        self.apply(self._init_weights)
         
+    def _init_weights(self, module):
+        if isinstance(module, nn.Linear):
+            torch.nn.init.xavier_uniform_(module.weight.data, gain=nn.init.calculate_gain('relu'))
+            if module.bias is not None:
+                module.bias.data.zero_()   
+    
     def forward(self, x):
         x_out = self.linear_relu_stack(x)
         return x_out
@@ -145,7 +152,6 @@ if __name__ == "__main__":
     input_dim = env_rl.observation_space.shape[0] + env_rl.action_space.shape[0]
     output_dim = env_rl.observation_space.shape[0]
     model = DynamicsPredictor(input_dim, output_dim).to(device)
-    torch.nn.init.xavier_uniform(model.weight)
     learning_rate = 0.001
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     loss_fn = predictor_loss
