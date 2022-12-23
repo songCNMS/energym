@@ -94,11 +94,9 @@ def reward_func(min_kpi, max_kpi, kpi, state):
 
 def learnt_reward_func(reward_models, min_kpi, max_kpi, kpi, state):
     reward_list = []
-    for reward_model in reward_models:
-        with torch.no_grad():
-            model_in = torch.from_numpy(np.array(state)).reshape(1, -1).to(torch.float)
-            new_reward = reward_model.get_reward(model_in)[0].item()            
-            reward_list.append(new_reward)
+    model_in = torch.from_numpy(np.array(state)).reshape(1, -1).to(torch.float).to(next(reward_models[0].parameters()).device)
+    with torch.no_grad():
+        reward_list = [reward_model.get_reward(model_in)[0].item() for reward_model in reward_models]           
     reward_mean = np.mean(reward_list)
     reward_std = (0.0 if len(reward_list) <= 1 else np.std(reward_list)) 
     # print(reward_mean, reward_std, reward_list)

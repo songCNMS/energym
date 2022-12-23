@@ -34,20 +34,20 @@ def constraint_violate(kpis):
 
 def constraint_violate_compare(kpi1, kpi2):
     preference = 0
-    # for key in kpi1['avg_dev'].keys():
-    #     val1 = kpi1['avg_dev'][key]
-    #     val2 = kpi2['avg_dev'][key]
-    #     if val1 > val2 and preference <= 0: preference = -1.0
-    #     elif val1 > val2 and preference == 1.0:
-    #         preference = 0.0
-    #         break
-    #     elif val1 < val2 and preference >= 0: preference = 1.0
-    #     elif val1 < val2 and preference == -1.0:
-    #         preference = 0.0
-    #         break
-    val1 = np.sum([v for v in kpi1['avg_dev'].values()])
-    val2 = np.sum([v for v in kpi2['avg_dev'].values()])
-    preference = (1.0 if val1 < val2 else (0.0 if val1 == val2 else -1.0))
+    for key in kpi1['avg_dev'].keys():
+        val1 = kpi1['avg_dev'][key]
+        val2 = kpi2['avg_dev'][key]
+        if val1 > val2 and preference <= 0: preference = -1.0
+        elif val1 > val2 and preference == 1.0:
+            preference = 0.0
+            break
+        elif val1 < val2 and preference >= 0: preference = 1.0
+        elif val1 < val2 and preference == -1.0:
+            preference = 0.0
+            break
+    # val1 = np.sum([v for v in kpi1['avg_dev'].values()])
+    # val2 = np.sum([v for v in kpi2['avg_dev'].values()])
+    # preference = (1.0 if val1 < val2 else (0.0 if val1 == val2 else -1.0))
     return preference
 
 def get_info_from_trajectory(trajectory, _len_traj, min_kpis, max_kpis):

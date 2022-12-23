@@ -95,9 +95,8 @@ class StableBaselinesRLWrapper(RLWrapper):
         self.controller = controller_list[building_idx]
         self.building_idx = building_idx
         self.hour = control_values[building_idx]
-        self.num_steps = int(self.env.stop_time - self.env.time) // control_frequency[building_idx] 
         self.state = self.transform_state(self.outputs)
-        self.max_episode_len = 100000
+        self.max_episode_len = control_frequency[building_idx]*simulation_days
         self.kpis = KPI(self.env.kpi_options)
         
         
@@ -159,8 +158,8 @@ class StableBaselinesRLWrapper(RLWrapper):
             self.outputs = self.inverse_transform_state(next_state)
             self.kpis.add_observation(self.outputs)
             kpi = self.kpis.get_kpi(start_ind=self.cur_step, end_ind=self.cur_step+1)
-            env_outputs = self.env.step(ori_inputs)
-            env_state = self.transform_state(env_outputs)
+            # env_outputs = self.env.step(ori_inputs)
+            # env_state = self.transform_state(env_outputs)
             # state_gap = state_distance(next_state, env_state)
             state_gap = 0.0
         else:             

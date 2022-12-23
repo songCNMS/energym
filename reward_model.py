@@ -22,7 +22,7 @@ class RewardNet(nn.Module):
                       layers_info= [256, 256, 256, 1],
                       output_activation="sigmoid",
                       batch_norm=False, dropout=0.2,
-                      hidden_activations=['LeakyReLU', 'LeakyReLU', 'LeakyReLU', 'LeakyReLU'], initialiser="Xavier", random_seed=43)
+                      hidden_activations=['LeakyReLU', 'LeakyReLU', 'LeakyReLU', 'LeakyReLU'], initialiser="Xavier")
         self.apply(self._init_weights)
         
     def _init_weights(self, module):

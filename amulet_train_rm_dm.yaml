@@ -38,62 +38,62 @@ data:
 
 
 jobs:
-- name: ApartmentsThermal-v0
-  sku: G1
-  command:
-  - python train.py --building ApartmentsThermal-v0 --amlt --rm --dm
+# - name: ApartmentsThermal-v0
+#   sku: G1
+#   command:
+#   - python train.py --building ApartmentsThermal-v0 --amlt --rm --dm
 
-- name: ApartmentsGrid-v0
-  sku: G1
-  command:
-  - python train.py --building ApartmentsGrid-v0 --amlt --rm --dm
+# - name: ApartmentsGrid-v0
+#   sku: G1
+#   command:
+#   - python train.py --building ApartmentsGrid-v0 --amlt --rm --dm
 
-- name: Apartments2Thermal-v0
-  sku: G1
-  command:
-  - python train.py --building Apartments2Thermal-v0 --amlt --rm --dm
+# - name: Apartments2Thermal-v0
+#   sku: G1
+#   command:
+#   - python train.py --building Apartments2Thermal-v0 --amlt --rm --dm
 
-- name: Apartments2Grid-v0
-  sku: G1
-  command:
-  - python train.py --building Apartments2Grid-v0 --amlt --rm --dm
+# - name: Apartments2Grid-v0
+#   sku: G1
+#   command:
+#   - python train.py --building Apartments2Grid-v0 --amlt --rm --dm
 
-- name: OfficesThermostat-v0
-  sku: G1
-  command:
-  - python train.py --building OfficesThermostat-v0 --amlt --rm --dm
+# - name: OfficesThermostat-v0
+#   sku: G1
+#   command:
+#   - python train.py --building OfficesThermostat-v0 --amlt --rm --dm
 
-- name: MixedUseFanFCU-v0
-  sku: G1
-  command:
-  - python train.py --building MixedUseFanFCU-v0 --amlt --rm --dm
+# - name: MixedUseFanFCU-v0
+#   sku: G1
+#   command:
+#   - python train.py --building MixedUseFanFCU-v0 --amlt --rm --dm
 
-- name: SeminarcenterThermostat-v0
-  sku: G1
-  command:
-  - python train.py --building SeminarcenterThermostat-v0 --amlt --rm --dm
+# - name: SeminarcenterThermostat-v0
+#   sku: G1
+#   command:
+#   - python train.py --building SeminarcenterThermostat-v0 --amlt --rm --dm
   
-- name: SeminarcenterFull-v0
-  sku: G1
-  command:
-  - python train.py --building SeminarcenterFull-v0 --amlt --rm --dm
+# - name: SeminarcenterFull-v0
+#   sku: G1
+#   command:
+#   - python train.py --building SeminarcenterFull-v0 --amlt --rm --dm
 
-- name: SimpleHouseRad-v0
-  sku: G1
-  command:
-  - python train.py --building SimpleHouseRad-v0 --amlt --rm --dm --seed 3131
+# - name: SimpleHouseRad-v0
+#   sku: G1
+#   command:
+#   - python train.py --building SimpleHouseRad-v0 --amlt --rm --dm --seed 313131
 
 - name: SimpleHouseRSla-v0
   sku: G1
   command:
-  - python train.py --building SimpleHouseRSla-v0 --amlt --rm --dm --seed 3131
+  - python train.py --building SimpleHouseRSla-v0 --amlt --rm --dm --seed 313131
 
 - name: SwissHouseRSlaW2W-v0
   sku: G1
   command:
-  - python train.py --building SwissHouseRSlaW2W-v0 --amlt --rm --dm --seed 3131
+  - python train.py --building SwissHouseRSlaW2W-v0 --amlt --rm --dm --seed 313131
 
 - name: SwissHouseRSlaTank-v0
   sku: G1
   command:
-  - python train.py --building SwissHouseRSlaTank-v0 --amlt --rm --dm --seed 3131
+  - python train.py --building SwissHouseRSlaTank-v0 --amlt --rm --dm --seed 313131

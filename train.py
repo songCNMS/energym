@@ -12,7 +12,7 @@ from energym.wrappers.rl_wrapper import StableBaselinesRLWrapper
 from stable_baselines3 import SAC, PPO
 from stable_baselines3.common.callbacks import CallbackList, CheckpointCallback, EvalCallback, BaseCallback
 from buildings_factory import *
-from reward_model import RewardNet, ensemble_num
+from reward_model import RewardNet, ensemble_num, device
 import gym
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -271,7 +271,7 @@ from datetime import datetime
 parser = argparse.ArgumentParser()
 parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
 parser.add_argument('--building', type=str, help='building name', required=True)
-parser.add_argument('--iter', type=int, help='learning steps', default=1024000)
+parser.add_argument('--iter', type=int, help='learning steps', default=1000)
 parser.add_argument("--exp_name", default=f"{datetime.today().date().strftime('%m%d-%H%M')}")
 parser.add_argument('--logdir', type=str, help='dir of results', default="models")
 parser.add_argument('--rm', action='store_true', help="whether using learnt reward model")
@@ -287,6 +287,7 @@ if __name__ == "__main__":
     if is_wandb:
         os.environ["WANDB_API_KEY"] = "116a4f287fd4fbaa6f790a50d2dd7f97ceae4a03"
         wandb.login()
+
 
     building_name = args.building
     min_kpis, max_kpis, min_outputs, max_outputs = collect_baseline_kpi(building_name)
@@ -307,6 +308,11 @@ if __name__ == "__main__":
     log_loc = f"{model_loc}/logs/"
     os.makedirs(log_loc, exist_ok=True)
     env_RL = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func)
+    episode_len = env_RL.max_episode_len
+    
+    if torch.cuda.is_available():
+        map_location=torch.device("cuda")
+    else: map_location=torch.device("cpu")
     
     if args.rm:
         input_dim = env_RL.observation_space.shape[0]
@@ -314,7 +320,7 @@ if __name__ == "__main__":
         for i in range(ensemble_num):
             reward_model = RewardNet(input_dim)
             _reward_model_loc = reward_model_loc.format(building_name, i)
-            reward_model.load_state_dict(torch.load(_reward_model_loc, map_location=torch.device('cpu')))
+            reward_model.load_state_dict(torch.load(_reward_model_loc, map_location=map_location))
             reward_model.eval()
             reward_models.append(reward_model)
         env_RL.reward_function = lambda min_kip, max_kpi, kpi, state: learnt_reward_func(reward_models, min_kip, max_kpi, kpi, state)
@@ -323,36 +329,45 @@ if __name__ == "__main__":
         input_dim = env_RL.observation_space.shape[0]
         action_dim=env_RL.action_space.shape[0]
         dynamics_predictor = DynamicsPredictor(input_dim+action_dim, input_dim)
-        dynamics_predictor.load_state_dict(torch.load(dynamics_model_loc, map_location=torch.device('cpu')))
+        dynamics_predictor.load_state_dict(torch.load(dynamics_model_loc, map_location=map_location))
         dynamics_predictor.eval()
         env_RL.dynamics_predictor = dynamics_predictor
         
     batch_size = 512
+    total_num_steps = args.iter*episode_len
+    print("total time steps: ", total_num_steps)
     n_actions = env_RL.action_space.shape[-1]
     action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
     if policy_name == "SAC":
         model = SAC('MlpPolicy', env_RL, verbose=1, device='auto', 
-                    train_freq=64, buffer_size=args.iter//2, 
+                    train_freq=32, buffer_size=episode_len*max(1, args.iter//4), 
                     gamma=0.99, tau=0.01,
                     action_noise=action_noise,
-                    learning_starts=batch_size*100, 
-                    batch_size=batch_size, 
-                    gradient_steps=32, 
+                    learning_starts=episode_len*10, 
+                    batch_size=batch_size,
+                    gradient_steps=32,
                     target_update_interval=64,
                     seed=args.seed,
                     policy_kwargs=dict(net_arch=[512, 512, 512], 
-                    activation_fn=torch.nn.ReLU))
+                                       activation_fn=torch.nn.ReLU))
     else:
-        model = PPO('MlpPolicy', env_RL, verbose=1, device='auto', batch_size=batch_size, seed=args.seed,
-                    policy_kwargs=dict(net_arch=[512, 512, 512], activation_fn=torch.nn.ReLU))
-    checkpoint_callback = CheckpointCallback(save_freq=args.iter//10, save_path=model_loc)
-    post_eval_callback = EnergymEvalCallback(model, building_name, log_loc, min_kpis, max_kpis, min_outputs, max_outputs, env_RL.reward_function, verbose=0)
+        model = PPO('MlpPolicy', env_RL, verbose=1, 
+                    device='auto', batch_size=batch_size, 
+                    seed=args.seed,
+                    policy_kwargs=dict(net_arch=[512, 512, 512], 
+                                       activation_fn=torch.nn.ReLU))
+    checkpoint_callback = CheckpointCallback(save_freq=episode_len*max(1, args.iter//20), save_path=model_loc)
+    post_eval_callback = EnergymEvalCallback(model, building_name, log_loc, 
+                                             min_kpis, max_kpis, 
+                                             min_outputs, max_outputs, 
+                                             env_RL.reward_function, verbose=0)
     eval_callback = EvalCallback(env_RL, best_model_save_path=model_loc + "/best_model/",
-                                 log_path=log_loc, eval_freq=args.iter//10, callback_after_eval=post_eval_callback)
+                                 log_path=log_loc, eval_freq=episode_len*max(1, args.iter//20), 
+                                 callback_after_eval=post_eval_callback)
     
     # Create the callback list
     callback = CallbackList([checkpoint_callback, eval_callback])
-    model.learn(args.iter, callback=callback)
+    model.learn(total_num_steps, callback=callback)
     env_RL.close()
 
     

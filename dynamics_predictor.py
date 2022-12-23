@@ -22,7 +22,7 @@ class DynamicsPredictor(nn.Module):
                       layers_info= [512, 512, 512, output_dim],
                       output_activation="none",
                       batch_norm=False, dropout=0.0,
-                      hidden_activations=['tanh', 'relu', 'relu', 'relu'], initialiser="Xavier", random_seed=43)
+                      hidden_activations=['tanh', 'relu', 'relu', 'relu'], initialiser="Xavier")
         self.apply(self._init_weights)
         
     def _init_weights(self, module):
