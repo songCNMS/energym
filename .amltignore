@@ -10,3 +10,4 @@ test_models
 amlt_configs
 *.ipynb
 d3rlpy_logs
+*.yaml
