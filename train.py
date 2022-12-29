@@ -327,8 +327,8 @@ if __name__ == "__main__":
     if args.dm:
         input_dim = env_RL.observation_space.shape[0]
         action_dim=env_RL.action_space.shape[0]
-        dynamics_predictor = DynamicsPredictor(input_dim+action_dim, input_dim).to("cpu")
-        dynamics_predictor.load_state_dict(torch.load(dynamics_model_loc, map_location=torch.device("cpu")))
+        dynamics_predictor = DynamicsPredictor(input_dim+action_dim, input_dim).to(args.device)
+        dynamics_predictor.load_state_dict(torch.load(dynamics_model_loc, map_location=map_location))
         dynamics_predictor.eval()
         env_RL.dynamics_predictor = dynamics_predictor
         
