@@ -12,7 +12,7 @@ from energym.wrappers.rl_wrapper import StableBaselinesRLWrapper
 from stable_baselines3 import SAC, PPO
 from stable_baselines3.common.callbacks import CallbackList, CheckpointCallback, EvalCallback, BaseCallback
 from buildings_factory import *
-from reward_model import RewardNet, ensemble_num, device
+from reward_model import RewardNet, ensemble_num
 import gym
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -279,6 +279,7 @@ parser.add_argument('--dm', action='store_true', help="whether using learnt dyna
 parser.add_argument('--seed', type=int, help='seed', default=7)
 parser.add_argument('--wandb', action='store_true', help="whether using wandb")
 parser.add_argument('--algo', type=str, help='algorithm', default="SAC")
+parser.add_argument('--device', type=str, help='device', default="cuda:0")
 
 
 if __name__ == "__main__":
@@ -310,15 +311,13 @@ if __name__ == "__main__":
     env_RL = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func)
     episode_len = env_RL.max_episode_len
     
-    if torch.cuda.is_available():
-        map_location=torch.device("cuda")
-    else: map_location=torch.device("cpu")
+    map_location=torch.device(args.device)
     
     if args.rm:
         input_dim = env_RL.observation_space.shape[0]
         reward_models = []
         for i in range(ensemble_num):
-            reward_model = RewardNet(input_dim)
+            reward_model = RewardNet(input_dim).to(args.device)
             _reward_model_loc = reward_model_loc.format(building_name, i)
             reward_model.load_state_dict(torch.load(_reward_model_loc, map_location=map_location))
             reward_model.eval()
@@ -328,8 +327,8 @@ if __name__ == "__main__":
     if args.dm:
         input_dim = env_RL.observation_space.shape[0]
         action_dim=env_RL.action_space.shape[0]
-        dynamics_predictor = DynamicsPredictor(input_dim+action_dim, input_dim)
-        dynamics_predictor.load_state_dict(torch.load(dynamics_model_loc, map_location=map_location))
+        dynamics_predictor = DynamicsPredictor(input_dim+action_dim, input_dim).to("cpu")
+        dynamics_predictor.load_state_dict(torch.load(dynamics_model_loc, map_location=torch.device("cpu")))
         dynamics_predictor.eval()
         env_RL.dynamics_predictor = dynamics_predictor
         
@@ -337,22 +336,22 @@ if __name__ == "__main__":
     total_num_steps = args.iter*episode_len
     print("total time steps: ", total_num_steps)
     n_actions = env_RL.action_space.shape[-1]
-    action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
+    # action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
     if policy_name == "SAC":
-        model = SAC('MlpPolicy', env_RL, verbose=1, device='auto', 
-                    train_freq=1, buffer_size=episode_len*max(1, args.iter//4), 
+        model = SAC('MlpPolicy', env_RL, verbose=1, device=args.device, 
+                    train_freq=8, buffer_size=episode_len*max(1, args.iter//4), 
                     gamma=0.99, tau=0.01,
-                    action_noise=action_noise,
+                    # action_noise=action_noise,
                     learning_starts=episode_len, 
                     batch_size=batch_size,
-                    gradient_steps=2,
+                    gradient_steps=8,
                     target_update_interval=16,
                     seed=args.seed,
                     policy_kwargs=dict(net_arch=[512, 512, 512], 
                                        activation_fn=torch.nn.ReLU))
     else:
         model = PPO('MlpPolicy', env_RL, verbose=1, 
-                    device='auto', batch_size=batch_size, 
+                    device=args.device, batch_size=batch_size, 
                     seed=args.seed,
                     policy_kwargs=dict(net_arch=[512, 512, 512], 
                                        activation_fn=torch.nn.ReLU))

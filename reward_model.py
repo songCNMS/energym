@@ -142,8 +142,8 @@ from energym.wrappers.rl_wrapper import StableBaselinesRLWrapper
 
 ensemble_num = 8
 batch_size = 1024
-device = ("cuda:0" if torch.cuda.is_available() else "cpu")
-print(device)
+# device = ("cuda" if torch.cuda.is_available() else "cpu")
+# print(device)
 
 
 # buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
@@ -155,7 +155,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
 parser.add_argument('--building', type=str, help='building name', required=True)
-
+parser.add_argument('--device', type=str, help='device', default="cuda:0")
 
 def run_train(i, input_dim, parent_loc, building_name):
     train_round_list = list(range(num_workers))
@@ -164,7 +164,7 @@ def run_train(i, input_dim, parent_loc, building_name):
     epochs = 50
     learning_rate = 0.001
     loss_fn = preference_loss
-    model = RewardNet(input_dim).to(device)
+    model = RewardNet(input_dim).to(args.device)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     loss_list = []
     test_loss_list = []

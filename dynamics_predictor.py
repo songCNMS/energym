@@ -123,8 +123,8 @@ from buildings_factory import *
 from energym.wrappers.rl_wrapper import StableBaselinesRLWrapper
 
 batch_size = 256
-device = ("cuda:0" if torch.cuda.is_available() else "cpu")
-print(device)
+# device = ("cuda" if torch.cuda.is_available() else "cpu")
+# print(device)
 
 
 # buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
@@ -136,7 +136,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
 parser.add_argument('--building', type=str, help='building name', required=True)
-
+parser.add_argument('--device', type=str, help='device', default="cuda:0")
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -151,7 +151,7 @@ if __name__ == "__main__":
     env_rl = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func)
     input_dim = env_rl.observation_space.shape[0] + env_rl.action_space.shape[0]
     output_dim = env_rl.observation_space.shape[0]
-    model = DynamicsPredictor(input_dim, output_dim).to(device)
+    model = DynamicsPredictor(input_dim, output_dim).to(args.device)
     learning_rate = 0.001
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     loss_fn = predictor_loss

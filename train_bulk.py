@@ -1,7 +1,7 @@
 import argparse
 import multiprocessing as mp
 import os
-
+import torch
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
@@ -25,9 +25,12 @@ if __name__ == "__main__":
         # cmds.append(cmd_prefix)
         # cmds.extend([cmd_prefix+" --dm", cmd_prefix+" --dm --rm"])
         cmds.extend([cmd_prefix+" --dm", cmd_prefix+" --dm --rm"])
+    device_count = torch.cuda.device_count()
     if building_name.startswith("Swiss") or building_name.startswith("Simple"):
         jobs = []
-        for cmd in cmds:
+        for i, cmd in enumerate(cmds):
+            device_idx = i % device_count
+            cmd += " --device cuda:%i"%device_idx
             p = mp.Process(target=run, args=(cmd,))
             jobs.append(p)
             p.start()
