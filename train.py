@@ -77,9 +77,9 @@ class EnergymEvalCallback(BaseCallback):
             online_preference_data_loc = os.environ['AMLT_DATA_DIR'] + "/data/offline_data/{}/preferences_data/{}/"
         else:
             online_data_loc = f"data/offline_data/{self.building_name}/traj_data/online_traj.pkl"
-            online_preference_data_loc = "/data/offline_data/{}/preferences_data/{}/"
+            online_preference_data_loc = "data/offline_data/{}/preferences_data/{}/"
         with open(online_data_loc, "rb") as f:
-            trajectories = pickle.loads(f)
+            trajectories = pickle.load(f)
         total_num_trajs = len(trajectories)
         for i in range(preference_per_round):
             idx1, idx2 = np.random.choice(total_num_trajs, size=2)

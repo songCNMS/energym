@@ -142,13 +142,14 @@ class StableBaselinesRLWrapper(RLWrapper):
         self.hour = control_values[self.building_idx]
         self.state = self.transform_state(self.outputs)
         if self.save_data:
-            if os.path.exists(self.data_loc):
-                with open(self.data_loc, "rb") as f:
-                    trajectories = pickle.load(f)
-            else: trajectories = []
-            trajectories.append(self.trajectory)
-            with open(self.data_loc, "wb") as f:
-                pickle.dump(trajectories, f)
+            if len(self.trajectory) > self.max_episode_len:
+                if os.path.exists(self.data_loc):
+                    with open(self.data_loc, "rb") as f:
+                        trajectories = pickle.load(f)
+                else: trajectories = []
+                trajectories.append(self.trajectory)
+                with open(self.data_loc, "wb") as f:
+                    pickle.dump(trajectories, f)
             self.trajectory = [self.state]
         return self.state
         

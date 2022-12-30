@@ -70,7 +70,7 @@ class DynamicsDataset(Dataset):
         return feature, label
     
     
-def train_loop(building_name, model, loss_fn, optimizer, round_list):
+def train_loop(building_name, model, loss_fn, optimizer, round_list, device):
     total_loss = 0.0
     total_size = 0
     for round in round_list:
@@ -95,7 +95,7 @@ def train_loop(building_name, model, loss_fn, optimizer, round_list):
                     print(f"round: {round}, traj_idx: {traj_idx}, loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
     return total_loss / total_size
 
-def test_loop(building_name, model, loss_fn, round_list):
+def test_loop(building_name, model, loss_fn, round_list, device):
     total_num_batches = 0
     test_loss, correct = 0, 0
     total_size = 0
@@ -169,11 +169,11 @@ if __name__ == "__main__":
     os.makedirs(model_loc, exist_ok=True)
     for t in range(epochs):
         print(f"Epoch {t+1}\n-------------------------------")
-        total_loss = train_loop(building_name, model, loss_fn, optimizer, train_round_list)
+        total_loss = train_loop(building_name, model, loss_fn, optimizer, train_round_list, args.device)
         loss_list.append(total_loss)
         fig, axs = plt.subplots(2, 1)
         axs[0].plot(loss_list)
-        test_loss = test_loop(building_name, model, loss_fn, eval_round_list)
+        test_loss = test_loop(building_name, model, loss_fn, eval_round_list, args.device)
         test_loss_list.append(test_loss)
         axs[1].plot(test_loss_list)
         plt.savefig(f"{model_loc}/dynamics_model_cost.png")
