@@ -12,14 +12,15 @@ from energym.wrappers.rl_wrapper import StableBaselinesRLWrapper
 from stable_baselines3 import SAC, PPO
 from stable_baselines3.common.callbacks import CallbackList, CheckpointCallback, EvalCallback, BaseCallback
 from buildings_factory import *
-from reward_model import RewardNet, ensemble_num
+from reward_model import RewardNet, ensemble_num, train_loop, test_loop, preference_loss
+from preference_data import num_workers, sample_preferences, perference_pairs_per_sample, len_traj
 import gym
 import pandas as pd
 import matplotlib.pyplot as plt
 import torch
 from dynamics_predictor import DynamicsPredictor
 from stable_baselines3.common.noise import NormalActionNoise
-
+import pickle
 
 import wandb
 import os
@@ -301,14 +302,18 @@ if __name__ == "__main__":
         model_loc = f"{os.environ['AMLT_DATA_DIR']}/data/{args.logdir}/{building_name}/{reward_path_suffix}/"
         reward_model_loc = os.environ['AMLT_DATA_DIR'] + "/data/models/{}/reward_model/reward_model_best_{}.pkl"
         dynamics_model_loc = f"{os.environ['AMLT_DATA_DIR']}/data/models/{building_name}/dynamics_model/dynamics_model_best.pkl"
+        online_data_loc = f"{os.environ['AMLT_DATA_DIR']}/data/offline_data/{building_name}/traj_data/online_traj.pkl"
+        online_preference_data_loc = os.environ['AMLT_DATA_DIR'] + "/data/offline_data/{}/preferences_data/{}/"
     else:
         model_loc = f"data/{args.logdir}/{building_name}/{reward_path_suffix}/"
         reward_model_loc = "data/models/{}/reward_model/reward_model_best_{}.pkl"
         dynamics_model_loc = f"data/models/{building_name}/dynamics_model/dynamics_model_best.pkl"
+        online_data_loc = f"data/offline_data/{building_name}/traj_data/online_traj.pkl"
+        online_preference_data_loc = "/data/offline_data/{}/preferences_data/{}/"
     
     log_loc = f"{model_loc}/logs/"
     os.makedirs(log_loc, exist_ok=True)
-    env_RL = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func)
+    env_RL = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func, save_data=True, data_loc=online_data_loc)
     episode_len = env_RL.max_episode_len
     
     map_location=torch.device(args.device)
@@ -316,12 +321,17 @@ if __name__ == "__main__":
     if args.rm:
         input_dim = env_RL.observation_space.shape[0]
         reward_models = []
+        optimizers = []
         for i in range(ensemble_num):
             reward_model = RewardNet(input_dim).to(args.device)
+            optimizer = torch.optim.Adam(reward_model.parameters(), lr=0.001)
             _reward_model_loc = reward_model_loc.format(building_name, i)
-            reward_model.load_state_dict(torch.load(_reward_model_loc, map_location=map_location))
+            checkpoint = torch.load(_reward_model_loc)
+            reward_model.load_state_dict(checkpoint['model_state_dict'])
+            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             reward_model.eval()
             reward_models.append(reward_model)
+            optimizers.append(optimizer)
         env_RL.reward_function = lambda min_kip, max_kpi, kpi, state: learnt_reward_func(reward_models, min_kip, max_kpi, kpi, state)
     
     if args.dm:
@@ -366,7 +376,43 @@ if __name__ == "__main__":
     
     # Create the callback list
     callback = CallbackList([checkpoint_callback, eval_callback])
-    model.learn(total_num_steps, callback=callback)
+    total_interleave_training_rounds = 10
+    for interleave_training_round in range(total_interleave_training_rounds):
+        model.learn(total_num_steps//total_interleave_training_rounds, callback=callback)
+        with open(online_data_loc, "rb") as f:
+            trajectories = pickle.loads(f)
+        total_num_trajs = len(trajectories)
+        for i in range(100):
+            idx1, idx2 = np.random.choice(total_num_trajs, size=2)
+            trajectory1, trajectory2 = trajectories[idx1], trajectories[idx2]
+            preference_pairs1 = sample_preferences(trajectory1, trajectory2, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
+            preference_pairs2 = sample_preferences(trajectory1, trajectory1, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
+            preference_pairs3 = sample_preferences(trajectory2, trajectory2, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
+            _data_loc = online_preference_data_loc.format(building_name, len_traj)
+            if i < 80: file_loc = f'{_data_loc}/preference_data_{num_workers+1}_{i}.pkl'
+            else: file_loc = f'{_data_loc}/preference_data_{num_workers+2}_{i}.pkl'
+            with open(file_loc, 'wb') as f:
+                np.save(f, preference_pairs1[len_traj-1]+preference_pairs2[len_traj-1]+preference_pairs3[len_traj-1])
+        
+        parent_loc = (os.environ['AMLT_DATA_DIR'] if args.amlt else "./")
+        train_round_list = [num_workers+1] + [np.random.randint(num_workers)]
+        eval_round_list = [num_workers+2]
+        loss_fn = preference_loss
+        for ridx in range(ensemble_num):
+            loss_list, test_loss_list, correct_list = [], [], []
+            reward_models[ridx].train()
+            for t in range(100):
+                print(f"Epoch {t+1}\n-------------------------------")
+                total_loss = train_loop(building_name, reward_models[ridx], loss_fn, optimizers[ridx], train_round_list, parent_loc, args.device)
+                loss_list.append(total_loss)
+                fig, axs = plt.subplots(3, 1)
+                axs[0].plot(loss_list)
+                test_loss, correct = test_loop(building_name, reward_models[ridx], loss_fn, eval_round_list, parent_loc, args.device)
+                test_loss_list.append(test_loss)
+                correct_list.append(correct)
+                axs[1].plot(test_loss_list)
+                axs[2].plot(correct_list)
+                plt.savefig(f"{model_loc}/reward_model_cost_{interleave_training_round}_{ridx}.png")
+            reward_models[ridx].eval()
+        os.remove(online_data_loc)
     env_RL.close()
-
-    

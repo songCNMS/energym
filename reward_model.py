@@ -70,7 +70,7 @@ class PreferencDataset(Dataset):
         label = self.labels[idx, :]
         return feature, label
     
-def train_loop(building_name, model, loss_fn, optimizer, round_list, parent_loc):
+def train_loop(building_name, model, loss_fn, optimizer, round_list, parent_loc, device):
     total_loss = 0.0
     total_size = 0
     for round in round_list:
@@ -104,7 +104,7 @@ def train_loop(building_name, model, loss_fn, optimizer, round_list, parent_loc)
                     print(f"round: {round}, traj_idx: {traj_idx}, loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
     return total_loss / total_size
 
-def test_loop(building_name, model, loss_fn, round_list, parent_loc):
+def test_loop(building_name, model, loss_fn, round_list, parent_loc, device):
     total_num_batches = 0
     test_loss, correct = 0, 0
     model.eval()
@@ -157,14 +157,19 @@ parser.add_argument('--amlt', action='store_true', help="remote execution on aml
 parser.add_argument('--building', type=str, help='building name', required=True)
 parser.add_argument('--device', type=str, help='device', default="cuda:0")
 
+
 def run_train(i, input_dim, parent_loc, building_name):
+    device = "cpu"
+    if torch.cuda.is_available():
+        device_count = torch.cuda.device_count()
+        device = "cuda:%i"%(i%device_count)
     train_round_list = list(range(num_workers))
     train_round_list.remove(i)        
     eval_round_list = [i]
-    epochs = 50
+    epochs = 30
     learning_rate = 0.001
     loss_fn = preference_loss
-    model = RewardNet(input_dim).to(args.device)
+    model = RewardNet(input_dim).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     loss_list = []
     test_loss_list = []
@@ -173,17 +178,23 @@ def run_train(i, input_dim, parent_loc, building_name):
     os.makedirs(model_loc, exist_ok=True)
     for t in range(epochs):
         print(f"Epoch {t+1}\n-------------------------------")
-        total_loss = train_loop(building_name, model, loss_fn, optimizer, train_round_list, parent_loc)
+        total_loss = train_loop(building_name, model, loss_fn, optimizer, train_round_list, parent_loc, device)
         loss_list.append(total_loss)
         fig, axs = plt.subplots(3, 1)
         axs[0].plot(loss_list)
-        test_loss, correct = test_loop(building_name, model, loss_fn, eval_round_list, parent_loc)
+        test_loss, correct = test_loop(building_name, model, loss_fn, eval_round_list, parent_loc, device)
         test_loss_list.append(test_loss)
         correct_list.append(correct)
         axs[1].plot(test_loss_list)
         axs[2].plot(correct_list)
         plt.savefig(f"{model_loc}/reward_model_cost_{i}.png")
-        if np.min(test_loss_list) == test_loss: torch.save(model.state_dict(), f"{model_loc}/reward_model_best_{i}.pkl")
+        if np.min(test_loss_list) == test_loss: 
+            torch.save({'epoch': t,
+                        'model_state_dict': model.state_dict(),
+                        'optimizer_state_dict': optimizer.state_dict(),
+                        'loss': np.mean(loss_list),
+                        "eval_loss": np.mean(test_loss_list)
+                        }, f"{model_loc}/reward_model_best_{i}.pkl")
     print(f"Round {i} done!")
 
 

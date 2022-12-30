@@ -153,9 +153,9 @@ def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, m
             with open(traj_file_loc, "rb") as f:
                 trajectories = pickle.load(f)
             trajectory1, trajectory2 = trajectories[0], trajectories[1]
-        preference_pairs1 = sample_preferences(trajectory1, trajectory2, min_kpis, max_kpis, num_preferences=102400)
-        preference_pairs2 = sample_preferences(trajectory1, trajectory1, min_kpis, max_kpis, num_preferences=102400)
-        preference_pairs3 = sample_preferences(trajectory2, trajectory2, min_kpis, max_kpis, num_preferences=102400)
+        preference_pairs1 = sample_preferences(trajectory1, trajectory2, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
+        preference_pairs2 = sample_preferences(trajectory1, trajectory1, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
+        preference_pairs3 = sample_preferences(trajectory2, trajectory2, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
         
         for j, _len_traj in enumerate(len_traj_list):
             _data_loc = data_loc.format(building_name, _len_traj)
@@ -172,6 +172,7 @@ len_traj_list = [1]
 # len_traj_list = list(range(1, 9))
 num_workers = 8
 preference_per_round = 100
+perference_pairs_per_sample = 102400
 
 # buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
 #                   "Apartments2Grid-v0", "OfficesThermostat-v0", "MixedUseFanFCU-v0",

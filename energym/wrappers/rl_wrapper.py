@@ -7,6 +7,7 @@ from energym.envs.utils.kpi import KPI
 from collections import OrderedDict
 from buildings_factory import *
 import sys
+import pickle
 
 
 def transform(val, l, u, is_action=False):
@@ -65,13 +66,16 @@ class StableBaselinesRLWrapper(RLWrapper):
 
     """
     metadata = {'render.modes': ['console']}
-    def __init__(self, building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_function, dynamics_predictor=None, eval=False):
+    def __init__(self, building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_function, dynamics_predictor=None, eval=False, save_data=False, data_loc=None):
         self.building_name = building_name
         self.min_kpis = min_kpis
         self.max_kpis = max_kpis
         self.min_outputs = min_outputs
         self.max_outputs = max_outputs
         self.eval_mode = eval
+        self.save_data = save_data
+        self.data_loc = data_loc
+        if self.save_data: assert self.data_loc is not None, "data loc must be given"
         self.dynamics_predictor = dynamics_predictor
         building_idx = buildings_list.index(building_name)
         env = get_env(building_name, eval=eval)
@@ -98,6 +102,8 @@ class StableBaselinesRLWrapper(RLWrapper):
         self.state = self.transform_state(self.outputs)
         self.max_episode_len = control_frequency[building_idx]*simulation_days
         self.kpis = KPI(self.env.kpi_options)
+        self.traj_idx_cnt = 0
+        if self.save_data: self.trajectory = [self.state]
         
         
     def inverse_transform_action(self, actions):
@@ -135,6 +141,15 @@ class StableBaselinesRLWrapper(RLWrapper):
         self.cur_step = 0
         self.hour = control_values[self.building_idx]
         self.state = self.transform_state(self.outputs)
+        if self.save_data:
+            if os.path.exists(self.data_loc):
+                with open(self.data_loc, "rb") as f:
+                    trajectories = pickle.load(f)
+            else: trajectories = []
+            trajectories.append(self.trajectory)
+            with open(self.data_loc, "wb") as f:
+                pickle.dump(trajectories, f)
+            self.trajectory = [self.state]
         return self.state
         
     def render(self, mode='console'):
@@ -173,4 +188,5 @@ class StableBaselinesRLWrapper(RLWrapper):
         info = {}
         self.cur_step += 1
         self.state = next_state
+        if self.save_data: self.trajectory.extend([inputs, reward, kpi, next_state])
         return next_state, reward, done, info

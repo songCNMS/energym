@@ -23,17 +23,17 @@ data:
 jobs:
 
 - name: SimpleHouseRSla-v0-1
-  sku: 16G1-V100
+  sku: G2-V100
   command:
   - python train_bulk.py --building SimpleHouseRSla-v0 --amlt --seed 7,13,19,23
 
 - name: SwissHouseRSlaW2W-v0-1
-  sku: 16G1-V100
+  sku: G2-V100
   command:
   - python train_bulk.py --building SwissHouseRSlaW2W-v0 --amlt --seed 7,13,19,23
 
 - name: SwissHouseRSlaTank-v0-1
-  sku: 16G1-V100
+  sku: G2-V100
   command:
   - python train_bulk.py --building SwissHouseRSlaTank-v0 --amlt --seed 7,13,19,23
 
