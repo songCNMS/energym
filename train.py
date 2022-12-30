@@ -64,7 +64,7 @@ class EnergymEvalCallback(BaseCallback):
         self.is_d3rl = is_d3rl
         self.is_remote = is_remote
         self.is_reward_model_retrain = reward_model_retrain
-        
+        self.reward_training_round = 1
         if not self.is_d3rl:
             super().init_callback(model)
         else: 
@@ -92,7 +92,7 @@ class EnergymEvalCallback(BaseCallback):
             else: file_loc = f'{_data_loc}/preference_data_{num_workers+2}_{i}.pkl'
             with open(file_loc, 'wb') as f:
                 np.save(f, preference_pairs1[len_traj-1]+preference_pairs2[len_traj-1]+preference_pairs3[len_traj-1])
-        
+
         parent_loc = (os.environ['AMLT_DATA_DIR'] if self.is_remote else "./")
         train_round_list = [num_workers+1] + [np.random.randint(num_workers)]
         eval_round_list = [num_workers+2]
@@ -100,7 +100,7 @@ class EnergymEvalCallback(BaseCallback):
         for ridx in range(ensemble_num):
             loss_list, test_loss_list, correct_list = [], [], []
             reward_models[ridx].train()
-            for t in range(100):
+            for t in range(30):
                 print(f"Epoch {t+1}\n-------------------------------")
                 total_loss = train_loop(self.building_name, reward_models[ridx], loss_fn, optimizers[ridx], train_round_list, parent_loc, args.device)
                 loss_list.append(total_loss)
@@ -111,9 +111,10 @@ class EnergymEvalCallback(BaseCallback):
                 correct_list.append(correct)
                 axs[1].plot(test_loss_list)
                 axs[2].plot(correct_list)
-                plt.savefig(f"{model_loc}/reward_model_cost_{interleave_training_round}_{ridx}.png")
+                plt.savefig(f"{model_loc}/reward_model_cost_{self.reward_training_round}_{ridx}.png")
             reward_models[ridx].eval()
         os.remove(online_data_loc)
+        self.reward_training_round += 1
         self.env.reward_function = lambda min_kip, max_kpi, kpi, state: learnt_reward_func(reward_models, min_kip, max_kpi, kpi, state)
     
     
