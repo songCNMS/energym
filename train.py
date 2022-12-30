@@ -131,9 +131,9 @@ class EnergymEvalCallback(BaseCallback):
                            simulation_days=self.simulation_days, 
                            eval_mode=True)
         eval_env_RL = StableBaselinesRLWrapper(self.building_name, 
-                                                    self.min_kpis, self.max_kpis, 
-                                                    self.min_outputs, self.max_outputs, 
-                                                    self.reward_function, eval=True)
+                                               self.min_kpis, self.max_kpis, 
+                                               self.min_outputs, self.max_outputs, 
+                                               self.reward_function, eval=True)
         inputs = get_inputs(self.building_name, bs_eval_env)
         
 
@@ -153,7 +153,7 @@ class EnergymEvalCallback(BaseCallback):
         step = 0
         hour = control_values[building_idx]
         res = {}
-        while not done:
+        while not done and step < eval_env_RL.max_episode_len:
             bs_control = controller(inputs, step)(bs_outputs, control_values[building_idx], hour)
             bs_control.update(default_control)
             bs_controls +=[ {p:bs_control[p][0] for p in bs_control} ]

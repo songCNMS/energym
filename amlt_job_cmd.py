@@ -8,10 +8,10 @@ import os
 description = "Energym Train with Learnt Dynamics and Reward Models"
 suffix = "--rm --dm --iter 500"
 seeds_list = [17]
-buildings = ["SimpleHouseRSla-v0", "SwissHouseRSlaW2W-v0", "SwissHouseRSlaTank-v0"]
+buildings = ["SimpleHouseRad-v0", "SimpleHouseRSla-v0", "SwissHouseRSlaW2W-v0", "SwissHouseRSlaTank-v0"]
 
-cmd="""
-description: Energym Train using Learnt Reward and Dynamics Model
+cmd=f"""
+description: {description}
 
 target:
   service: sing

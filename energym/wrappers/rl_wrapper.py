@@ -66,7 +66,13 @@ class StableBaselinesRLWrapper(RLWrapper):
 
     """
     metadata = {'render.modes': ['console']}
-    def __init__(self, building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_function, dynamics_predictor=None, eval=False, save_data=False, data_loc=None):
+    def __init__(self, building_name, 
+                 min_kpis, max_kpis, 
+                 min_outputs, max_outputs, 
+                 reward_function, 
+                 dynamics_predictor=None, 
+                 eval=False, 
+                 save_data=False, data_loc=None):
         self.building_name = building_name
         self.min_kpis = min_kpis
         self.max_kpis = max_kpis

@@ -22,33 +22,43 @@ data:
 
 jobs:
 
+- name: SimpleHouseRad-v0-1
+  sku: G2-V100
+  command:
+  - python train_bulk.py --building SimpleHouseRad-v0 --amlt --seed 7,13
+
 - name: SimpleHouseRSla-v0-1
   sku: G2-V100
   command:
-  - python train_bulk.py --building SimpleHouseRSla-v0 --amlt --seed 7,13,19,23
+  - python train_bulk.py --building SimpleHouseRSla-v0 --amlt --seed 7,13
 
 - name: SwissHouseRSlaW2W-v0-1
   sku: G2-V100
   command:
-  - python train_bulk.py --building SwissHouseRSlaW2W-v0 --amlt --seed 7,13,19,23
+  - python train_bulk.py --building SwissHouseRSlaW2W-v0 --amlt --seed 7,13
 
 - name: SwissHouseRSlaTank-v0-1
   sku: G2-V100
   command:
-  - python train_bulk.py --building SwissHouseRSlaTank-v0 --amlt --seed 7,13,19,23
+  - python train_bulk.py --building SwissHouseRSlaTank-v0 --amlt --seed 7,13
 
 
-- name: SwissHouseRSlaW2W-v0-3
-  sku: 16G1-V100
+- name: SwissHouseRSlaW2W-v0-2
+  sku: G2-V100
   command:
-  - python train_bulk.py --building SwissHouseRSlaW2W-v0 --amlt --seed 29,31,43,67
+  - python train_bulk.py --building SwissHouseRSlaW2W-v0 --amlt --seed 29,31
 
-- name: SwissHouseRSlaTank-v0-3
-  sku: 16G1-V100
+- name: SwissHouseRSlaTank-v0-2
+  sku: G2-V100
   command:
-  - python train_bulk.py --building SwissHouseRSlaTank-v0 --amlt --seed 29,31,43,67
+  - python train_bulk.py --building SwissHouseRSlaTank-v0 --amlt --seed 29,31
 
-- name: SimpleHouseRSla-v0-3
-  sku: 16G1-V100
+- name: SimpleHouseRSla-v0-2
+  sku: G2-V100
   command:
-  - python train_bulk.py --building SimpleHouseRSla-v0 --amlt --seed 29,31,43,67
+  - python train_bulk.py --building SimpleHouseRSla-v0 --amlt --seed 29,31
+
+- name: SimpleHouseRad-v0-2
+  sku: G2-V100
+  command:
+  - python train_bulk.py --building SimpleHouseRad-v0 --amlt --seed 29,31
