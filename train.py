@@ -13,7 +13,7 @@ from stable_baselines3 import SAC, PPO
 from stable_baselines3.common.callbacks import CallbackList, CheckpointCallback, EvalCallback, BaseCallback
 from buildings_factory import *
 from reward_model import RewardNet, ensemble_num, train_loop, test_loop, preference_loss
-from preference_data import num_workers, sample_preferences, perference_pairs_per_sample, len_traj
+from preference_data import num_workers, sample_preferences, perference_pairs_per_sample, len_traj, preference_per_round
 import gym
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -42,7 +42,9 @@ class EnergymEvalCallback(BaseCallback):
         max_kpis,
         min_outputs,
         max_outputs,
-        reward_function,
+        env,
+        is_remote,
+        reward_model_retrain,
         simulation_days: int = 28,
         verbose: int = 0,
         is_wandb: bool = False,
@@ -57,13 +59,63 @@ class EnergymEvalCallback(BaseCallback):
         self.min_outputs = min_outputs
         self.max_outputs = max_outputs
         self.is_wandb = is_wandb
-        self.reward_function = reward_function
+        self.reward_function = env.reward_function
+        self.env = env
         self.is_d3rl = is_d3rl
+        self.is_remote = is_remote
+        self.is_reward_model_retrain = reward_model_retrain
+        
         if not self.is_d3rl:
             super().init_callback(model)
         else: 
             self.model = model
             self.num_timesteps = 0
+            
+    def reward_model_trainig(self):
+        if self.is_remote:
+            online_data_loc = f"{os.environ['AMLT_DATA_DIR']}/data/offline_data/{self.building_name}/traj_data/online_traj.pkl"
+            online_preference_data_loc = os.environ['AMLT_DATA_DIR'] + "/data/offline_data/{}/preferences_data/{}/"
+        else:
+            online_data_loc = f"data/offline_data/{self.building_name}/traj_data/online_traj.pkl"
+            online_preference_data_loc = "/data/offline_data/{}/preferences_data/{}/"
+        with open(online_data_loc, "rb") as f:
+            trajectories = pickle.loads(f)
+        total_num_trajs = len(trajectories)
+        for i in range(preference_per_round):
+            idx1, idx2 = np.random.choice(total_num_trajs, size=2)
+            trajectory1, trajectory2 = trajectories[idx1], trajectories[idx2]
+            preference_pairs1 = sample_preferences(trajectory1, trajectory2, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
+            preference_pairs2 = sample_preferences(trajectory1, trajectory1, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
+            preference_pairs3 = sample_preferences(trajectory2, trajectory2, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
+            _data_loc = online_preference_data_loc.format(self.building_name, len_traj)
+            if i < int(0.8*preference_per_round): file_loc = f'{_data_loc}/preference_data_{num_workers+1}_{i}.pkl'
+            else: file_loc = f'{_data_loc}/preference_data_{num_workers+2}_{i}.pkl'
+            with open(file_loc, 'wb') as f:
+                np.save(f, preference_pairs1[len_traj-1]+preference_pairs2[len_traj-1]+preference_pairs3[len_traj-1])
+        
+        parent_loc = (os.environ['AMLT_DATA_DIR'] if self.is_remote else "./")
+        train_round_list = [num_workers+1] + [np.random.randint(num_workers)]
+        eval_round_list = [num_workers+2]
+        loss_fn = preference_loss
+        for ridx in range(ensemble_num):
+            loss_list, test_loss_list, correct_list = [], [], []
+            reward_models[ridx].train()
+            for t in range(100):
+                print(f"Epoch {t+1}\n-------------------------------")
+                total_loss = train_loop(self.building_name, reward_models[ridx], loss_fn, optimizers[ridx], train_round_list, parent_loc, args.device)
+                loss_list.append(total_loss)
+                fig, axs = plt.subplots(3, 1)
+                axs[0].plot(loss_list)
+                test_loss, correct = test_loop(self.building_name, reward_models[ridx], loss_fn, eval_round_list, parent_loc, args.device)
+                test_loss_list.append(test_loss)
+                correct_list.append(correct)
+                axs[1].plot(test_loss_list)
+                axs[2].plot(correct_list)
+                plt.savefig(f"{model_loc}/reward_model_cost_{interleave_training_round}_{ridx}.png")
+            reward_models[ridx].eval()
+        os.remove(online_data_loc)
+        self.env.reward_function = lambda min_kip, max_kpi, kpi, state: learnt_reward_func(reward_models, min_kip, max_kpi, kpi, state)
+    
     
     def _on_step(self) -> bool:
         building_idx = buildings_list.index(self.building_name)
@@ -259,6 +311,23 @@ class EnergymEvalCallback(BaseCallback):
         eval_env_RL.close()
         bs_eval_env.close()
         if self.is_wandb: wandb.finish()
+        if self.is_reward_model_retrain: self.reward_model_trainig()
+        
+        
+def load_reward_model(input_dim):
+    reward_models = []
+    optimizers = []
+    for i in range(ensemble_num):
+        reward_model = RewardNet(input_dim).to(args.device)
+        optimizer = torch.optim.Adam(reward_model.parameters(), lr=0.001)
+        _reward_model_loc = reward_model_loc.format(building_name, i)
+        checkpoint = torch.load(_reward_model_loc)
+        reward_model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        reward_model.eval()
+        reward_models.append(reward_model)
+        optimizers.append(optimizer)
+    return reward_models, optimizers
 
 # buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
 #                   "Apartments2Grid-v0", "OfficesThermostat-v0", "MixedUseFanFCU-v0",
@@ -281,6 +350,7 @@ parser.add_argument('--seed', type=int, help='seed', default=7)
 parser.add_argument('--wandb', action='store_true', help="whether using wandb")
 parser.add_argument('--algo', type=str, help='algorithm', default="SAC")
 parser.add_argument('--device', type=str, help='device', default="cuda:0")
+parser.add_argument('--inc', action='store_true', help="interleaving training")
 
 
 if __name__ == "__main__":
@@ -294,8 +364,9 @@ if __name__ == "__main__":
     building_name = args.building
     min_kpis, max_kpis, min_outputs, max_outputs = collect_baseline_kpi(building_name)
     policy_name = args.algo
-    reward_path_suffix = f"{policy_name}_"
-    reward_path_suffix += ("rewards" if args.rm else "manual")
+    reward_path_suffix = f"{policy_name}"
+    reward_path_suffix += ("_inc" if args.inc else "")
+    reward_path_suffix += ("_rewards" if args.rm else "_manual")
     reward_path_suffix += ("_predictor" if args.dm else "_simulator")
     reward_path_suffix += f"_seed{args.seed}"
     if args.amlt:
@@ -303,35 +374,23 @@ if __name__ == "__main__":
         reward_model_loc = os.environ['AMLT_DATA_DIR'] + "/data/models/{}/reward_model/reward_model_best_{}.pkl"
         dynamics_model_loc = f"{os.environ['AMLT_DATA_DIR']}/data/models/{building_name}/dynamics_model/dynamics_model_best.pkl"
         online_data_loc = f"{os.environ['AMLT_DATA_DIR']}/data/offline_data/{building_name}/traj_data/online_traj.pkl"
-        online_preference_data_loc = os.environ['AMLT_DATA_DIR'] + "/data/offline_data/{}/preferences_data/{}/"
     else:
         model_loc = f"data/{args.logdir}/{building_name}/{reward_path_suffix}/"
         reward_model_loc = "data/models/{}/reward_model/reward_model_best_{}.pkl"
         dynamics_model_loc = f"data/models/{building_name}/dynamics_model/dynamics_model_best.pkl"
         online_data_loc = f"data/offline_data/{building_name}/traj_data/online_traj.pkl"
-        online_preference_data_loc = "/data/offline_data/{}/preferences_data/{}/"
     
     log_loc = f"{model_loc}/logs/"
     os.makedirs(log_loc, exist_ok=True)
-    env_RL = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func, save_data=True, data_loc=online_data_loc)
-    episode_len = env_RL.max_episode_len
+    if args.inc: env_RL = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func, save_data=True, data_loc=online_data_loc)
+    else: env_RL = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func)
     
+    episode_len = env_RL.max_episode_len
     map_location=torch.device(args.device)
     
     if args.rm:
         input_dim = env_RL.observation_space.shape[0]
-        reward_models = []
-        optimizers = []
-        for i in range(ensemble_num):
-            reward_model = RewardNet(input_dim).to(args.device)
-            optimizer = torch.optim.Adam(reward_model.parameters(), lr=0.001)
-            _reward_model_loc = reward_model_loc.format(building_name, i)
-            checkpoint = torch.load(_reward_model_loc)
-            reward_model.load_state_dict(checkpoint['model_state_dict'])
-            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-            reward_model.eval()
-            reward_models.append(reward_model)
-            optimizers.append(optimizer)
+        reward_models, optimizers = load_reward_model(input_dim)
         env_RL.reward_function = lambda min_kip, max_kpi, kpi, state: learnt_reward_func(reward_models, min_kip, max_kpi, kpi, state)
     
     if args.dm:
@@ -369,50 +428,12 @@ if __name__ == "__main__":
     post_eval_callback = EnergymEvalCallback(model, building_name, log_loc, 
                                              min_kpis, max_kpis, 
                                              min_outputs, max_outputs, 
-                                             env_RL.reward_function, verbose=0)
+                                             env_RL, args.amlt, args.inc, verbose=0)
     eval_callback = EvalCallback(env_RL, best_model_save_path=model_loc + "/best_model/",
                                  log_path=log_loc, eval_freq=episode_len*max(1, args.iter//20), 
                                  callback_after_eval=post_eval_callback)
     
     # Create the callback list
     callback = CallbackList([checkpoint_callback, eval_callback])
-    total_interleave_training_rounds = 10
-    for interleave_training_round in range(total_interleave_training_rounds):
-        model.learn(total_num_steps//total_interleave_training_rounds, callback=callback)
-        with open(online_data_loc, "rb") as f:
-            trajectories = pickle.loads(f)
-        total_num_trajs = len(trajectories)
-        for i in range(100):
-            idx1, idx2 = np.random.choice(total_num_trajs, size=2)
-            trajectory1, trajectory2 = trajectories[idx1], trajectories[idx2]
-            preference_pairs1 = sample_preferences(trajectory1, trajectory2, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
-            preference_pairs2 = sample_preferences(trajectory1, trajectory1, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
-            preference_pairs3 = sample_preferences(trajectory2, trajectory2, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
-            _data_loc = online_preference_data_loc.format(building_name, len_traj)
-            if i < 80: file_loc = f'{_data_loc}/preference_data_{num_workers+1}_{i}.pkl'
-            else: file_loc = f'{_data_loc}/preference_data_{num_workers+2}_{i}.pkl'
-            with open(file_loc, 'wb') as f:
-                np.save(f, preference_pairs1[len_traj-1]+preference_pairs2[len_traj-1]+preference_pairs3[len_traj-1])
-        
-        parent_loc = (os.environ['AMLT_DATA_DIR'] if args.amlt else "./")
-        train_round_list = [num_workers+1] + [np.random.randint(num_workers)]
-        eval_round_list = [num_workers+2]
-        loss_fn = preference_loss
-        for ridx in range(ensemble_num):
-            loss_list, test_loss_list, correct_list = [], [], []
-            reward_models[ridx].train()
-            for t in range(100):
-                print(f"Epoch {t+1}\n-------------------------------")
-                total_loss = train_loop(building_name, reward_models[ridx], loss_fn, optimizers[ridx], train_round_list, parent_loc, args.device)
-                loss_list.append(total_loss)
-                fig, axs = plt.subplots(3, 1)
-                axs[0].plot(loss_list)
-                test_loss, correct = test_loop(building_name, reward_models[ridx], loss_fn, eval_round_list, parent_loc, args.device)
-                test_loss_list.append(test_loss)
-                correct_list.append(correct)
-                axs[1].plot(test_loss_list)
-                axs[2].plot(correct_list)
-                plt.savefig(f"{model_loc}/reward_model_cost_{interleave_training_round}_{ridx}.png")
-            reward_models[ridx].eval()
-        os.remove(online_data_loc)
+    model.learn(total_num_steps, callback=callback)
     env_RL.close()
