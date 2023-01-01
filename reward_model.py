@@ -70,9 +70,13 @@ class PreferencDataset(Dataset):
         label = self.labels[idx, :]
         return feature, label
     
-def train_loop(building_name, model, loss_fn, optimizer, round_list, parent_loc, device):
-    total_loss = 0.0
+def train_loop(building_name, models, loss_fn, optimizers, round_list, parent_loc, device):
     total_size = 0
+    if not isinstance(models, list): models = [models]
+    if not isinstance(optimizers, list): optimizers = [optimizers]
+    num_models = len(models)
+    total_losses = [0.0]*num_models
+    
     for round in round_list:
         for traj_idx in range(preference_per_round):
             if not os.path.exists(f'{parent_loc}/data/offline_data/{building_name}/preferences_data/{len_traj}/preference_data_{round}_{traj_idx}.pkl'): continue
@@ -86,28 +90,33 @@ def train_loop(building_name, model, loss_fn, optimizer, round_list, parent_loc,
                 X = X.reshape(num_samples, 2, -1)
                 X_left = X[:, 0, :].reshape(num_samples, len_traj, -1)
                 X_right = X[:, 1, :].reshape(num_samples, len_traj, -1)
-                pred = torch.zeros(X.size(0), 2, requires_grad=True).to(device)
+                preds = [torch.zeros(X.size(0), 2, requires_grad=True).to(device) for _ in range(num_models)]
                 for i in range(len_traj):
                     model_in = torch.cat((X_left[:, i, :], X_right[:, i, :]), axis=1).to(device)
-                    model_out = model(model_in)
-                    pred = pred + model_out
-                pred /= len_traj
-                loss = loss_fn(pred, y.to(device))
+                    model_outs = [model(model_in) for model in models]
+                    preds = [pred + model_out for pred, model_out in zip(preds, model_outs)]
+                preds = [pred / len_traj for pred in preds]
+                y = y.to(device)
+                losses = [loss_fn(pred, y) for pred in preds]
                 # Backpropagation
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-                total_loss += loss.cpu().item()
+                for i in range(num_models): 
+                    optimizers[i].zero_grad()
+                    losses[i].backward()
+                    optimizers[i].step()
+                losses = [loss.cpu().item() for loss in losses]
+                total_losses = [total_losses[i]+losses[i] for i in range(num_models)]
                 total_size += 1
                 if (batch % 10 == 0):
-                    loss, current = loss.cpu().item(), batch * batch_size
-                    print(f"round: {round}, traj_idx: {traj_idx}, loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
-    return total_loss / total_size
+                    current = batch * batch_size
+                    print(f"round: {round}, traj_idx: {traj_idx}, loss: {losses}  [{current:>5d}/{size:>5d}]")
+    return [total_loss / total_size for total_loss in total_losses]
 
-def test_loop(building_name, model, loss_fn, round_list, parent_loc, device):
+def test_loop(building_name, models, loss_fn, round_list, parent_loc, device):
     total_num_batches = 0
-    test_loss, correct = 0, 0
-    model.eval()
+    if not isinstance(models, list): models = [models]
+    num_models = len(models)
+    test_losses, corrects = [0]*num_models, [0]*num_models
+    for model in models: model.eval()
     for round in round_list:
         for traj_idx in range(preference_per_round):
             if not os.path.exists(f'{parent_loc}/data/offline_data/{building_name}/preferences_data/{len_traj}/preference_data_{round}_{traj_idx}.pkl'): continue
@@ -120,19 +129,19 @@ def test_loop(building_name, model, loss_fn, round_list, parent_loc, device):
                     X = X.reshape(num_samples, 2, -1)
                     X_left = X[:, 0, :].reshape(num_samples, len_traj, -1)
                     X_right = X[:, 1, :].reshape(num_samples, len_traj, -1)
-                    pred = torch.zeros(X.size(0), 2, requires_grad=True).to(device)
+                    preds = [torch.zeros(X.size(0), 2, requires_grad=True).to(device) for _ in range(num_models)]
                     for i in range(len_traj):
                         model_in = torch.cat((X_left[:, i, :], X_right[:, i, :]), axis=1).to(device)
-                        model_out = model(model_in)
-                        pred = pred + model_out
-                    test_loss += loss_fn(pred, y).cpu().item()
-                    correct += (pred.argmax(1) == y.argmax(1)).type(torch.float).sum().cpu().item()
+                        model_outs = [model(model_in) for model in models]
+                        preds = [pred + model_out for pred, model_out in zip(preds, model_outs)]
+                    test_losses = [loss_fn(pred, y).cpu().item() for pred in preds]
+                    corrects = [(pred.argmax(1) == y.argmax(1)).type(torch.float).sum().cpu().item() for pred in preds]
                     total_num_batches += 1
-    model.train()
-    correct /= (total_num_batches*batch_size)
-    test_loss /= total_num_batches
-    print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
-    return test_loss, correct
+    for model in models: model.train()
+    corrects = [correct/(total_num_batches*batch_size) for correct in corrects]
+    test_losses = [test_loss/total_num_batches for test_loss in test_losses]
+    print(f"Test Error: \n Accuracy: {corrects}, Avg loss: {test_losses} \n")
+    return test_losses, corrects
     
     
 import matplotlib.pyplot as plt
@@ -179,12 +188,12 @@ def run_train(i, input_dim, parent_loc, building_name):
     for t in range(epochs):
         print(f"Epoch {t+1}\n-------------------------------")
         total_loss = train_loop(building_name, model, loss_fn, optimizer, train_round_list, parent_loc, device)
-        loss_list.append(total_loss)
+        loss_list.append(total_loss[0])
         fig, axs = plt.subplots(3, 1)
         axs[0].plot(loss_list)
         test_loss, correct = test_loop(building_name, model, loss_fn, eval_round_list, parent_loc, device)
-        test_loss_list.append(test_loss)
-        correct_list.append(correct)
+        test_loss_list.append(test_loss[0])
+        correct_list.append(correct[0])
         axs[1].plot(test_loss_list)
         axs[2].plot(correct_list)
         plt.savefig(f"{model_loc}/reward_model_cost_{i}.png")

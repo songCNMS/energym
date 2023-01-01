@@ -74,16 +74,21 @@ class EnergymEvalCallback(BaseCallback):
     def reward_model_trainig(self):
         if self.is_remote:
             online_data_loc = f"{os.environ['AMLT_DATA_DIR']}/data/offline_data/{self.building_name}/traj_data/online_traj.pkl"
+            offline_data_loc = "{os.environ['AMLT_DATA_DIR']}/data/offline_data/{}/traj_data/0_{}.pkl"
             online_preference_data_loc = os.environ['AMLT_DATA_DIR'] + "/data/offline_data/{}/preferences_data/{}/"
         else:
             online_data_loc = f"data/offline_data/{self.building_name}/traj_data/online_traj.pkl"
+            offline_data_loc = "data/offline_data/{}/traj_data/0_{}.pkl"
             online_preference_data_loc = "data/offline_data/{}/preferences_data/{}/"
         with open(online_data_loc, "rb") as f:
-            trajectories = pickle.load(f)
-        total_num_trajs = len(trajectories)
+            online_trajectories = pickle.load(f)
         for i in range(preference_per_round):
-            idx1, idx2 = np.random.choice(total_num_trajs, size=2)
-            trajectory1, trajectory2 = trajectories[idx1], trajectories[idx2]
+            if not os.path.exists(offline_data_loc.format(self.building_name, i)): continue
+            with open(offline_data_loc.format(self.building_name, i), "rb") as f:
+                offline_trajectories = pickle.load(f)
+            idx1 = np.random.randint(len(online_trajectories))
+            idx2 = np.random.randint(len(offline_trajectories))
+            trajectory1, trajectory2 = online_trajectories[idx1], offline_trajectories[idx2]
             preference_pairs1 = sample_preferences(trajectory1, trajectory2, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
             preference_pairs2 = sample_preferences(trajectory1, trajectory1, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
             preference_pairs3 = sample_preferences(trajectory2, trajectory2, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
@@ -94,25 +99,26 @@ class EnergymEvalCallback(BaseCallback):
                 np.save(f, preference_pairs1[len_traj-1]+preference_pairs2[len_traj-1]+preference_pairs3[len_traj-1])
 
         parent_loc = (os.environ['AMLT_DATA_DIR'] if self.is_remote else "./")
-        train_round_list = [num_workers+1] + [np.random.randint(num_workers)]
+        train_round_list = [num_workers+1]
         eval_round_list = [num_workers+2]
         loss_fn = preference_loss
-        for ridx in range(ensemble_num):
-            loss_list, test_loss_list, correct_list = [], [], []
-            reward_models[ridx].train()
-            for t in range(30):
-                print(f"Epoch {t+1}\n-------------------------------")
-                total_loss = train_loop(self.building_name, reward_models[ridx], loss_fn, optimizers[ridx], train_round_list, parent_loc, args.device)
-                loss_list.append(total_loss)
+        loss_list, test_loss_list, correct_list = [[]]*ensemble_num, [[]]*ensemble_num, [[]]*ensemble_num
+        for reward_model in reward_models: reward_model.train()
+        for t in range(30):
+            print(f"Epoch {t+1}\n-------------------------------")
+            total_losses = train_loop(self.building_name, reward_models, loss_fn, optimizers, train_round_list, parent_loc, args.device)
+            for ridx, total_loss in enumerate(total_losses): loss_list[ridx].append(total_loss)
+            
+            test_losses, corrects = test_loop(self.building_name, reward_models, loss_fn, eval_round_list, parent_loc, args.device)
+            for ridx, test_loss in enumerate(test_losses): test_loss_list[ridx].append(test_loss)
+            for ridx, correct in enumerate(corrects): correct_list[ridx].append(correct)
+            for ridx in range(ensemble_num):
                 fig, axs = plt.subplots(3, 1)
-                axs[0].plot(loss_list)
-                test_loss, correct = test_loop(self.building_name, reward_models[ridx], loss_fn, eval_round_list, parent_loc, args.device)
-                test_loss_list.append(test_loss)
-                correct_list.append(correct)
-                axs[1].plot(test_loss_list)
-                axs[2].plot(correct_list)
+                axs[0].plot(loss_list[ridx])
+                axs[1].plot(test_loss_list[ridx])
+                axs[2].plot(correct_list[ridx])
                 plt.savefig(f"{model_loc}/reward_model_cost_{self.reward_training_round}_{ridx}.png")
-            reward_models[ridx].eval()
+        for reward_model in reward_models: reward_model.eval()
         os.remove(online_data_loc)
         self.reward_training_round += 1
         self.env.reward_function = lambda min_kip, max_kpi, kpi, state: learnt_reward_func(reward_models, min_kip, max_kpi, kpi, state)
