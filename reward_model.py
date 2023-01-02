@@ -106,7 +106,7 @@ def train_loop(building_name, models, loss_fn, optimizers, round_list, parent_lo
                 losses = [loss.cpu().item() for loss in losses]
                 total_losses = [total_losses[i]+losses[i] for i in range(num_models)]
                 total_size += 1
-                if (batch % 10 == 0):
+                if (batch % 100 == 0):
                     current = batch * batch_size
                     print(f"round: {round}, traj_idx: {traj_idx}, loss: {losses}  [{current:>5d}/{size:>5d}]")
     return [total_loss / total_size for total_loss in total_losses]

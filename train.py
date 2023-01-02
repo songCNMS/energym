@@ -367,7 +367,6 @@ if __name__ == "__main__":
         os.environ["WANDB_API_KEY"] = "116a4f287fd4fbaa6f790a50d2dd7f97ceae4a03"
         wandb.login()
 
-
     building_name = args.building
     min_kpis, max_kpis, min_outputs, max_outputs = collect_baseline_kpi(building_name)
     policy_name = args.algo
@@ -387,6 +386,7 @@ if __name__ == "__main__":
         dynamics_model_loc = f"data/models/{building_name}/dynamics_model/dynamics_model_best.pkl"
         online_data_loc = f"data/offline_data/{building_name}/traj_data/online_traj.pkl"
     
+    os.remove(online_data_loc)
     log_loc = f"{model_loc}/logs/"
     os.makedirs(log_loc, exist_ok=True)
     if args.inc: env_RL = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func, save_data=True, data_loc=online_data_loc)
