@@ -1,12 +1,12 @@
 description: Energym Reward Model
 
 target:
-  # service: sing
-  # name: msrresrchvc
-  # vc: gcr-singularity-resrch
-  service: amlk8s
-  name: ms-shared
-  vc: MS-Shared
+  service: sing
+  name: msrresrchvc
+  vc: gcr-singularity-resrch
+  # service: amlk8s
+  # name: ms-shared
+  # vc: MS-Shared
   # run "amlt target list amlk8s" to list the names of available AMLK8s targets
   # name: msrresrchvc
   # vc: gcr-singularity-resrch
@@ -18,7 +18,6 @@ environment:
   setup:
     - apt-get update && apt-get install --no-install-recommends --no-install-suggests -yq figlet && rm -rf /var/lib/apt/lists/* && apt-get purge --auto-remove && apt-get clean && figlet Singularity
     - apt install libffi-dev
-
 
 code:
   # local directory of the code. this will be uploaded to the server.
@@ -79,22 +78,22 @@ jobs:
   command:
   - python reward_model.py --building SeminarcenterFull-v0 --amlt
 
-# - name: SimpleHouseRad-v0
-#   sku: G2-V100
-#   command:
-#   - python reward_model.py --building SimpleHouseRad-v0 --amlt
+- name: SimpleHouseRad-v0
+  sku: G2-V100
+  command:
+  - python reward_model.py --building SimpleHouseRad-v0 --amlt
 
-# - name: SimpleHouseRSla-v0
-#   sku: G2-V100
-#   command:
-#   - python reward_model.py --building SimpleHouseRSla-v0 --amlt
+- name: SimpleHouseRSla-v0
+  sku: G2-V100
+  command:
+  - python reward_model.py --building SimpleHouseRSla-v0 --amlt
 
-# - name: SwissHouseRSlaW2W-v0
-#   sku: G2-V100
-#   command:
-#   - python reward_model.py --building SwissHouseRSlaW2W-v0 --amlt
+- name: SwissHouseRSlaW2W-v0
+  sku: G2-V100
+  command:
+  - python reward_model.py --building SwissHouseRSlaW2W-v0 --amlt
 
-# - name: SwissHouseRSlaTank-v0
-#   sku: G2-V100
-#   command:
-#   - python reward_model.py --building SwissHouseRSlaTank-v0 --amlt
+- name: SwissHouseRSlaTank-v0
+  sku: G2-V100
+  command:
+  - python reward_model.py --building SwissHouseRSlaTank-v0 --amlt

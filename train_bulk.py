@@ -24,7 +24,7 @@ if __name__ == "__main__":
         # cmds.extend([cmd_prefix+" --dm --rm"])
         # cmds.append(cmd_prefix)
         # cmds.extend([cmd_prefix+" --dm", cmd_prefix+" --dm --rm"])
-        cmds.extend([cmd_prefix+" --dm --rm", cmd_prefix+" --dm --rm --inc"])
+        cmds.extend([cmd_prefix+" --dm --rm"])
     device_count = torch.cuda.device_count()
     if building_name.startswith("Swiss") or building_name.startswith("Simple"):
         jobs = []

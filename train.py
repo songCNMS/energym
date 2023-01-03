@@ -413,16 +413,17 @@ if __name__ == "__main__":
     total_num_steps = args.iter*episode_len
     print("total time steps: ", total_num_steps)
     n_actions = env_RL.action_space.shape[-1]
-    # action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
+    action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
     if policy_name == "SAC":
         model = SAC('MlpPolicy', env_RL, verbose=1, device=args.device, 
-                    train_freq=16, buffer_size=episode_len*max(1, args.iter//4), 
+                    train_freq=16, buffer_size=episode_len*max(100, args.iter//2), 
                     gamma=0.99, tau=0.01,
-                    # action_noise=action_noise,
+                    action_noise=action_noise,
                     learning_starts=episode_len, 
                     batch_size=batch_size,
                     gradient_steps=1,
-                    target_update_interval=64,
+                    use_sde=True,
+                    target_update_interval=16,
                     seed=args.seed,
                     policy_kwargs=dict(net_arch=[512, 512, 512], 
                                        activation_fn=torch.nn.ReLU))

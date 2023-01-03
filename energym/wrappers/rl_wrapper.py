@@ -15,7 +15,7 @@ def transform(val, l, u, is_action=False):
     else: return ((2.0*(val-l)/(u-l)-1.0) if u > l else 0.0)
 
 def inverse_transform(val, l, u, is_action=False):
-    if not is_action: return (val*(u - l)+l if u > l else l)
+    if not is_action: return (val*(u-l)+l if u > l else l)
     else: return ((val+1.0)*(u-l)*0.5+l if u > l else l)
 
 

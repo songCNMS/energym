@@ -71,13 +71,13 @@ def collect_baseline_kpi(building_name):
             if key not in min_kpis:
                 min_kpis[key] = {}
                 min_kpis[key].update(val)
-            max_kpis[key]['kpi'] = max(max_kpis[key]['kpi'], val['kpi'])
-            min_kpis[key]['kpi'] = min(min_kpis[key]['kpi'], val['kpi'])
+            max_kpis[key]['kpi'] = max(max_kpis[key]['kpi'], 2.0*val['kpi'])
+            min_kpis[key]['kpi'] = min(min_kpis[key]['kpi'], 0.5*val['kpi'])
         for key, val in outputs.items():
             if key not in min_outputs: min_outputs[key] = val
             if key not in max_outputs: max_outputs[key] = val
-            max_outputs[key] = max(max_outputs[key], val)
-            min_outputs[key] = min(min_outputs[key], val)
+            max_outputs[key] = max(max_outputs[key], 2.0*val)
+            min_outputs[key] = min(min_outputs[key], 0.5*val)
     return min_kpis, max_kpis, min_outputs, max_outputs
 
 
