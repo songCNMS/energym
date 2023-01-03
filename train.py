@@ -104,7 +104,7 @@ class EnergymEvalCallback(BaseCallback):
         loss_fn = preference_loss
         loss_list, test_loss_list, correct_list = [[]]*ensemble_num, [[]]*ensemble_num, [[]]*ensemble_num
         for reward_model in reward_models: reward_model.train()
-        for t in range(30):
+        for t in range(32):
             print(f"Epoch {t+1}\n-------------------------------")
             total_losses = train_loop(self.building_name, reward_models, loss_fn, optimizers, train_round_list, parent_loc, args.device)
             for ridx, total_loss in enumerate(total_losses): loss_list[ridx].append(total_loss)
@@ -112,14 +112,15 @@ class EnergymEvalCallback(BaseCallback):
             test_losses, corrects = test_loop(self.building_name, reward_models, loss_fn, eval_round_list, parent_loc, args.device)
             for ridx, test_loss in enumerate(test_losses): test_loss_list[ridx].append(test_loss)
             for ridx, correct in enumerate(corrects): correct_list[ridx].append(correct)
-            for ridx in range(ensemble_num):
-                fig, axs = plt.subplots(3, 1)
-                axs[0].plot(loss_list[ridx])
-                axs[1].plot(test_loss_list[ridx])
-                axs[2].plot(correct_list[ridx])
-                plt.savefig(f"{model_loc}/reward_model_cost_{self.reward_training_round}_{ridx}.png")
+        for ridx in range(ensemble_num):
+            fig, axs = plt.subplots(3, 1)
+            axs[0].plot(loss_list[ridx])
+            axs[1].plot(test_loss_list[ridx])
+            axs[2].plot(correct_list[ridx])
+            plt.savefig(f"{model_loc}/reward_model_cost_{self.reward_training_round}_{ridx}.png")
+            plt.clf()
         for reward_model in reward_models: reward_model.eval()
-        os.remove(online_data_loc)
+        if os.path.exists(online_data_loc): os.remove(online_data_loc)
         self.reward_training_round += 1
         self.env.reward_function = lambda min_kip, max_kpi, kpi, state: learnt_reward_func(reward_models, min_kip, max_kpi, kpi, state)
     
@@ -386,7 +387,7 @@ if __name__ == "__main__":
         dynamics_model_loc = f"data/models/{building_name}/dynamics_model/dynamics_model_best.pkl"
         online_data_loc = f"data/offline_data/{building_name}/traj_data/online_traj.pkl"
     
-    os.remove(online_data_loc)
+    if os.path.exists(online_data_loc): os.remove(online_data_loc)
     log_loc = f"{model_loc}/logs/"
     os.makedirs(log_loc, exist_ok=True)
     if args.inc: env_RL = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func, save_data=True, data_loc=online_data_loc)
@@ -415,13 +416,13 @@ if __name__ == "__main__":
     # action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
     if policy_name == "SAC":
         model = SAC('MlpPolicy', env_RL, verbose=1, device=args.device, 
-                    train_freq=8, buffer_size=episode_len*max(1, args.iter//4), 
+                    train_freq=16, buffer_size=episode_len*max(1, args.iter//4), 
                     gamma=0.99, tau=0.01,
                     # action_noise=action_noise,
                     learning_starts=episode_len, 
                     batch_size=batch_size,
-                    gradient_steps=8,
-                    target_update_interval=16,
+                    gradient_steps=1,
+                    target_update_interval=64,
                     seed=args.seed,
                     policy_kwargs=dict(net_arch=[512, 512, 512], 
                                        activation_fn=torch.nn.ReLU))

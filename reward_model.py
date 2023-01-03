@@ -135,10 +135,10 @@ def test_loop(building_name, models, loss_fn, round_list, parent_loc, device):
                         model_outs = [model(model_in) for model in models]
                         preds = [pred + model_out for pred, model_out in zip(preds, model_outs)]
                     test_losses = [loss_fn(pred, y).cpu().item() for pred in preds]
-                    corrects = [(pred.argmax(1) == y.argmax(1)).type(torch.float).sum().cpu().item() for pred in preds]
+                    corrects = [(pred.argmax(1) == y.argmax(1)).type(torch.float).mean().cpu().item() for pred in preds]
                     total_num_batches += 1
     for model in models: model.train()
-    corrects = [correct/(total_num_batches*batch_size) for correct in corrects]
+    corrects = [correct/total_num_batches for correct in corrects]
     test_losses = [test_loss/total_num_batches for test_loss in test_losses]
     print(f"Test Error: \n Accuracy: {corrects}, Avg loss: {test_losses} \n")
     return test_losses, corrects

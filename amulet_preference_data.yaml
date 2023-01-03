@@ -1,23 +1,22 @@
 description: Energym Data Collection
 
 target:
-  # service: sing
-  # name: msrresrchvc
-  # vc: gcr-singularity-resrch
-  service: amlk8s
-  name: itpwus2cpucl1
-  vc: gcrcpu
+  service: sing
+  name: msrresrchvc
+  vc: gcr-singularity-resrch
+  # service: amlk8s
+  # name: itpwus2cpucl1
+  # vc: gcrcpu
   # run "amlt target list amlk8s" to list the names of available AMLK8s targets
   # name: msrresrchvc
   # vc: gcr-singularity-resrch
 
 environment:
-  image: energym_sing:sing
+  image: energym_gcr:sing
   registry: resrchvc4cr.azurecr.io # any public registry can be specified here
   username: resrchvc4cr
   setup:
-    - apt-get update && apt-get install --no-install-recommends --no-install-suggests -yq figlet && rm -rf /var/lib/apt/lists/* && apt-get purge --auto-remove && apt-get clean && figlet Singularity
-    - apt install libffi-dev
+    - apt-get update 
 
 
 code:
@@ -49,11 +48,11 @@ jobs:
 - name: ApartmentsThermal-v0-3
   sku: C2
   command:
-  - python preference_data.py --building ApartmentsThermal-v0 --amlt --round 4,5
+  - python preference_data.py --building ApartmentsThermal-v0 --amlt --round 5
 - name: ApartmentsThermal-v0-4
   sku: C2
   command:
-  - python preference_data.py --building ApartmentsThermal-v0 --amlt --round 6,7
+  - python preference_data.py --building ApartmentsThermal-v0 --amlt --round 7
 
 
 - name: ApartmentsGrid-v0-1
@@ -85,11 +84,11 @@ jobs:
 - name: Apartments2Thermal-v0-3
   sku: C2
   command:
-  - python preference_data.py --building Apartments2Thermal-v0 --amlt --round 4,5
+  - python preference_data.py --building Apartments2Thermal-v0 --amlt --round 5
 - name: Apartments2Thermal-v0-4
   sku: C2
   command:
-  - python preference_data.py --building Apartments2Thermal-v0 --amlt --round 6,7
+  - python preference_data.py --building Apartments2Thermal-v0 --amlt --round 7
 
 
 - name: Apartments2Grid-v0-1
@@ -103,7 +102,7 @@ jobs:
 - name: Apartments2Grid-v0-3
   sku: C2
   command:
-  - python preference_data.py --building Apartments2Grid-v0 --amlt --round 4,5
+  - python preference_data.py --building Apartments2Grid-v0 --amlt --round 5
 - name: Apartments2Grid-v0-4
   sku: C2
   command:
