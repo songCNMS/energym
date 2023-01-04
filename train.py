@@ -168,8 +168,8 @@ class EnergymEvalCallback(BaseCallback):
             _,hour,_,_ = bs_eval_env.get_date()
             bs_out_list.append(bs_outputs)
             bs_state = eval_env_RL.transform_state(bs_outputs)
-            ori_bs_reward = reward_func(self.min_kpis, self.max_kpis, bs_eval_env.get_kpi(start_ind=step, end_ind=step+1), bs_state)
-            bs_reward = self.reward_function(self.min_kpis, self.max_kpis, bs_eval_env.get_kpi(start_ind=step, end_ind=step+1), bs_state)
+            ori_bs_reward, _ = reward_func(self.min_kpis, self.max_kpis, bs_eval_env.get_kpi(start_ind=step, end_ind=step+1), bs_state)
+            bs_reward, _ = self.reward_function(self.min_kpis, self.max_kpis, bs_eval_env.get_kpi(start_ind=step, end_ind=step+1), bs_state)
             bs_reward_list.append(bs_reward)
             ori_bs_reward_list.append(ori_bs_reward)
             done = (done | (bs_eval_env.time >= bs_eval_env.stop_time))
@@ -180,7 +180,7 @@ class EnergymEvalCallback(BaseCallback):
             state, reward, _done, info = eval_env_RL.step(actions)
             done = (done | _done)
             outputs = eval_env_RL.inverse_transform_state(state)
-            ori_reward = reward_func(self.min_kpis, self.max_kpis, eval_env_RL.env.get_kpi(start_ind=step, end_ind=step+1), state)
+            ori_reward, _ = reward_func(self.min_kpis, self.max_kpis, eval_env_RL.env.get_kpi(start_ind=step, end_ind=step+1), state)
             control = eval_env_RL.inverse_transform_action(actions)
             controls +=[ {p:control[p][0] for p in control} ]
             out_list.append(outputs)
@@ -419,7 +419,7 @@ if __name__ == "__main__":
                     train_freq=16, buffer_size=episode_len*max(100, args.iter//2), 
                     gamma=0.99, tau=0.01,
                     action_noise=action_noise,
-                    learning_starts=episode_len, 
+                    learning_starts=batch_size, 
                     batch_size=batch_size,
                     gradient_steps=1,
                     use_sde=True,
