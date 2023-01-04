@@ -65,18 +65,18 @@ def get_info_from_trajectory(trajectory, _len_traj, min_kpis, max_kpis):
 def compare_trajectory(trajectory1, trajectory2, _len_traj, min_kpis, max_kpis):
     state1, kpis1 = get_info_from_trajectory(trajectory1, _len_traj, min_kpis, max_kpis)
     state2, kpis2 = get_info_from_trajectory(trajectory2, _len_traj, min_kpis, max_kpis)
-    preference = 0
-    if (not constraint_violate(kpis1)) and (not constraint_violate(kpis2)): preference = objective_compare(kpis1, kpis2)
-    elif constraint_violate(kpis1) and (not constraint_violate(kpis2)): preference = -1.0
-    elif (not constraint_violate(kpis1)) and constraint_violate(kpis2): preference = 1.0
-    else: preference = constraint_violate_compare(kpis1, kpis2)
-    # obj1 = np.sum([v for v in kpis1['avg'].values()]) 
-    # obj2 = np.sum([v for v in kpis2['avg'].values()]) 
-    # vio1 = np.sum([v for v in kpis1["avg_dev"].values()])
-    # vio2 = np.sum([v for v in kpis2["avg_dev"].values()])
-    # r1 = -obj1-vio1
-    # r2 = -obj2-vio2
-    # preference = (1.0 if r1 > r2 else (-1.0 if r1 < r2 else 0.0))
+    # preference = 0
+    # if (not constraint_violate(kpis1)) and (not constraint_violate(kpis2)): preference = objective_compare(kpis1, kpis2)
+    # elif constraint_violate(kpis1) and (not constraint_violate(kpis2)): preference = -1.0
+    # elif (not constraint_violate(kpis1)) and constraint_violate(kpis2): preference = 1.0
+    # else: preference = constraint_violate_compare(kpis1, kpis2)
+    obj1 = np.sum([v for v in kpis1['avg'].values()]) 
+    obj2 = np.sum([v for v in kpis2['avg'].values()]) 
+    vio1 = np.sum([v for v in kpis1["avg_dev"].values()])
+    vio2 = np.sum([v for v in kpis2["avg_dev"].values()])
+    r1 = -obj1-vio1
+    r2 = -obj2-vio2
+    preference = (1.0 if r1 > r2 else (-1.0 if r1 < r2 else 0.0))
     mu = ([1.0, 0.0] if preference==1.0 else ([0.5, 0.5] if preference == 0.0 else [0.0, 1.0]))
     return state1, state2, mu
         
@@ -171,7 +171,7 @@ len_traj = 1
 len_traj_list = [1]
 # len_traj_list = list(range(1, 9))
 num_workers = 8
-preference_per_round = 10
+preference_per_round = 50
 perference_pairs_per_sample = 102400
 
 # buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",

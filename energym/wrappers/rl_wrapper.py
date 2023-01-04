@@ -192,6 +192,10 @@ class StableBaselinesRLWrapper(RLWrapper):
         next_state = self.transform_state(self.outputs)
         reward = self.reward_function(self.min_kpis, self.max_kpis, kpi, next_state) - state_gap
         done = ((self.unwrapped.time >= self.unwrapped.stop_time) | (self.cur_step >= self.max_episode_len))
+ 
+        # print("state max: ", np.max(next_state), "state min: ", np.min(next_state))
+        if not self.eval_mode and (np.max(next_state) > 4.0 or np.min(next_state) < -1.0): done = True
+ 
         info = {}
         self.cur_step += 1
         self.state = next_state

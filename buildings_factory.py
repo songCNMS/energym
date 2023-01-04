@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(0, "/home/energym/energym/")
+sys.path.insert(0, "./")
 
 import os
 from energym.examples.Controller import *
@@ -71,13 +71,13 @@ def collect_baseline_kpi(building_name):
             if key not in min_kpis:
                 min_kpis[key] = {}
                 min_kpis[key].update(val)
-            max_kpis[key]['kpi'] = max(max_kpis[key]['kpi'], 2.0*val['kpi'])
-            min_kpis[key]['kpi'] = min(min_kpis[key]['kpi'], 0.5*val['kpi'])
+            max_kpis[key]['kpi'] = max(max_kpis[key]['kpi'], val['kpi'])
+            min_kpis[key]['kpi'] = min(min_kpis[key]['kpi'], val['kpi'])
         for key, val in outputs.items():
             if key not in min_outputs: min_outputs[key] = val
             if key not in max_outputs: max_outputs[key] = val
-            max_outputs[key] = max(max_outputs[key], 2.0*val)
-            min_outputs[key] = min(min_outputs[key], 0.5*val)
+            max_outputs[key] = max(max_outputs[key], val)
+            min_outputs[key] = min(min_outputs[key], val)
     return min_kpis, max_kpis, min_outputs, max_outputs
 
 
@@ -100,7 +100,7 @@ def learnt_reward_func(reward_models, min_kpi, max_kpi, kpi, state):
     reward_mean = reward_list.mean().item()
     reward_std = (0.0 if len(reward_list) <= 1 else reward_list.std().item())
     # print(reward_mean, reward_std, reward_list)
-    return reward_mean - 2.0*reward_std
+    return reward_mean - reward_std
     
 
 def get_env(building_name, eval=False):

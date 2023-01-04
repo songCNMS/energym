@@ -329,7 +329,7 @@ def load_reward_model(input_dim):
         reward_model = RewardNet(input_dim).to(args.device)
         optimizer = torch.optim.Adam(reward_model.parameters(), lr=0.001)
         _reward_model_loc = reward_model_loc.format(building_name, i)
-        checkpoint = torch.load(_reward_model_loc)
+        checkpoint = torch.load(_reward_model_loc, map_location=torch.device(args.device))
         reward_model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         reward_model.eval()
