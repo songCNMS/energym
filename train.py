@@ -322,14 +322,14 @@ class EnergymEvalCallback(BaseCallback):
         if self.is_reward_model_retrain: self.reward_model_trainig()
         
         
-def load_reward_model(input_dim):
+def load_reward_model(input_dim, reward_model_loc, building_name, device):
     reward_models = []
     optimizers = []
     for i in range(ensemble_num):
-        reward_model = RewardNet(input_dim).to(args.device)
+        reward_model = RewardNet(input_dim).to(device)
         optimizer = torch.optim.Adam(reward_model.parameters(), lr=0.001)
         _reward_model_loc = reward_model_loc.format(building_name, i)
-        checkpoint = torch.load(_reward_model_loc, map_location=torch.device(args.device))
+        checkpoint = torch.load(_reward_model_loc, map_location=torch.device(device))
         reward_model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         reward_model.eval()
@@ -398,7 +398,7 @@ if __name__ == "__main__":
     
     if args.rm:
         input_dim = env_RL.observation_space.shape[0]
-        reward_models, optimizers = load_reward_model(input_dim)
+        reward_models, optimizers = load_reward_model(input_dim, reward_model_loc, building_name, args.device)
         env_RL.reward_function = lambda min_kip, max_kpi, kpi, state: learnt_reward_func(reward_models, min_kip, max_kpi, kpi, state)
     
     if args.dm:

@@ -192,8 +192,8 @@ class StableBaselinesRLWrapper(RLWrapper):
         done = ((self.unwrapped.time >= self.unwrapped.stop_time) | (self.cur_step >= self.max_episode_len))
  
         # print("state max: ", np.max(next_state), "state min: ", np.min(next_state))
-        # if not self.eval_mode and (np.max(next_state) > 4.0 or np.min(next_state) < -1.0): done = True
-        if not self.eval_mode and reward_std >= 1.5: done=True
+        if not self.eval_mode and (np.max(next_state) > 4.0 or np.min(next_state) < -1.0): done = True
+        # if not self.eval_mode and reward_std >= 1.5: done=True
         
         info = {}
         self.cur_step += 1

@@ -89,7 +89,7 @@ def sample_trajectory(env, building_name, controller=None):
     trajectory = [state]
     rule_controller = controller_list[building_idx]
     # noisy_delta = np.random.choice([1.0, 0.7, 0.5, 0.3, 0.0])
-    noisy_delta = np.random.choice([1.0, 0.0], p=[0.8, 0.2])
+    noisy_delta = np.random.choice([1.0, 0.0], p=[0.5, 0.5])
     # trajectory.append(state)
     while not done:
         # if controller is None: 
@@ -171,7 +171,7 @@ len_traj = 1
 len_traj_list = [1]
 # len_traj_list = list(range(1, 9))
 num_workers = 8
-preference_per_round = 50
+preference_per_round = 100
 perference_pairs_per_sample = 102400
 
 # buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
