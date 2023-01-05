@@ -12,12 +12,11 @@ target:
   # vc: gcr-singularity-resrch
 
 environment:
-  image: energym_gcr:sing1
+  image: energym_gcr:sing2
   registry: resrchvc4cr.azurecr.io # any public registry can be specified here
   username: resrchvc4cr
   setup:
-    - apt-get update && apt-get install --no-install-recommends --no-install-suggests -yq figlet && rm -rf /var/lib/apt/lists/* && apt-get purge --auto-remove && apt-get clean && figlet Singularity
-    - apt install libffi-dev
+    - apt-get update
 
 code:
   # local directory of the code. this will be uploaded to the server.
@@ -39,61 +38,61 @@ data:
 
 jobs:
 - name: ApartmentsThermal-v0
-  sku: G2-V100
+  sku: G1-V100
   command:
   - python reward_model.py --building ApartmentsThermal-v0 --amlt
 
 - name: ApartmentsGrid-v0
-  sku: G2-V100
+  sku: G1-V100
   command:
   - python reward_model.py --building ApartmentsGrid-v0 --amlt
 
 - name: Apartments2Thermal-v0
-  sku: G2-V100
+  sku: G1-V100
   command:
   - python reward_model.py --building Apartments2Thermal-v0 --amlt
 
 - name: Apartments2Grid-v0
-  sku: G2-V100
+  sku: G1-V100
   command:
   - python reward_model.py --building Apartments2Grid-v0 --amlt
 
 - name: OfficesThermostat-v0
-  sku: G2-V100
+  sku: G1-V100
   command:
   - python reward_model.py --building OfficesThermostat-v0 --amlt
 
 - name: MixedUseFanFCU-v0
-  sku: G2-V100
+  sku: G1-V100
   command:
   - python reward_model.py --building MixedUseFanFCU-v0 --amlt
 
 - name: SeminarcenterThermostat-v0
-  sku: G2-V100
+  sku: G1-V100
   command:
   - python reward_model.py --building SeminarcenterThermostat-v0 --amlt
   
 - name: SeminarcenterFull-v0
-  sku: G2-V100
+  sku: G1-V100
   command:
   - python reward_model.py --building SeminarcenterFull-v0 --amlt
 
 - name: SimpleHouseRad-v0
-  sku: G2-V100
+  sku: G1-V100
   command:
   - python reward_model.py --building SimpleHouseRad-v0 --amlt
 
 - name: SimpleHouseRSla-v0
-  sku: G2-V100
+  sku: G1-V100
   command:
   - python reward_model.py --building SimpleHouseRSla-v0 --amlt
 
 - name: SwissHouseRSlaW2W-v0
-  sku: G2-V100
+  sku: G1-V100
   command:
   - python reward_model.py --building SwissHouseRSlaW2W-v0 --amlt
 
 - name: SwissHouseRSlaTank-v0
-  sku: G2-V100
+  sku: G1-V100
   command:
   - python reward_model.py --building SwissHouseRSlaTank-v0 --amlt

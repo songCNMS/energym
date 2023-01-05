@@ -86,11 +86,11 @@ class StableBaselinesRLWrapper(RLWrapper):
         building_idx = buildings_list.index(building_name)
         env = get_env(building_name, eval=eval)
         default_control = default_controls[building_idx]
-        inputs = get_inputs(building_name, env)
+        self.inputs = get_inputs(building_name, env)
         env.step(env.sample_random_action())
         self.outputs = env.get_output()
         super(StableBaselinesRLWrapper, self).__init__(env, reward_function)
-        self.action_keys = [a_name for a_name in inputs if env.input_specs[a_name]["type"] == "scalar"]
+        self.action_keys = [a_name for a_name in self.inputs if env.input_specs[a_name]["type"] == "scalar"]
         n_actions = len(self.action_keys)
         n_states = len(env.output_keys)
         self.action_space = spaces.Box(low=-1.0, high=1.0,
@@ -192,9 +192,10 @@ class StableBaselinesRLWrapper(RLWrapper):
         reward, reward_std = self.reward_function(self.min_kpis, self.max_kpis, kpi, next_state)
         done = ((self.unwrapped.time >= self.unwrapped.stop_time) | (self.cur_step >= self.max_episode_len))
  
-        # print("state max: ", np.max(next_state), "state min: ", np.min(next_state))
+        # print("state max: ", np.max(next_state), "state min: ", np.min(next_state), "reward: ", reward, "reward std: ", reward_std)
         if not self.eval_mode and (np.max(next_state) > 4.0 or np.min(next_state) < -1.0): done = True
-        # if not self.eval_mode and reward_std >= 1.5: done=True
+        if not self.eval_mode and reward_std >= 0.5:
+            reward, _ = baseline_reward_func(self.min_kpis, self.max_kpis, kpi, next_state)
         
         info = {}
         self.cur_step += 1

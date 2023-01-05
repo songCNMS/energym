@@ -107,6 +107,16 @@ def reward_func(min_kpi, max_kpi, kpi, state):
     return reward + 10.0*constraint, 0.0
 
 
+def baseline_reward_func(min_kpi, max_kpi, kpi, state):
+    reward = 0.0
+    constraint = 0.0
+    for key, val in kpi.items():
+        min_v, max_v = min_kpi[key]['kpi'], max_kpi[key]['kpi']
+        if val['type'] == 'avg_dev': constraint += (max_v - val["kpi"]) / max(max_v-min_v, 1.0)
+        elif val['type'] == 'avg': reward += (max_v - val["kpi"]) / max(max_v-min_v, 1.0)
+    return reward + constraint, 0.0
+
+
 def learnt_reward_func(reward_models, min_kpi, max_kpi, kpi, state):
     reward_list = []
     model_in = torch.from_numpy(np.array(state)).reshape(1, -1).to(torch.float).to(next(reward_models[0].parameters()).device)

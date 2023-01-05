@@ -57,8 +57,9 @@ class PreferencDataset(Dataset):
         self.round = round
         self.traj_idx = traj_idx
         with open(f'{parent_loc}/data/offline_data/{building_name}/preferences_data/{len_traj}/preference_data_{round}_{traj_idx}.pkl', 'rb') as f:
-            _raw_data = np.load(f, allow_pickle=True)
-            self.raw_data = _raw_data[_raw_data[:, -1] != 0.5, :]
+            self.raw_data = np.load(f, allow_pickle=True)
+            if len(self.raw_data.shape) > 2: self.raw_data = self.raw_data[0]
+            # self.raw_data = _raw_data[_raw_data[:, -1] != 0.5, :]
         self.data = torch.from_numpy(self.raw_data[:, :-2]).to(torch.float)
         self.labels = torch.from_numpy(self.raw_data[:, -2:]).to(torch.float)
         
@@ -135,8 +136,8 @@ def test_loop(building_name, models, loss_fn, round_list, parent_loc, device):
                         model_in = torch.cat((X_left[:, i, :], X_right[:, i, :]), axis=1).to(device)
                         model_outs = [model(model_in) for model in models]
                         preds = [pred + model_out for pred, model_out in zip(preds, model_outs)]
-                    test_losses = [loss_fn(pred, y).cpu().item() for pred in preds]
-                    corrects = [(pred.argmax(1) == y.argmax(1)).type(torch.float).sum().cpu().item() for pred in preds]
+                    test_losses = [loss_fn(pred, y).cpu().item()+loss for loss,pred in zip(test_losses, preds)]
+                    corrects = [(pred.argmax(1) == y.argmax(1)).type(torch.float).sum().cpu().item()+correct for correct,pred in zip(corrects, preds)]
                     total_num_batches += 1
                     total_samples += num_samples
     for model in models: model.train()
@@ -194,8 +195,9 @@ def run_train(i, input_dim, parent_loc, building_name):
         fig, axs = plt.subplots(3, 1)
         axs[0].plot(loss_list)
         test_loss, correct = test_loop(building_name, model, loss_fn, eval_round_list, parent_loc, device)
-        test_loss_list.append(test_loss[0])
-        correct_list.append(correct[0])
+        test_loss, correct = test_loss[0], correct[0]
+        test_loss_list.append(test_loss)
+        correct_list.append(correct)
         axs[1].plot(test_loss_list)
         axs[2].plot(correct_list)
         plt.savefig(f"{model_loc}/reward_model_cost_{i}.png")
