@@ -139,9 +139,10 @@ class StableBaselinesRLWrapper(RLWrapper):
         pass
 
     def reset(self):
-        if self.building_name.startswith("Simple") or self.building_name.startswith("Swiss"):
-            self.env = get_env(self.building_name, eval=self.eval_mode)
-        else: self.env.reset()
+        # if self.building_name.startswith("Simple") or self.building_name.startswith("Swiss"):
+        #     self.env = get_env(self.building_name, eval=self.eval_mode)
+        # else: self.env.reset()
+        self.env.reset()
         self.env.step(self.env.sample_random_action())
         self.outputs = self.env.get_output()
         self.cur_step = 0
