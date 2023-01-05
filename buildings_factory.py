@@ -9,6 +9,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import signal
 import torch
+import pickle
 
 
 
@@ -44,40 +45,54 @@ control_frequency = [480, 480, 480, 480, 96, 96, 144, 144, 288, 288, 288, 288]
 simulation_days = 60
 
 
-def collect_baseline_kpi(building_name):
-    max_kpis, min_kpis = {}, {}
-    max_outputs, min_outputs = {}, {}
-    _env = get_env(building_name, eval=True)
-    building_idx = buildings_list.index(building_name)
-    controller = controller_list[building_idx]
-    default_control = default_controls[building_idx]
-    hour = control_values[building_idx]
-    step = 0
-    inputs = get_inputs(building_name, _env)
-    outputs = _env.get_output()
-    done = False
-    while not done:
-        control = controller(inputs, step)(outputs, control_values[building_idx], hour)
-        control.update(default_control)
-        outputs = _env.step(control)
-        _,hour,_,_ = _env.get_date()
-        kpis = _env.get_kpi(start_ind=step, end_ind=step+1)
-        done = (_env.time >= _env.stop_time)
-        step += 1
-        for key, val in kpis.items():
-            if key not in max_kpis: 
-                max_kpis[key] = {}
-                max_kpis[key].update(val)
-            if key not in min_kpis:
-                min_kpis[key] = {}
-                min_kpis[key].update(val)
-            max_kpis[key]['kpi'] = max(max_kpis[key]['kpi'], val['kpi'])
-            min_kpis[key]['kpi'] = min(min_kpis[key]['kpi'], val['kpi'])
-        for key, val in outputs.items():
-            if key not in min_outputs: min_outputs[key] = val
-            if key not in max_outputs: max_outputs[key] = val
-            max_outputs[key] = max(max_outputs[key], val)
-            min_outputs[key] = min(min_outputs[key], val)
+def collect_baseline_kpi(building_name, is_remote):
+    if is_remote: baseline_metric_loc = f"{os.environ['AMLT_DATA_DIR']}/data/models/{building_name}/baseline_metrics.pkl"
+    else: baseline_metric_loc = f"data/models/{building_name}/baseline_metrics.pkl"
+    if os.path.exists(baseline_metric_loc):
+        with open(baseline_metric_loc, "rb") as f:
+            res = pickle.load(f)
+            min_kpis, max_kpis, min_outputs, max_outputs = res["min_kpis"], res["max_kpis"], res["min_outputs"], res["max_outputs"]
+    else:
+        max_kpis, min_kpis = {}, {}
+        max_outputs, min_outputs = {}, {}
+        _env = get_env(building_name, eval=True)
+        building_idx = buildings_list.index(building_name)
+        controller = controller_list[building_idx]
+        default_control = default_controls[building_idx]
+        hour = control_values[building_idx]
+        step = 0
+        inputs = get_inputs(building_name, _env)
+        outputs = _env.get_output()
+        done = False
+        while not done:
+            control = controller(inputs, step)(outputs, control_values[building_idx], hour)
+            control.update(default_control)
+            outputs = _env.step(control)
+            _,hour,_,_ = _env.get_date()
+            kpis = _env.get_kpi(start_ind=step, end_ind=step+1)
+            done = (_env.time >= _env.stop_time)
+            step += 1
+            for key, val in kpis.items():
+                if key not in max_kpis: 
+                    max_kpis[key] = {}
+                    max_kpis[key].update(val)
+                if key not in min_kpis:
+                    min_kpis[key] = {}
+                    min_kpis[key].update(val)
+                max_kpis[key]['kpi'] = max(max_kpis[key]['kpi'], val['kpi'])
+                min_kpis[key]['kpi'] = min(min_kpis[key]['kpi'], val['kpi'])
+            for key, val in outputs.items():
+                if key not in min_outputs: min_outputs[key] = val
+                if key not in max_outputs: max_outputs[key] = val
+                max_outputs[key] = max(max_outputs[key], val)
+                min_outputs[key] = min(min_outputs[key], val)
+        with open(baseline_metric_loc, "wb") as f:
+            res = {}
+            res['min_kpis'] = min_kpis
+            res['max_kpis'] = max_kpis
+            res['min_outputs'] = min_outputs
+            res['max_outputs'] = max_outputs
+            pickle.dump(res, f)
     return min_kpis, max_kpis, min_outputs, max_outputs
 
 

@@ -215,7 +215,7 @@ if __name__ == "__main__":
     is_remote = args.amlt
     parent_loc = (os.environ['AMLT_DATA_DIR'] if is_remote else "./")
     building_name = args.building
-    min_kpis, max_kpis, min_outputs, max_outputs = collect_baseline_kpi(building_name)
+    min_kpis, max_kpis, min_outputs, max_outputs = collect_baseline_kpi(building_name, args.amlt)
     # building_idx = buildings_list.index(building_name)
     # env = get_env(building_name)
     # inputs = get_inputs(building_name, env)

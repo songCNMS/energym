@@ -5,10 +5,15 @@ import os
 #                   "SeminarcenterThermostat-v0", "SeminarcenterFull-v0", "SimpleHouseRad-v0",
 #                   "SimpleHouseRSla-v0", "SwissHouseRSlaW2W-v0", "SwissHouseRSlaTank-v0"] 
 
-description = "Energym Train with Learnt Dynamics and Reward Models"
-suffix = "--rm --dm --iter 500"
-seeds_list = [17]
-buildings = ["SimpleHouseRad-v0", "SimpleHouseRSla-v0", "SwissHouseRSlaW2W-v0", "SwissHouseRSlaTank-v0"]
+description = "Energym Train Baseline"
+suffix = "--iter 100 --algo TD3PlusBC"
+seeds_list = [7]
+buildings = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
+             "Apartments2Grid-v0", "OfficesThermostat-v0", "MixedUseFanFCU-v0",
+             "SeminarcenterThermostat-v0", "SeminarcenterFull-v0", "SimpleHouseRad-v0",
+             "SimpleHouseRSla-v0", "SwissHouseRSlaW2W-v0", "SwissHouseRSlaTank-v0"]
+file_name = "d3rl_baselines"
+res_file_name = "amulet_baseline_config"
 
 cmd=f"""
 description: {description}
@@ -19,7 +24,7 @@ target:
   vc: gcr-singularity-resrch
 
 environment:
-  image: energym_gcr:sing
+  image: energym_gcr:sing2
   registry: resrchvc4cr.azurecr.io # any public registry can be specified here
   username: resrchvc4cr
   setup:
@@ -38,12 +43,12 @@ suffix_in_name = suffix.replace(" ", "").replace("-", "")
 for building in buildings:
     for seed in seeds_list:
         cmd += f"""
-- name: {building}-{suffix_in_name}-seed{seed}
-  sku: G2-V100
+- name: {building}-{file_name}-{suffix_in_name}-seed{seed}
+  sku: G1-V100
   command:
-  - python train.py --building {building} --amlt {suffix} --seed {seed}
+  - python {file_name}.py --building {building} --amlt {suffix} --seed {seed}
 """
 
-with open("amult_config.yaml", 'w') as f:
+with open(f"{res_file_name}.yaml", 'w') as f:
     f.write(cmd)
 

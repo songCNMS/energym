@@ -369,7 +369,7 @@ if __name__ == "__main__":
         wandb.login()
 
     building_name = args.building
-    min_kpis, max_kpis, min_outputs, max_outputs = collect_baseline_kpi(building_name)
+    min_kpis, max_kpis, min_outputs, max_outputs = collect_baseline_kpi(building_name, args.amlt)
     policy_name = args.algo
     reward_path_suffix = f"{policy_name}"
     reward_path_suffix += ("_inc" if args.inc else "")

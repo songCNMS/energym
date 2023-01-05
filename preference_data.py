@@ -191,7 +191,7 @@ parser.add_argument('--round', type=str, help='round', default="")
 if __name__ == "__main__":
     args = parser.parse_args()
     building_name = args.building
-    min_kpis, max_kpis, min_outputs, max_outputs = collect_baseline_kpi(building_name)
+    min_kpis, max_kpis, min_outputs, max_outputs = collect_baseline_kpi(building_name, args.amlt)
     if args.round == "": rounds_list = list(range(num_workers))
     else: rounds_list = [int(c) for c in args.round.split(",")]
     if (not building_name.startswith("Simple")) and (not building_name.startswith("Swiss")):

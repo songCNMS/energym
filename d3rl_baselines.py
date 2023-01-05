@@ -88,7 +88,6 @@ if __name__ == "__main__":
     building_name = args.building
     is_remote = args.amlt
     parent_loc = (os.environ['AMLT_DATA_DIR'] if is_remote else "./")
-    min_kpis, max_kpis, min_outputs, max_outputs = collect_baseline_kpi(building_name)
     reward_path_suffix = f"{args.algo}"
     reward_path_suffix += ("_rewards" if args.rm else "_manual")
     reward_path_suffix += ("_predictor" if args.dm else "_simulator")
@@ -102,7 +101,7 @@ if __name__ == "__main__":
         reward_model_loc = "data/models/{}/reward_model/reward_model_best_{}.pkl"
         dynamics_model_loc = f"data/models/{building_name}/dynamics_model/dynamics_model_best.pkl"
     
-    
+    min_kpis, max_kpis, min_outputs, max_outputs = collect_baseline_kpi(building_name, args.amlt)
     reward_function = lambda kpi, state: reward_func(min_kpis, max_kpis, kpi, state)
     env_RL = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func)
     eval_env_RL = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func, eval=True)
