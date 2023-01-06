@@ -384,7 +384,7 @@ if __name__ == "__main__":
         input_dim = env_RL.observation_space.shape[0]
         reward_models, optimizers = load_reward_model(input_dim, reward_model_loc, building_name, args.device)
         env_RL.reward_function = lambda min_kip, max_kpi, kpi, state: learnt_reward_func(reward_models, min_kip, max_kpi, kpi, state)
-    elif args.rm =='bs': env_RL.reward_function = baseline_reward_func
+    elif args.rm == 'bs': env_RL.reward_function = baseline_reward_func
     
     if args.dm:
         input_dim = env_RL.observation_space.shape[0]
