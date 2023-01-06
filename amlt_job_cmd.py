@@ -6,13 +6,13 @@ import os
 #                   "SimpleHouseRSla-v0", "SwissHouseRSlaW2W-v0", "SwissHouseRSlaTank-v0"] 
 
 description = "Energym Train Baseline"
-suffix = "--iter 100 --algo TD3PlusBC"
-seeds_list = [7]
+suffix = ""
+seeds_list = ["13,17,19,23"]
 buildings = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
              "Apartments2Grid-v0", "OfficesThermostat-v0", "MixedUseFanFCU-v0",
              "SeminarcenterThermostat-v0", "SeminarcenterFull-v0", "SimpleHouseRad-v0",
              "SimpleHouseRSla-v0", "SwissHouseRSlaW2W-v0", "SwissHouseRSlaTank-v0"]
-file_name = "d3rl_baselines"
+file_name = "train_bulk_baseline"
 res_file_name = "amulet_baseline_config"
 
 cmd=f"""
