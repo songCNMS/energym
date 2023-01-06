@@ -26,16 +26,15 @@ if __name__ == "__main__":
         # cmds.extend([cmd_prefix+" --dm", cmd_prefix+" --dm --rm"])
         cmds.extend([cmd_prefix])
     device_count = torch.cuda.device_count()
-    for cmd in cmds: run(cmd)
-    # if building_name.startswith("Swiss") or building_name.startswith("Simple"):
-    #     jobs = []
-    #     for i, cmd in enumerate(cmds):
-    #         device_idx = i % device_count
-    #         cmd += " --device cuda:%i"%device_idx
-    #         p = mp.Process(target=run, args=(cmd,))
-    #         jobs.append(p)
-    #         p.start()
-    #     for proc in jobs:
-    #         proc.join()
-    # else:
-    #     for cmd in cmds: run(cmd)
+    if building_name.startswith("Swiss") or building_name.startswith("Simple"):
+        jobs = []
+        for i, cmd in enumerate(cmds):
+            device_idx = i % device_count
+            cmd += " --device cuda:%i"%device_idx
+            p = mp.Process(target=run, args=(cmd,))
+            jobs.append(p)
+            p.start()
+        for proc in jobs:
+            proc.join()
+    else:
+        for cmd in cmds: run(cmd)

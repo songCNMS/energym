@@ -16,11 +16,12 @@ import pickle
 buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
                   "Apartments2Grid-v0", "OfficesThermostat-v0", "MixedUseFanFCU-v0",
                   "SeminarcenterThermostat-v0", "SeminarcenterFull-v0", "SimpleHouseRad-v0",
-                  "SimpleHouseRSla-v0", "SwissHouseRSlaW2W-v0", "SwissHouseRSlaTank-v0"] 
+                  "SimpleHouseRSla-v0", "SwissHouseRSlaW2W-v0", "SwissHouseRSlaTank-v0",
+                  "SwissHouseRSlaTankDhw-v0"] 
 weather_list = ["ESP_CT_Barcelona", "ESP_CT_Barcelona", "ESP_CT_Barcelona",
                 "ESP_CT_Barcelona", "GRC_A_Athens", "GRC_A_Athens", 
                 "DNK_MJ_Horsens1", "DNK_MJ_Horsens1", "CH_BS_Basel", 
-                "CH_BS_Basel", "CH_BS_Basel", "CH_BS_Basel"]
+                "CH_BS_Basel", "CH_BS_Basel", "CH_BS_Basel","CH_BS_Basel"]
 
 default_controls = [{'P1_T_Tank_sp': [40.0], 'P2_T_Tank_sp': [40.0], 'P3_T_Tank_sp': [40.0],
                      'P4_T_Tank_sp': [40.0], 'Bd_Ch_EVBat_sp': [1.0], 'Bd_DisCh_EVBat_sp': [0.0],
@@ -36,11 +37,12 @@ default_controls = [{'P1_T_Tank_sp': [40.0], 'P2_T_Tank_sp': [40.0], 'P3_T_Tank_
                     {},
                     {},
                     {},
+                    {},
                     {}
                     ]
 
-control_values = [21, 21, 21, 21, 21, 22, 22, 22, 0, 0, 0, 0]
-control_frequency = [480, 480, 480, 480, 96, 96, 144, 144, 288, 288, 288, 288]
+control_values = [21, 21, 21, 21, 21, 22, 22, 22, 0, 0, 0, 0, 0]
+control_frequency = [480, 480, 480, 480, 96, 96, 144, 144, 288, 288, 288, 288, 288]
 
 simulation_days = 60
 
@@ -162,9 +164,12 @@ controller_list = [lambda inputs, step: LabController(control_list=inputs, lower
                    lambda inputs, step: lambda x,y,z: {"u": [0.5*(signal.square(0.1*step)+1.0)]},
                    lambda inputs, step: lambda x,y,z: {"u": [0.5*(signal.square(0.1*step)+1.0)]},
                    lambda inputs, step: lambda x,y,z: {"u": [0.5*(signal.square(0.1*step)+1.0)]},
-                   lambda inputs, step: lambda x,y,z: {"uHP": [0.5*(signal.square(0.1*step)+1.0)], 'uRSla':[0.5*(math.sin(0.01*step)+1.0)]}
+                   lambda inputs, step: lambda x,y,z: {"uHP": [0.5*(signal.square(0.1*step)+1.0)], 'uRSla':[0.5*(math.sin(0.01*step)+1.0)]},
+                   lambda inputs, step: lambda x,y,z: {'uHP': [0.5*(signal.square(0.1*step)+1.0)], 'uRSla': [0.5*(math.cos(0.01*step)+1.0)],
+                                                       'uFlowDHW': [0.1], 'uValveDHW': [0.0]}
                    ]
 
+    
 cols_plot = [[['Z01_T', 'P1_T_Thermostat_sp_out'], ['Ext_T'], ['Fa_Pw_All']],
              [['Z01_T', 'P1_T_Thermostat_sp_out'], ['Ext_T'], ['Fa_Pw_All']],
              [['Z01_T', 'P1_T_Thermostat_sp_out', 'P1_onoff_HP_sp_out'], ['Ext_T'], ['Fa_Pw_All']],
@@ -175,6 +180,7 @@ cols_plot = [[['Z01_T', 'P1_T_Thermostat_sp_out'], ['Ext_T'], ['Fa_Pw_All']],
              [['Z22_T', 'Z22_T_Thermostat_sp_out'], ['Ext_T'], ['Bd_onoff_HP1_sp', 'Bd_T_HP1_sp', 'Bd_onoff_HP3_sp', 'Bd_onoff_HP4_sp'], ['Fa_Pw_All']],
              [['temRoo.T', 'temSup.T', 'temRet.T'], ['TOut.T'], ['heaPum.P']],
              [['temRoo.T', 'temSup.T', 'temRet.T'], ['TOut.T'], ['heaPum.P']],
+             [['temRoo.T', 'sla.heatPortEmb[1].T', 'heaPum.TEvaAct'], ['TOut.T'], ['heaPum.P']],
              [['temRoo.T', 'sla.heatPortEmb[1].T', 'heaPum.TEvaAct'], ['TOut.T'], ['heaPum.P']],
              [['temRoo.T', 'sla.heatPortEmb[1].T', 'heaPum.TEvaAct'], ['TOut.T'], ['heaPum.P']]
             ]
