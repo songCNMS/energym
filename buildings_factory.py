@@ -86,6 +86,17 @@ def collect_baseline_kpi(building_name, is_remote):
                 if key not in max_outputs: max_outputs[key] = val
                 max_outputs[key] = max(max_outputs[key], val)
                 min_outputs[key] = min(min_outputs[key], val)
+        for key in max_kpis.keys():
+            if max_kpis[key]['kpi'] > 0: max_kpis[key]['kpi'] = max_kpis[key]['kpi']*5.0
+            else: max_kpis[key]['kpi'] = 0.0
+            if min_kpis[key]['kpi'] < 0: min_kpis[key]['kpi'] = min_kpis[key]['kpi']*5.0
+            else: min_kpis[key]['kpi'] = 0.0
+        for key in max_outputs.keys():
+            if max_outputs[key] > 0: max_outputs[key] = max_outputs[key]*5.0
+            else: max_outputs[key] = 0.0
+            if min_outputs[key] < 0: min_outputs[key] = min_outputs[key]*5.0
+            else: min_outputs[key] = 0.0
+        os.makedirs(os.path.dirname(baseline_metric_loc), exist_ok=True)
         with open(baseline_metric_loc, "wb") as f:
             res = {}
             res['min_kpis'] = min_kpis

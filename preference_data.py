@@ -88,8 +88,7 @@ def sample_trajectory(env, building_name, controller=None):
     step = 0
     trajectory = [state]
     rule_controller = controller_list[building_idx]
-    # noisy_delta = np.random.choice([1.0, 0.7, 0.5, 0.3, 0.0])
-    noisy_delta = np.random.choice([1.0, 0.0], p=[0.5, 0.5])
+    noisy_delta = np.random.choice([1.0, 0.0], p=[0.3, 0.7])
     # trajectory.append(state)
     while not done:
         # if controller is None: 
@@ -135,7 +134,7 @@ def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, m
     else: 
         data_loc = "data/offline_data/{}/preferences_data/{}/"
         traj_data_loc = f"data/offline_data/{building_name}/traj_data/"
-        model_loc = f"data/models/{building_name}/manual_simulator_seed7/best_model/best_model.zip"
+        model_loc = f"data/models/{building_name}/SAC_bs_simulator_seed7/best_model/best_model.zip"
     env_rl = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func)
     for _len_traj in len_traj_list: os.makedirs(data_loc.format(building_name, _len_traj), exist_ok=True)
     os.makedirs(traj_data_loc, exist_ok=True)
@@ -171,7 +170,7 @@ len_traj = 1
 len_traj_list = [1]
 # len_traj_list = list(range(1, 9))
 num_workers = 8
-preference_per_round = 100
+preference_per_round = 10
 perference_pairs_per_sample = 102400
 
 # buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",

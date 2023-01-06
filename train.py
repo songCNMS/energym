@@ -336,7 +336,7 @@ parser.add_argument('--building', type=str, help='building name', required=True)
 parser.add_argument('--iter', type=int, help='learning steps', default=1000)
 parser.add_argument("--exp_name", default=f"{datetime.today().date().strftime('%m%d-%H%M')}")
 parser.add_argument('--logdir', type=str, help='dir of results', default="models")
-parser.add_argument('--rm', action='store_true', help="whether using learnt reward model")
+parser.add_argument('--rm', type=str, help='reward model', default="dnn")
 parser.add_argument('--dm', action='store_true', help="whether using learnt dynamics model")
 parser.add_argument('--seed', type=int, help='seed', default=7)
 parser.add_argument('--wandb', action='store_true', help="whether using wandb")
@@ -357,7 +357,7 @@ if __name__ == "__main__":
     policy_name = args.algo
     reward_path_suffix = f"{policy_name}"
     reward_path_suffix += ("_inc" if args.inc else "")
-    reward_path_suffix += ("_rewards" if args.rm else "_manual")
+    reward_path_suffix += f"_{args.rm}"
     reward_path_suffix += ("_predictor" if args.dm else "_simulator")
     reward_path_suffix += f"_seed{args.seed}"
     if args.amlt:
@@ -380,10 +380,11 @@ if __name__ == "__main__":
     episode_len = env_RL.max_episode_len
     map_location=torch.device(args.device)
     
-    if args.rm:
+    if args.rm == "dnn":
         input_dim = env_RL.observation_space.shape[0]
         reward_models, optimizers = load_reward_model(input_dim, reward_model_loc, building_name, args.device)
         env_RL.reward_function = lambda min_kip, max_kpi, kpi, state: learnt_reward_func(reward_models, min_kip, max_kpi, kpi, state)
+    elif args.rm =='bs': env_RL.reward_function = baseline_reward_func
     
     if args.dm:
         input_dim = env_RL.observation_space.shape[0]

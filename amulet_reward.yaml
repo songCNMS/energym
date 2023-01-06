@@ -1,12 +1,12 @@
 description: Energym Reward Model
 
 target:
-  service: sing
-  name: msrresrchvc
-  vc: gcr-singularity-resrch
-  # service: amlk8s
-  # name: ms-shared
-  # vc: MS-Shared
+  # service: sing
+  # name: msrresrchvc
+  # vc: gcr-singularity-resrch
+  service: amlk8s
+  name: ms-shared
+  vc: MS-Shared
   # run "amlt target list amlk8s" to list the names of available AMLK8s targets
   # name: msrresrchvc
   # vc: gcr-singularity-resrch
@@ -30,69 +30,69 @@ data:
 
 # list of jobs to run, we run 2 jobs in this example
 
-# buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
-#                   "Apartments2Grid-v0", "OfficesThermostat-v0", "MixedUseFanFCU-v0",
-#                   "SeminarcenterThermostat-v0", "SeminarcenterFull-v0", "SimpleHouseRad-v0",
-#                   "SimpleHouseRSla-v0", "SwissHouseRSlaW2W-v0", "SwissHouseRSlaTank-v0"] 
+# buildings_list = ["ApartmentsThermal-v0-reward", "ApartmentsGrid-v0-reward", "Apartments2Thermal-v0-reward",
+#                   "Apartments2Grid-v0-reward", "OfficesThermostat-v0-reward", "MixedUseFanFCU-v0-reward",
+#                   "SeminarcenterThermostat-v0-reward", "SeminarcenterFull-v0-reward", "SimpleHouseRad-v0-reward",
+#                   "SimpleHouseRSla-v0-reward", "SwissHouseRSlaW2W-v0-reward", "SwissHouseRSlaTank-v0-reward"] 
 
 
 jobs:
-- name: ApartmentsThermal-v0
-  sku: G1-V100
+- name: ApartmentsThermal-v0-reward
+  sku: G1
   command:
   - python reward_model.py --building ApartmentsThermal-v0 --amlt
 
-- name: ApartmentsGrid-v0
-  sku: G1-V100
+- name: ApartmentsGrid-v0-reward
+  sku: G1
   command:
   - python reward_model.py --building ApartmentsGrid-v0 --amlt
 
-- name: Apartments2Thermal-v0
-  sku: G1-V100
+- name: Apartments2Thermal-v0-reward
+  sku: G1
   command:
   - python reward_model.py --building Apartments2Thermal-v0 --amlt
 
-- name: Apartments2Grid-v0
-  sku: G1-V100
+- name: Apartments2Grid-v0-reward
+  sku: G1
   command:
   - python reward_model.py --building Apartments2Grid-v0 --amlt
 
-- name: OfficesThermostat-v0
-  sku: G1-V100
+- name: OfficesThermostat-v0-reward
+  sku: G1
   command:
   - python reward_model.py --building OfficesThermostat-v0 --amlt
 
-- name: MixedUseFanFCU-v0
-  sku: G1-V100
+- name: MixedUseFanFCU-v0-reward
+  sku: G1
   command:
   - python reward_model.py --building MixedUseFanFCU-v0 --amlt
 
-- name: SeminarcenterThermostat-v0
-  sku: G1-V100
+- name: SeminarcenterThermostat-v0-reward
+  sku: G1
   command:
   - python reward_model.py --building SeminarcenterThermostat-v0 --amlt
   
-- name: SeminarcenterFull-v0
-  sku: G1-V100
+- name: SeminarcenterFull-v0-reward
+  sku: G1
   command:
   - python reward_model.py --building SeminarcenterFull-v0 --amlt
 
-- name: SimpleHouseRad-v0
-  sku: G1-V100
+- name: SimpleHouseRad-v0-reward
+  sku: G1
   command:
   - python reward_model.py --building SimpleHouseRad-v0 --amlt
 
-- name: SimpleHouseRSla-v0
-  sku: G1-V100
+- name: SimpleHouseRSla-v0-reward
+  sku: G1
   command:
   - python reward_model.py --building SimpleHouseRSla-v0 --amlt
 
-- name: SwissHouseRSlaW2W-v0
-  sku: G1-V100
+- name: SwissHouseRSlaW2W-v0-reward
+  sku: G1
   command:
   - python reward_model.py --building SwissHouseRSlaW2W-v0 --amlt
 
-- name: SwissHouseRSlaTank-v0
-  sku: G1-V100
+- name: SwissHouseRSlaTank-v0-reward
+  sku: G1
   command:
   - python reward_model.py --building SwissHouseRSlaTank-v0 --amlt
