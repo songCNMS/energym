@@ -333,7 +333,7 @@ from datetime import datetime
 parser = argparse.ArgumentParser()
 parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
 parser.add_argument('--building', type=str, help='building name', required=True)
-parser.add_argument('--iter', type=int, help='learning steps', default=1000)
+parser.add_argument('--iter', type=int, help='learning steps', default=100)
 parser.add_argument("--exp_name", default=f"{datetime.today().date().strftime('%m%d-%H%M')}")
 parser.add_argument('--logdir', type=str, help='dir of results', default="models")
 parser.add_argument('--rm', type=str, help='reward model', default="dnn")
@@ -418,13 +418,13 @@ if __name__ == "__main__":
                     seed=args.seed,
                     policy_kwargs=dict(net_arch=[512, 512, 512], 
                                        activation_fn=torch.nn.ReLU))
-    checkpoint_callback = CheckpointCallback(save_freq=episode_len*max(1, args.iter//20), save_path=model_loc)
+    checkpoint_callback = CheckpointCallback(save_freq=episode_len*max(1, args.iter//10), save_path=model_loc)
     post_eval_callback = EnergymEvalCallback(model, building_name, log_loc, 
                                              min_kpis, max_kpis, 
                                              min_outputs, max_outputs, 
                                              env_RL, args.amlt, args.inc, verbose=0)
     eval_callback = EvalCallback(env_RL, best_model_save_path=model_loc + "/best_model/",
-                                 log_path=log_loc, eval_freq=episode_len*max(1, args.iter//20), 
+                                 log_path=log_loc, eval_freq=episode_len*max(1, args.iter//10), 
                                  callback_after_eval=post_eval_callback)
     
     # Create the callback list

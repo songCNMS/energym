@@ -88,7 +88,7 @@ def sample_trajectory(env, building_name, controller=None):
     step = 0
     trajectory = [state]
     rule_controller = controller_list[building_idx]
-    noisy_delta = np.random.choice([1.0, 0.0], p=[0.3, 0.7])
+    noisy_delta = np.random.choice([1.0, 0.0], p=[0.4, 0.6])
     # trajectory.append(state)
     while not done:
         # if controller is None: 
@@ -126,11 +126,11 @@ def sample_preferences(trajectory1, trajectory2, min_kpis, max_kpis, num_prefere
     return preference_pairs
 
 
-def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, min_outputs, max_outputs, round, preference_per_round):
+def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, min_outputs, max_outputs, round, preference_idx_list, device):
     if is_remote: 
         data_loc = os.environ['AMLT_DATA_DIR'] + "/data/offline_data/{}/preferences_data/{}/"
         traj_data_loc = f"{os.environ['AMLT_DATA_DIR']}/data/offline_data/{building_name}/traj_data/"
-        model_loc = f"{os.environ['AMLT_DATA_DIR']}/data/models/{building_name}/manual_simulator_seed7/best_model/best_model.zip"
+        model_loc = f"{os.environ['AMLT_DATA_DIR']}/data/models/{building_name}/SAC_bs_simulator_seed7/best_model/best_model.zip"
     else: 
         data_loc = "data/offline_data/{}/preferences_data/{}/"
         traj_data_loc = f"data/offline_data/{building_name}/traj_data/"
@@ -138,11 +138,11 @@ def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, m
     env_rl = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func)
     for _len_traj in len_traj_list: os.makedirs(data_loc.format(building_name, _len_traj), exist_ok=True)
     os.makedirs(traj_data_loc, exist_ok=True)
-    for i in range(preference_per_round):        
+    for i in preference_idx_list: 
         traj_file_loc = f"{traj_data_loc}/{round}_{i}.pkl"
         if not os.path.exists(traj_file_loc):
-            controller1 = SAC.load(model_loc)
-            controller2 = SAC.load(model_loc)
+            controller1 = SAC.load(model_loc, device=device)
+            controller2 = SAC.load(model_loc, device=device)
             trajectory1 = sample_trajectory(env_rl, building_name, controller=controller1)
             trajectory2 = sample_trajectory(env_rl, building_name, controller=controller2)
             trajectories = [trajectory1, trajectory2]
@@ -170,7 +170,7 @@ len_traj = 1
 len_traj_list = [1]
 # len_traj_list = list(range(1, 9))
 num_workers = 8
-preference_per_round = 10
+preference_per_round = 50
 perference_pairs_per_sample = 102400
 
 # buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
@@ -184,6 +184,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
 parser.add_argument('--building', type=str, help='building name', required=True)
 parser.add_argument('--round', type=str, help='round', default="")
+parser.add_argument('--idx', type=str, help='idx', default="")
+parser.add_argument('--device', type=str, help='device', default="cpu")
 
 
 
@@ -193,14 +195,18 @@ if __name__ == "__main__":
     min_kpis, max_kpis, min_outputs, max_outputs = collect_baseline_kpi(building_name, args.amlt)
     if args.round == "": rounds_list = list(range(num_workers))
     else: rounds_list = [int(c) for c in args.round.split(",")]
+    
+    if args.idx == "": idx_list = list(range(preference_per_round))
+    else: idx_list = [int(c) for c in args.idx.split(",")]
+    
     if (not building_name.startswith("Simple")) and (not building_name.startswith("Swiss")):
-        for i in rounds_list: generate_offline_data_worker(args.amlt, building_name, min_kpis, max_kpis, min_outputs, max_outputs, i, preference_per_round)
+        for i in rounds_list: 
+            generate_offline_data_worker(args.amlt, building_name, min_kpis, max_kpis, min_outputs, max_outputs, i, idx_list, args.device)
     else:
         jobs = []
         for i in rounds_list:
-            p = mp.Process(target=generate_offline_data_worker, args=(args.amlt, building_name, min_kpis, max_kpis, min_outputs, max_outputs, i, preference_per_round))
+            p = mp.Process(target=generate_offline_data_worker, args=(args.amlt, building_name, min_kpis, max_kpis, min_outputs, max_outputs, i, idx_list, args.device))
             jobs.append(p)
             p.start()
-
         for proc in jobs:
             proc.join()

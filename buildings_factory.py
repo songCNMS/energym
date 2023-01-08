@@ -127,7 +127,7 @@ def baseline_reward_func(min_kpi, max_kpi, kpi, state):
         min_v, max_v = min_kpi[key]['kpi'], max_kpi[key]['kpi']
         if val['type'] == 'avg_dev': constraint += (max_v - val["kpi"]) / max(max_v-min_v, 1.0)
         elif val['type'] == 'avg': reward += (max_v - val["kpi"]) / max(max_v-min_v, 1.0)
-    return reward + constraint, 0.0
+    return reward + 5.0*constraint, 0.0
 
 
 def learnt_reward_func(reward_models, min_kpi, max_kpi, kpi, state):

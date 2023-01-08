@@ -1,175 +1,1003 @@
-description: Energym Data Collection
+
+description: Energym Preference Data
 
 target:
-  # service: sing
-  # name: msrresrchvc
-  # vc: gcr-singularity-resrch
-  service: amlk8s
-  name: itpwus2cpucl1
-  vc: gcrcpu
-  # run "amlt target list amlk8s" to list the names of available AMLK8s targets
-  # name: msrresrchvc
-  # vc: gcr-singularity-resrch
+  service: sing
+  name: msrresrchvc
+  vc: gcr-singularity-resrch
 
 environment:
-  image: energym_sing:sing
+  image: energym_gcr:sing2
   registry: resrchvc4cr.azurecr.io # any public registry can be specified here
   username: resrchvc4cr
   setup:
-    - apt-get update 
-
+    - apt-get update
 
 code:
-  # local directory of the code. this will be uploaded to the server.
-  # $CONFIG_DIR is expanded to the directory of this config file
   local_dir: $CONFIG_DIR/
 
 data:
-  local_dir: $CONFIG_DIR/data/
-  remote_dir: energym/
-
-# list of jobs to run, we run 2 jobs in this example
-
-# buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
-#                   "Apartments2Grid-v0", "OfficesThermostat-v0", "MixedUseFanFCU-v0",
-#                   "SeminarcenterThermostat-v0", "SeminarcenterFull-v0", "SimpleHouseRad-v0",
-#                   "SimpleHouseRSla-v0", "SwissHouseRSlaW2W-v0", "SwissHouseRSlaTank-v0"] 
-
+  local_dir: $CONFIG_DIR/
+  remote_dir: energym_v2/
 
 jobs:
-- name: ApartmentsThermal-v0-1
-  sku: C2
-  command:
-  - python preference_data.py --building ApartmentsThermal-v0 --amlt --round 0,1
-- name: ApartmentsThermal-v0-2
-  sku: C2
-  command:
-  - python preference_data.py --building ApartmentsThermal-v0 --amlt --round 2,3
-- name: ApartmentsThermal-v0-3
-  sku: C2
-  command:
-  - python preference_data.py --building ApartmentsThermal-v0 --amlt --round 5
-- name: ApartmentsThermal-v0-4
-  sku: C2
-  command:
-  - python preference_data.py --building ApartmentsThermal-v0 --amlt --round 7
 
+# - name: ApartmentsThermal-v0-preference_data--round_0-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 0 --idx 0,1,2,3,4,5,6,7,8,9
 
-- name: ApartmentsGrid-v0-1
-  sku: C2
-  command:
-  - python preference_data.py --building ApartmentsGrid-v0 --amlt --round 0,1
-- name: ApartmentsGrid-v0-2
-  sku: C2
-  command:
-  - python preference_data.py --building ApartmentsGrid-v0 --amlt --round 2,3
-- name: ApartmentsGrid-v0-3
-  sku: C2
-  command:
-  - python preference_data.py --building ApartmentsGrid-v0 --amlt --round 4,5
-- name: ApartmentsGrid-v0-4
-  sku: C2
-  command:
-  - python preference_data.py --building ApartmentsGrid-v0 --amlt --round 6,7
+# - name: ApartmentsThermal-v0-preference_data--round_0-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 0 --idx 10,11,12,13,14,15,16,17,18,19
 
+# - name: ApartmentsThermal-v0-preference_data--round_0-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 0 --idx 20,21,22,23,24,25,26,27,28,29
 
-- name: Apartments2Thermal-v0-1
-  sku: C2
-  command:
-  - python preference_data.py --building Apartments2Thermal-v0 --amlt --round 0,1
-- name: Apartments2Thermal-v0-2
-  sku: C2
-  command:
-  - python preference_data.py --building Apartments2Thermal-v0 --amlt --round 2,3
-- name: Apartments2Thermal-v0-3
-  sku: C2
-  command:
-  - python preference_data.py --building Apartments2Thermal-v0 --amlt --round 5
-- name: Apartments2Thermal-v0-4
-  sku: C2
-  command:
-  - python preference_data.py --building Apartments2Thermal-v0 --amlt --round 7
+# - name: ApartmentsThermal-v0-preference_data--round_0-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 0 --idx 30,31,32,33,34,35,36,37,38,39
 
+# - name: ApartmentsThermal-v0-preference_data--round_0-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 0 --idx 40,41,42,43,44,45,46,47,48,49
 
-- name: Apartments2Grid-v0-1
-  sku: C2
-  command:
-  - python preference_data.py --building Apartments2Grid-v0 --amlt --round 0,1
-- name: Apartments2Grid-v0-2
-  sku: C2
-  command:
-  - python preference_data.py --building Apartments2Grid-v0 --amlt --round 2,3
-- name: Apartments2Grid-v0-3
-  sku: C2
-  command:
-  - python preference_data.py --building Apartments2Grid-v0 --amlt --round 5
-- name: Apartments2Grid-v0-4
-  sku: C2
-  command:
-  - python preference_data.py --building Apartments2Grid-v0 --amlt --round 6,7
+# - name: ApartmentsThermal-v0-preference_data--round_1-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 1 --idx 0,1,2,3,4,5,6,7,8,9
 
+# - name: ApartmentsThermal-v0-preference_data--round_1-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 1 --idx 10,11,12,13,14,15,16,17,18,19
 
-- name: SeminarcenterThermostat-v0-1
-  sku: C2
-  command:
-  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt --round 0,1
-- name: SeminarcenterThermostat-v0-2
-  sku: C2
-  command:
-  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt --round 2,3
-- name: SeminarcenterThermostat-v0-3
-  sku: C2
-  command:
-  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt --round 4,5
-- name: SeminarcenterThermostat-v0-4
-  sku: C2
-  command:
-  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt --round 6,7
+# - name: ApartmentsThermal-v0-preference_data--round_1-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 1 --idx 20,21,22,23,24,25,26,27,28,29
 
-  
-- name: SeminarcenterFull-v0-1
-  sku: C2
-  command:
-  - python preference_data.py --building SeminarcenterFull-v0 --amlt --round 0,1
-- name: SeminarcenterFull-v0-2
-  sku: C2
-  command:
-  - python preference_data.py --building SeminarcenterFull-v0 --amlt --round 2,3
-- name: SeminarcenterFull-v0-3
-  sku: C2
-  command:
-  - python preference_data.py --building SeminarcenterFull-v0 --amlt --round 4,5
-- name: SeminarcenterFull-v0-4
-  sku: C2
-  command:
-  - python preference_data.py --building SeminarcenterFull-v0 --amlt --round 6,7
+# - name: ApartmentsThermal-v0-preference_data--round_1-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 1 --idx 30,31,32,33,34,35,36,37,38,39
 
-- name: MixedUseFanFCU-v0
-  sku: C2
-  command:
-  - python preference_data.py --building MixedUseFanFCU-v0 --amlt
+# - name: ApartmentsThermal-v0-preference_data--round_1-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 1 --idx 40,41,42,43,44,45,46,47,48,49
 
-- name: OfficesThermostat-v0
-  sku: C2
-  command:
-  - python preference_data.py --building OfficesThermostat-v0 --amlt
+# - name: ApartmentsThermal-v0-preference_data--round_2-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 2 --idx 0,1,2,3,4,5,6,7,8,9
 
-- name: SimpleHouseRad-v0
-  sku: C8
-  command:
-  - python preference_data.py --building SimpleHouseRad-v0 --amlt
+# - name: ApartmentsThermal-v0-preference_data--round_2-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 2 --idx 10,11,12,13,14,15,16,17,18,19
 
-- name: SimpleHouseRSla-v0
-  sku: C8
-  command:
-  - python preference_data.py --building SimpleHouseRSla-v0 --amlt
+# - name: ApartmentsThermal-v0-preference_data--round_2-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 2 --idx 20,21,22,23,24,25,26,27,28,29
 
-- name: SwissHouseRSlaW2W-v0
-  sku: C8
-  command:
-  - python preference_data.py --building SwissHouseRSlaW2W-v0 --amlt
+# - name: ApartmentsThermal-v0-preference_data--round_2-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 2 --idx 30,31,32,33,34,35,36,37,38,39
 
-- name: SwissHouseRSlaTank-v0
-  sku: C8
+# - name: ApartmentsThermal-v0-preference_data--round_2-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 2 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: ApartmentsThermal-v0-preference_data--round_3-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 3 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: ApartmentsThermal-v0-preference_data--round_3-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 3 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: ApartmentsThermal-v0-preference_data--round_3-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 3 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: ApartmentsThermal-v0-preference_data--round_3-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 3 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: ApartmentsThermal-v0-preference_data--round_3-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 3 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: ApartmentsThermal-v0-preference_data--round_4-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 4 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: ApartmentsThermal-v0-preference_data--round_4-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 4 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: ApartmentsThermal-v0-preference_data--round_4-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 4 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: ApartmentsThermal-v0-preference_data--round_4-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 4 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: ApartmentsThermal-v0-preference_data--round_4-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 4 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: ApartmentsThermal-v0-preference_data--round_5-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 5 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: ApartmentsThermal-v0-preference_data--round_5-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 5 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: ApartmentsThermal-v0-preference_data--round_5-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 5 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: ApartmentsThermal-v0-preference_data--round_5-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 5 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: ApartmentsThermal-v0-preference_data--round_5-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 5 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: ApartmentsThermal-v0-preference_data--round_6-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 6 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: ApartmentsThermal-v0-preference_data--round_6-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 6 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: ApartmentsThermal-v0-preference_data--round_6-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 6 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: ApartmentsThermal-v0-preference_data--round_6-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 6 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: ApartmentsThermal-v0-preference_data--round_6-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 6 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: ApartmentsThermal-v0-preference_data--round_7-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 7 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: ApartmentsThermal-v0-preference_data--round_7-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 7 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: ApartmentsThermal-v0-preference_data--round_7-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 7 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: ApartmentsThermal-v0-preference_data--round_7-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 7 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: ApartmentsThermal-v0-preference_data--round_7-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsThermal-v0 --amlt  --round 7 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: ApartmentsGrid-v0-preference_data--round_0-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 0 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: ApartmentsGrid-v0-preference_data--round_0-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 0 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: ApartmentsGrid-v0-preference_data--round_0-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 0 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: ApartmentsGrid-v0-preference_data--round_0-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 0 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: ApartmentsGrid-v0-preference_data--round_0-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 0 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: ApartmentsGrid-v0-preference_data--round_1-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 1 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: ApartmentsGrid-v0-preference_data--round_1-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 1 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: ApartmentsGrid-v0-preference_data--round_1-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 1 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: ApartmentsGrid-v0-preference_data--round_1-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 1 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: ApartmentsGrid-v0-preference_data--round_1-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 1 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: ApartmentsGrid-v0-preference_data--round_2-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 2 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: ApartmentsGrid-v0-preference_data--round_2-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 2 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: ApartmentsGrid-v0-preference_data--round_2-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 2 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: ApartmentsGrid-v0-preference_data--round_2-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 2 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: ApartmentsGrid-v0-preference_data--round_2-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 2 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: ApartmentsGrid-v0-preference_data--round_3-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 3 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: ApartmentsGrid-v0-preference_data--round_3-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 3 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: ApartmentsGrid-v0-preference_data--round_3-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 3 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: ApartmentsGrid-v0-preference_data--round_3-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 3 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: ApartmentsGrid-v0-preference_data--round_3-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 3 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: ApartmentsGrid-v0-preference_data--round_4-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 4 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: ApartmentsGrid-v0-preference_data--round_4-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 4 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: ApartmentsGrid-v0-preference_data--round_4-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 4 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: ApartmentsGrid-v0-preference_data--round_4-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 4 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: ApartmentsGrid-v0-preference_data--round_4-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 4 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: ApartmentsGrid-v0-preference_data--round_5-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 5 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: ApartmentsGrid-v0-preference_data--round_5-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 5 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: ApartmentsGrid-v0-preference_data--round_5-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 5 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: ApartmentsGrid-v0-preference_data--round_5-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 5 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: ApartmentsGrid-v0-preference_data--round_5-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 5 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: ApartmentsGrid-v0-preference_data--round_6-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 6 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: ApartmentsGrid-v0-preference_data--round_6-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 6 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: ApartmentsGrid-v0-preference_data--round_6-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 6 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: ApartmentsGrid-v0-preference_data--round_6-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 6 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: ApartmentsGrid-v0-preference_data--round_6-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 6 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: ApartmentsGrid-v0-preference_data--round_7-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 7 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: ApartmentsGrid-v0-preference_data--round_7-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 7 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: ApartmentsGrid-v0-preference_data--round_7-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 7 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: ApartmentsGrid-v0-preference_data--round_7-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 7 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: ApartmentsGrid-v0-preference_data--round_7-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building ApartmentsGrid-v0 --amlt  --round 7 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: Apartments2Thermal-v0-preference_data--round_0-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 0 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: Apartments2Thermal-v0-preference_data--round_0-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 0 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: Apartments2Thermal-v0-preference_data--round_0-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 0 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: Apartments2Thermal-v0-preference_data--round_0-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 0 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: Apartments2Thermal-v0-preference_data--round_0-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 0 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: Apartments2Thermal-v0-preference_data--round_1-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 1 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: Apartments2Thermal-v0-preference_data--round_1-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 1 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: Apartments2Thermal-v0-preference_data--round_1-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 1 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: Apartments2Thermal-v0-preference_data--round_1-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 1 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: Apartments2Thermal-v0-preference_data--round_1-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 1 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: Apartments2Thermal-v0-preference_data--round_2-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 2 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: Apartments2Thermal-v0-preference_data--round_2-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 2 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: Apartments2Thermal-v0-preference_data--round_2-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 2 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: Apartments2Thermal-v0-preference_data--round_2-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 2 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: Apartments2Thermal-v0-preference_data--round_2-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 2 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: Apartments2Thermal-v0-preference_data--round_3-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 3 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: Apartments2Thermal-v0-preference_data--round_3-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 3 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: Apartments2Thermal-v0-preference_data--round_3-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 3 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: Apartments2Thermal-v0-preference_data--round_3-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 3 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: Apartments2Thermal-v0-preference_data--round_3-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 3 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: Apartments2Thermal-v0-preference_data--round_4-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 4 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: Apartments2Thermal-v0-preference_data--round_4-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 4 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: Apartments2Thermal-v0-preference_data--round_4-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 4 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: Apartments2Thermal-v0-preference_data--round_4-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 4 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: Apartments2Thermal-v0-preference_data--round_4-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 4 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: Apartments2Thermal-v0-preference_data--round_5-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 5 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: Apartments2Thermal-v0-preference_data--round_5-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 5 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: Apartments2Thermal-v0-preference_data--round_5-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 5 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: Apartments2Thermal-v0-preference_data--round_5-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 5 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: Apartments2Thermal-v0-preference_data--round_5-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 5 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: Apartments2Thermal-v0-preference_data--round_6-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 6 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: Apartments2Thermal-v0-preference_data--round_6-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 6 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: Apartments2Thermal-v0-preference_data--round_6-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 6 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: Apartments2Thermal-v0-preference_data--round_6-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 6 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: Apartments2Thermal-v0-preference_data--round_6-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 6 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: Apartments2Thermal-v0-preference_data--round_7-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 7 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: Apartments2Thermal-v0-preference_data--round_7-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 7 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: Apartments2Thermal-v0-preference_data--round_7-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 7 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: Apartments2Thermal-v0-preference_data--round_7-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 7 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: Apartments2Thermal-v0-preference_data--round_7-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Thermal-v0 --amlt  --round 7 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: Apartments2Grid-v0-preference_data--round_0-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 0 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: Apartments2Grid-v0-preference_data--round_0-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 0 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: Apartments2Grid-v0-preference_data--round_0-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 0 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: Apartments2Grid-v0-preference_data--round_0-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 0 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: Apartments2Grid-v0-preference_data--round_0-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 0 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: Apartments2Grid-v0-preference_data--round_1-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 1 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: Apartments2Grid-v0-preference_data--round_1-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 1 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: Apartments2Grid-v0-preference_data--round_1-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 1 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: Apartments2Grid-v0-preference_data--round_1-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 1 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: Apartments2Grid-v0-preference_data--round_1-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 1 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: Apartments2Grid-v0-preference_data--round_2-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 2 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: Apartments2Grid-v0-preference_data--round_2-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 2 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: Apartments2Grid-v0-preference_data--round_2-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 2 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: Apartments2Grid-v0-preference_data--round_2-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 2 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: Apartments2Grid-v0-preference_data--round_2-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 2 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: Apartments2Grid-v0-preference_data--round_3-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 3 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: Apartments2Grid-v0-preference_data--round_3-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 3 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: Apartments2Grid-v0-preference_data--round_3-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 3 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: Apartments2Grid-v0-preference_data--round_3-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 3 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: Apartments2Grid-v0-preference_data--round_3-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 3 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: Apartments2Grid-v0-preference_data--round_4-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 4 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: Apartments2Grid-v0-preference_data--round_4-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 4 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: Apartments2Grid-v0-preference_data--round_4-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 4 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: Apartments2Grid-v0-preference_data--round_4-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 4 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: Apartments2Grid-v0-preference_data--round_4-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 4 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: Apartments2Grid-v0-preference_data--round_5-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 5 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: Apartments2Grid-v0-preference_data--round_5-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 5 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: Apartments2Grid-v0-preference_data--round_5-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 5 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: Apartments2Grid-v0-preference_data--round_5-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 5 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: Apartments2Grid-v0-preference_data--round_5-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 5 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: Apartments2Grid-v0-preference_data--round_6-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 6 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: Apartments2Grid-v0-preference_data--round_6-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 6 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: Apartments2Grid-v0-preference_data--round_6-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 6 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: Apartments2Grid-v0-preference_data--round_6-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 6 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: Apartments2Grid-v0-preference_data--round_6-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 6 --idx 40,41,42,43,44,45,46,47,48,49
+
+# - name: Apartments2Grid-v0-preference_data--round_7-idx_0,1,2,3,4,5,6,7,8,9
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 7 --idx 0,1,2,3,4,5,6,7,8,9
+
+# - name: Apartments2Grid-v0-preference_data--round_7-idx_10,11,12,13,14,15,16,17,18,19
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 7 --idx 10,11,12,13,14,15,16,17,18,19
+
+# - name: Apartments2Grid-v0-preference_data--round_7-idx_20,21,22,23,24,25,26,27,28,29
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 7 --idx 20,21,22,23,24,25,26,27,28,29
+
+# - name: Apartments2Grid-v0-preference_data--round_7-idx_30,31,32,33,34,35,36,37,38,39
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 7 --idx 30,31,32,33,34,35,36,37,38,39
+
+# - name: Apartments2Grid-v0-preference_data--round_7-idx_40,41,42,43,44,45,46,47,48,49
+#   sku: C1
+#   command:
+#   - python preference_data.py --building Apartments2Grid-v0 --amlt  --round 7 --idx 40,41,42,43,44,45,46,47,48,49
+
+- name: OfficesThermostat-v0-preference_data--round_0-idx_all
+  sku: C1
   command:
-  - python preference_data.py --building SwissHouseRSlaTank-v0 --amlt
+  - python preference_data.py --building OfficesThermostat-v0 --amlt  --round 0
+
+- name: OfficesThermostat-v0-preference_data--round_1-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building OfficesThermostat-v0 --amlt  --round 1
+
+- name: OfficesThermostat-v0-preference_data--round_2-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building OfficesThermostat-v0 --amlt  --round 2
+
+- name: OfficesThermostat-v0-preference_data--round_3-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building OfficesThermostat-v0 --amlt  --round 3
+
+- name: OfficesThermostat-v0-preference_data--round_4-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building OfficesThermostat-v0 --amlt  --round 4
+
+- name: OfficesThermostat-v0-preference_data--round_5-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building OfficesThermostat-v0 --amlt  --round 5
+
+- name: OfficesThermostat-v0-preference_data--round_6-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building OfficesThermostat-v0 --amlt  --round 6
+
+- name: OfficesThermostat-v0-preference_data--round_7-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building OfficesThermostat-v0 --amlt  --round 7
+
+- name: MixedUseFanFCU-v0-preference_data--round_0-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building MixedUseFanFCU-v0 --amlt  --round 0
+
+- name: MixedUseFanFCU-v0-preference_data--round_1-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building MixedUseFanFCU-v0 --amlt  --round 1
+
+- name: MixedUseFanFCU-v0-preference_data--round_2-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building MixedUseFanFCU-v0 --amlt  --round 2
+
+- name: MixedUseFanFCU-v0-preference_data--round_3-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building MixedUseFanFCU-v0 --amlt  --round 3
+
+- name: MixedUseFanFCU-v0-preference_data--round_4-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building MixedUseFanFCU-v0 --amlt  --round 4
+
+- name: MixedUseFanFCU-v0-preference_data--round_5-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building MixedUseFanFCU-v0 --amlt  --round 5
+
+- name: MixedUseFanFCU-v0-preference_data--round_6-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building MixedUseFanFCU-v0 --amlt  --round 6
+
+- name: MixedUseFanFCU-v0-preference_data--round_7-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building MixedUseFanFCU-v0 --amlt  --round 7
+
+- name: SeminarcenterThermostat-v0-preference_data--round_0-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_1-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 1
+
+- name: SeminarcenterThermostat-v0-preference_data--round_2-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 2
+
+- name: SeminarcenterThermostat-v0-preference_data--round_3-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 3
+
+- name: SeminarcenterThermostat-v0-preference_data--round_4-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 4
+
+- name: SeminarcenterThermostat-v0-preference_data--round_5-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 5
+
+- name: SeminarcenterThermostat-v0-preference_data--round_6-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 6
+
+- name: SeminarcenterThermostat-v0-preference_data--round_7-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 7
+
+- name: SeminarcenterFull-v0-preference_data--round_0-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 0
+
+- name: SeminarcenterFull-v0-preference_data--round_1-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 1
+
+- name: SeminarcenterFull-v0-preference_data--round_2-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 2
+
+- name: SeminarcenterFull-v0-preference_data--round_3-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 3
+
+- name: SeminarcenterFull-v0-preference_data--round_4-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 4
+
+- name: SeminarcenterFull-v0-preference_data--round_5-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 5
+
+- name: SeminarcenterFull-v0-preference_data--round_6-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 6
+
+- name: SeminarcenterFull-v0-preference_data--round_7-idx_all
+  sku: C1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 7
+
+- name: SimpleHouseRad-v0-preference_data--round_all-idx_all
+  sku: C4
+  command:
+  - python preference_data.py --building SimpleHouseRad-v0 --amlt 
+
+- name: SimpleHouseRSla-v0-preference_data--round_all-idx_all
+  sku: C4
+  command:
+  - python preference_data.py --building SimpleHouseRSla-v0 --amlt 
+
+- name: SwissHouseRSlaW2W-v0-preference_data--round_all-idx_all
+  sku: C4
+  command:
+  - python preference_data.py --building SwissHouseRSlaW2W-v0 --amlt 
+
+- name: SwissHouseRSlaTank-v0-preference_data--round_all-idx_all
+  sku: C4
+  command:
+  - python preference_data.py --building SwissHouseRSlaTank-v0 --amlt 

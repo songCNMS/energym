@@ -5,15 +5,15 @@ import os
 #                   "SeminarcenterThermostat-v0", "SeminarcenterFull-v0", "SimpleHouseRad-v0",
 #                   "SimpleHouseRSla-v0", "SwissHouseRSlaW2W-v0", "SwissHouseRSlaTank-v0"] 
 
-description = "Energym Train Baseline Reward NO Dynamics"
+description = "Energym Preference Data"
 suffix = ""
-seeds_list = ["7,13,17,19"]
+# seeds_list = ["7,13,17,19"]
 buildings = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
              "Apartments2Grid-v0", "OfficesThermostat-v0", "MixedUseFanFCU-v0",
              "SeminarcenterThermostat-v0", "SeminarcenterFull-v0", "SimpleHouseRad-v0",
              "SimpleHouseRSla-v0", "SwissHouseRSlaW2W-v0", "SwissHouseRSlaTank-v0"]
-file_name = "train_bulk"
-res_file_name = "amulet_rmbs_simulator_config"
+file_name = "preference_data"
+res_file_name = "amulet_preference_data"
 
 cmd=f"""
 description: {description}
@@ -35,20 +35,38 @@ code:
 
 data:
   local_dir: $CONFIG_DIR/data/
-  remote_dir: energym/
+  remote_dir: energym_v2/
 
 jobs:
 """
 suffix_in_name = suffix.replace(" ", "").replace("-", "")
 for building in buildings:
-    for seed in seeds_list:
-        cmd += f"""
-- name: {building}-{file_name}-{suffix_in_name}-seed{seed}
-  sku: G1-V100
+  if building.startswith("Swiss") or building.startswith("Simple"): 
+    cmd += f"""
+- name: {building}-{file_name}-{suffix_in_name}-round_all-idx_all
+  sku: C4
   command:
-  - python {file_name}.py --building {building} --amlt {suffix} --seed {seed}
+  - python {file_name}.py --building {building} --amlt {suffix}
+"""
+  elif building.startswith("Apartments"):
+    for round in range(8):
+        for idx in range(0, 50, 10):
+            idx_list = ','.join([str(idx+i) for i in range(10)])
+            cmd += f"""
+- name: {building}-{file_name}-{suffix_in_name}-round_{round}-idx_{idx_list}
+  sku: C1
+  command:
+  - python {file_name}.py --building {building} --amlt {suffix} --round {round} --idx {idx_list}
+"""
+  else:
+    for round in range(8):
+      cmd += f"""
+- name: {building}-{file_name}-{suffix_in_name}-round_{round}-idx_all
+  sku: C1
+  command:
+  - python {file_name}.py --building {building} --amlt {suffix} --round {round}
 """
 
 with open(f"{res_file_name}.yaml", 'w') as f:
-    f.write(cmd)
+  f.write(cmd)
 
