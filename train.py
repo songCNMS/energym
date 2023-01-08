@@ -60,6 +60,7 @@ class EnergymEvalCallback(BaseCallback):
         self.max_outputs = max_outputs
         self.is_wandb = is_wandb
         self.reward_function = env.reward_function
+        self.dynamics_predictor = env.dynamics_predictor
         self.env = env
         self.is_d3rl = is_d3rl
         self.is_remote = is_remote
@@ -135,7 +136,9 @@ class EnergymEvalCallback(BaseCallback):
         eval_env_RL = StableBaselinesRLWrapper(self.building_name, 
                                                self.min_kpis, self.max_kpis, 
                                                self.min_outputs, self.max_outputs, 
-                                               self.reward_function, eval=True)
+                                               self.reward_function, 
+                                               dynamics_predictor=self.dynamics_predictor,
+                                               eval=True)
         inputs = eval_env_RL.inputs
         out_list = []
         controls = []
@@ -155,15 +158,15 @@ class EnergymEvalCallback(BaseCallback):
         while not done:
             bs_control = controller(inputs, step)(bs_outputs, control_values[building_idx], hour)
             bs_control.update(default_control)
-            bs_controls +=[ {p:bs_control[p][0] for p in bs_control} ]
+            bs_controls += [ {p:bs_control[p][0] for p in bs_control} ]
             bs_actions = eval_env_RL.transform_action(bs_control)
             state, reward, done, info = eval_env_RL.step(bs_actions)
             bs_outputs = eval_env_RL.inverse_transform_state(state)
             hour = eval_env_RL.hour
             bs_out_list.append(bs_outputs)
             bs_state = eval_env_RL.transform_state(bs_outputs)
-            ori_bs_reward, _ = reward_func(self.min_kpis, self.max_kpis, eval_env_RL.env.get_kpi(start_ind=step, end_ind=step+1), bs_state)
-            bs_reward, _ = self.reward_function(self.min_kpis, self.max_kpis, eval_env_RL.env.get_kpi(start_ind=step, end_ind=step+1), bs_state)
+            ori_bs_reward, _ = reward_func(self.min_kpis, self.max_kpis, eval_env_RL.kpi, bs_state)
+            bs_reward, _ = self.reward_function(self.min_kpis, self.max_kpis, eval_env_RL.kpi, bs_state)
             bs_reward_list.append(bs_reward)
             ori_bs_reward_list.append(ori_bs_reward)
             step += 1
@@ -176,9 +179,10 @@ class EnergymEvalCallback(BaseCallback):
             if self.is_d3rl: actions = self.model.predict([state])
             else: actions, _ = self.model.predict(state, deterministic=True)
             if len(actions.shape) > 1: actions = actions[0]
+            print("step: ", step, actions, state)
             state, reward, done, info = eval_env_RL.step(actions)
             outputs = eval_env_RL.inverse_transform_state(state)
-            ori_reward, _ = reward_func(self.min_kpis, self.max_kpis, eval_env_RL.env.get_kpi(start_ind=step, end_ind=step+1), state)
+            ori_reward, _ = reward_func(self.min_kpis, self.max_kpis, eval_env_RL.kpi, state)
             control = eval_env_RL.inverse_transform_action(actions)
             controls +=[ {p:control[p][0] for p in control} ]
             out_list.append(outputs)

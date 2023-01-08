@@ -47,7 +47,7 @@ class Env:
         self.runs_path = os.path.join(home, "Energym_runs")
         if not os.path.isdir(self.runs_path):
             try:
-                os.mkdir(self.runs_path)
+                os.makedirs(self.runs_path, exist_ok=True)
             except BaseException as e:
                 logger.exception(f"Unable to create folder 'Energym_runs'. {e}")
 

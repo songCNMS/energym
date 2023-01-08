@@ -41,31 +41,23 @@ jobs:
 """
 suffix_in_name = suffix.replace(" ", "").replace("-", "")
 for building in buildings:
-  if building.startswith("Swiss") or building.startswith("Simple"): 
+  if not building.startswith("Apartments"): 
     cmd += f"""
 - name: {building}-{file_name}-{suffix_in_name}-round_all-idx_all
-  sku: C4
+  sku: G1
   command:
-  - python {file_name}.py --building {building} --amlt {suffix}
+  - python {file_name}.py --building {building} --amlt {suffix} --device cuda:0
 """
-  elif building.startswith("Apartments"):
-    for round in range(8):
-        for idx in range(0, 50, 10):
-            idx_list = ','.join([str(idx+i) for i in range(10)])
-            cmd += f"""
-- name: {building}-{file_name}-{suffix_in_name}-round_{round}-idx_{idx_list}
-  sku: C1
-  command:
-  - python {file_name}.py --building {building} --amlt {suffix} --round {round} --idx {idx_list}
-"""
-  else:
-    for round in range(8):
-      cmd += f"""
-- name: {building}-{file_name}-{suffix_in_name}-round_{round}-idx_all
-  sku: C1
-  command:
-  - python {file_name}.py --building {building} --amlt {suffix} --round {round}
-"""
+#   else:
+#     for round in range(8):
+#         for idx in range(0, 50, 10):
+#             idx_list = ','.join([str(idx+i) for i in range(10)])
+#             cmd += f"""
+# - name: {building}-{file_name}-{suffix_in_name}-round_{round}-idx_{idx_list}
+#   sku: C1
+#   command:
+#   - python {file_name}.py --building {building} --amlt {suffix} --round {round} --idx {idx_list} --device cuda:0
+# """
 
 with open(f"{res_file_name}.yaml", 'w') as f:
   f.write(cmd)

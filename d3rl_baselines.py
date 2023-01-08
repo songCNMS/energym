@@ -77,7 +77,7 @@ parser.add_argument('--seed', type=int, help='seed', default=7)
 parser.add_argument('--iter', type=int, help='iter', default=100)
 parser.add_argument('--algo', type=str, help='algorithm to use', default="TD3PlusBC")
 parser.add_argument('--logdir', type=str, help='log location', default="models")
-parser.add_argument('--rm', action='store_true', help="use learnt reward function")
+parser.add_argument('--rm', type=str, help='reward models', default="ori")
 parser.add_argument('--dm', action='store_true', help="whether using learnt dynamics model")
 parser.add_argument('--device', type=str, help='device', default="cuda:0")
 
@@ -109,10 +109,12 @@ if __name__ == "__main__":
     episode_len = env_RL.max_episode_len
     is_gpu_on = torch.cuda.is_available()
     
-    if args.rm:
+
+    if args.rm == "dnn":
         input_dim = env_RL.observation_space.shape[0]
         reward_models, optimizers = load_reward_model(input_dim, reward_model_loc, building_name, args.device)
-        reward_function = lambda kpi, state: learnt_reward_func(reward_models, min_kpis, max_kpis, kpi, state)
+        env_RL.reward_function = lambda min_kip, max_kpi, kpi, state: learnt_reward_func(reward_models, min_kip, max_kpi, kpi, state)
+    elif args.rm == 'bs': env_RL.reward_function = baseline_reward_func
     
     if args.dm:
         input_dim = env_RL.observation_space.shape[0]
@@ -154,9 +156,10 @@ if __name__ == "__main__":
                                              eval_env_RL,
                                              args.amlt,
                                              False, 
-                                             verbose=0, is_d3rl=True)
+                                             verbose=0, 
+                                             is_d3rl=True)
     def eval_callback(algo, epoch, total_step):
-        if total_step % (max(1, args.iter//20)*episode_len) == 0:
+        if total_step % (max(1, args.iter//10)*episode_len) == 0:
             print("eval on epoch", epoch, "step: ", total_step)
             post_eval_callback.num_timesteps = total_step
             post_eval_callback._on_step()
