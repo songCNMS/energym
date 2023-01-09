@@ -15,14 +15,15 @@ def run(cmd):
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    building_name = args.building
+    building_name_list = args.building.split(",")
     seed_list = [int(s) for s in args.seed.split(",")]
     cmds = []
-    for seed in seed_list:
-        cmd_prefix = f"python d3rl_baselines.py --building {building_name} --seed {seed} --iter 100 "
-        if args.amlt: cmd_prefix += "--amlt "
-        cmds.extend([cmd_prefix+"--algo TD3PlusBC", cmd_prefix+"--algo CQL", cmd_prefix+"--algo MOPO"])
-    
+    for building_name in building_name_list:
+        for seed in seed_list:
+            cmd_prefix = f"python d3rl_baselines.py --building {building_name} --seed {seed} --iter 100 "
+            if args.amlt: cmd_prefix += "--amlt "
+            cmds.extend([cmd_prefix+"--algo TD3PlusBC", cmd_prefix+"--algo CQL", cmd_prefix+"--algo MOPO"])
+        
     device_count = torch.cuda.device_count()
     # for cmd in cmds: run(cmd)
     if building_name.startswith("Swiss") or building_name.startswith("Simple"):
