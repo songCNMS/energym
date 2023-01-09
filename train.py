@@ -137,7 +137,6 @@ class EnergymEvalCallback(BaseCallback):
                                                self.min_kpis, self.max_kpis, 
                                                self.min_outputs, self.max_outputs, 
                                                self.reward_function, 
-                                               dynamics_predictor=self.dynamics_predictor,
                                                eval=True)
         inputs = eval_env_RL.inputs
         out_list = []
@@ -152,6 +151,7 @@ class EnergymEvalCallback(BaseCallback):
         
         
         bs_outputs = eval_env_RL.outputs
+        state = eval_env_RL.state
         done = False
         step = 0
         hour = control_values[building_idx]
@@ -164,10 +164,10 @@ class EnergymEvalCallback(BaseCallback):
             bs_outputs = eval_env_RL.inverse_transform_state(state)
             hour = eval_env_RL.hour
             bs_out_list.append(bs_outputs)
-            bs_state = eval_env_RL.transform_state(bs_outputs)
+            bs_state = state
             ori_bs_reward, _ = reward_func(self.min_kpis, self.max_kpis, eval_env_RL.kpi, bs_state)
-            bs_reward, _ = self.reward_function(self.min_kpis, self.max_kpis, eval_env_RL.kpi, bs_state)
-            bs_reward_list.append(bs_reward)
+            # bs_reward, _ = self.reward_function(self.min_kpis, self.max_kpis, eval_env_RL.kpi, bs_state)
+            bs_reward_list.append(reward)
             ori_bs_reward_list.append(ori_bs_reward)
             step += 1
         
@@ -179,7 +179,6 @@ class EnergymEvalCallback(BaseCallback):
             if self.is_d3rl: actions = self.model.predict([state])
             else: actions, _ = self.model.predict(state, deterministic=True)
             if len(actions.shape) > 1: actions = actions[0]
-            print("step: ", step, actions, state)
             state, reward, done, info = eval_env_RL.step(actions)
             outputs = eval_env_RL.inverse_transform_state(state)
             ori_reward, _ = reward_func(self.min_kpis, self.max_kpis, eval_env_RL.kpi, state)

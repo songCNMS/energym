@@ -89,7 +89,7 @@ if __name__ == "__main__":
     is_remote = args.amlt
     parent_loc = (os.environ['AMLT_DATA_DIR'] if is_remote else "./")
     reward_path_suffix = f"{args.algo}"
-    reward_path_suffix += ("_rewards" if args.rm else "_manual")
+    reward_path_suffix += f"_{args.rm}"
     reward_path_suffix += ("_predictor" if args.dm else "_simulator")
     reward_path_suffix += f"_seed{args.seed}"
     if args.amlt:
@@ -113,8 +113,9 @@ if __name__ == "__main__":
     if args.rm == "dnn":
         input_dim = env_RL.observation_space.shape[0]
         reward_models, optimizers = load_reward_model(input_dim, reward_model_loc, building_name, args.device)
-        env_RL.reward_function = lambda min_kip, max_kpi, kpi, state: learnt_reward_func(reward_models, min_kip, max_kpi, kpi, state)
-    elif args.rm == 'bs': env_RL.reward_function = baseline_reward_func
+        reward_function = lambda min_kip, max_kpi, kpi, state: learnt_reward_func(reward_models, min_kip, max_kpi, kpi, state)
+    elif args.rm == 'bs': reward_function = baseline_reward_func
+    env_RL.reward_function = reward_function
     
     if args.dm:
         input_dim = env_RL.observation_space.shape[0]
@@ -127,15 +128,19 @@ if __name__ == "__main__":
     dataset = get_d3rlpy_dataset(building_name, list(range(num_workers)),
                                  list(range(preference_per_round)), reward_function)
     
+    if args.device.find(":") >= 0:
+        device_id = int(args.device.split(":")[-1])
+    else: device_id = False
+    
     d3rlpy.seed(args.seed)
     assert args.algo in ["TD3PlusBC", "SAC", "CQL", "MOPO"], "wrong algorithm"
     if args.algo == "TD3PlusBC":
-        algo = d3rlpy.algos.TD3PlusBC(action_scaler="min_max", use_gpu=is_gpu_on)
+        algo = d3rlpy.algos.TD3PlusBC(action_scaler="min_max", use_gpu=device_id)
     elif args.algo == "CQL":
-        algo = d3rlpy.algos.CQL(action_scaler="min_max", use_gpu=is_gpu_on)
+        algo = d3rlpy.algos.CQL(action_scaler="min_max", use_gpu=device_id)
     elif args.algo == "MOPO":
         train_episodes, test_episodes = train_test_split(dataset)
-        mopo = ProbabilisticEnsembleDynamics(learning_rate=1e-4, use_gpu=is_gpu_on)
+        mopo = ProbabilisticEnsembleDynamics(learning_rate=1e-4, use_gpu=device_id)
         mopo.fit(train_episodes,
                  n_steps=episode_len,
                  eval_episodes=test_episodes,
@@ -144,9 +149,9 @@ if __name__ == "__main__":
                     'reward_error': dynamics_reward_prediction_error_scorer,
                     'variance': dynamics_prediction_variance_scorer,
                  })
-        algo = d3rlpy.algos.MOPO(dynamics=mopo, action_scaler="min_max", use_gpu=is_gpu_on)
+        algo = d3rlpy.algos.MOPO(dynamics=mopo, action_scaler="min_max", use_gpu=device_id)
     else:
-        algo = d3rlpy.algos.SAC(action_scaler="min_max", use_gpu=is_gpu_on)
+        algo = d3rlpy.algos.SAC(action_scaler="min_max", use_gpu=device_id)
     
     log_loc = f"{model_loc}/logs/"
     os.makedirs(log_loc, exist_ok=True)

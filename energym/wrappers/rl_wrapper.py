@@ -16,7 +16,7 @@ def transform(val, l, u, is_action=False):
 
 def inverse_transform(val, l, u, is_action=False):
     if not is_action: return (val*(u-l)+l if u > l else l)
-    else: return ((val+1.0)*(u-l)*0.5+l if u > l else l)
+    else: return max(l+0.05, ((val+1.0)*(u-l)*0.5+l if u > l else l))
 
 
 def state_distance(state1, state2):
@@ -133,10 +133,10 @@ class StableBaselinesRLWrapper(RLWrapper):
         res = OrderedDict({})
         for a, a_name in zip(state, self.env.output_keys):
             v = inverse_transform(a, self.min_outputs[a_name], self.max_outputs[a_name])
-            if a_name in self.env.output_specs and self.env.output_specs[a_name]['type'] == 'scalar':
-                v = max(self.env.output_specs[a_name]['lower_bound'], min(v, self.env.output_specs[a_name]['upper_bound']))
-            if a_name in self.env.input_specs and self.env.input_specs[a_name]['type'] == 'scalar':
-                v = max(self.env.input_specs[a_name]['lower_bound'], min(v, self.env.input_specs[a_name]['upper_bound']))
+            # if a_name in self.env.output_specs and self.env.output_specs[a_name]['type'] == 'scalar':
+            #     v = max(self.env.output_specs[a_name]['lower_bound'], min(v, self.env.output_specs[a_name]['upper_bound']))
+            # if a_name in self.env.input_specs and self.env.input_specs[a_name]['type'] == 'scalar':
+            #     v = max(self.env.input_specs[a_name]['lower_bound'], min(v, self.env.input_specs[a_name]['upper_bound']))
             res[a_name] = v
         return res
     
@@ -147,9 +147,10 @@ class StableBaselinesRLWrapper(RLWrapper):
         pass
 
     def reset(self):
-        if self.building_name.startswith("Simple") or self.building_name.startswith("Swiss"):
-            self.env = get_env(self.building_name, eval=self.eval_mode)
-        else: self.env.reset()
+        # if self.building_name.startswith("Simple") or self.building_name.startswith("Swiss"):
+        #     self.env = get_env(self.building_name, eval=self.eval_mode)
+        # else: self.env.reset()
+        self.env.reset()
         self.kpis = KPI(self.env.kpi_options)
         self.env.step(self.env.sample_random_action())
         self.outputs = self.env.get_output()
@@ -201,7 +202,7 @@ class StableBaselinesRLWrapper(RLWrapper):
         done = ((self.unwrapped.time >= self.unwrapped.stop_time) | (self.cur_step >= self.max_episode_len))
  
         # print("state max: ", np.max(next_state), "state min: ", np.min(next_state), "reward: ", reward, "reward std: ", reward_std)
-        # if not self.eval_mode and (np.max(next_state) > 4.0 or np.min(next_state) < -1.0): done = True
+        # if not self.eval_mode and (np.max(next_state) > 1.0 or np.min(next_state) < -0.1): done = True
         # if not self.eval_mode and reward_std >= 0.5:
         #     reward, _ = baseline_reward_func(self.min_kpis, self.max_kpis, kpi, next_state)
         

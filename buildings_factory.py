@@ -114,10 +114,9 @@ def reward_func(min_kpi, max_kpi, kpi, state):
     constraint = 0.0
     for key, val in kpi.items():
         min_v, max_v = min_kpi[key]['kpi'], max_kpi[key]['kpi']
-        if val['type'] == 'avg_dev': constraint += (0.0 - val["kpi"]) / max(max_v-min_v, 1.0)
-        elif val['type'] == 'avg': reward += (max_v - val["kpi"]) / max(max_v-min_v, 1.0)
-    # print(reward, constraint, kpi)
-    return reward + 10.0*constraint, 0.0
+        if val['type'] == 'avg_dev': constraint += (min_v-val["kpi"]) / max(max_v-min_v, 1.0)
+        elif val['type'] == 'avg': reward += (min_v-val["kpi"]) / max(max_v-min_v, 1.0)
+    return reward+constraint, 0.0
 
 
 def baseline_reward_func(min_kpi, max_kpi, kpi, state):
@@ -137,8 +136,7 @@ def learnt_reward_func(reward_models, min_kpi, max_kpi, kpi, state):
         reward_list = torch.concat([reward_model.get_reward(model_in) for reward_model in reward_models], axis=0)         
     reward_mean = reward_list.mean().item()
     reward_std = (0.0 if len(reward_list) <= 1 else reward_list.std().item())
-    # print(reward_mean, reward_std)
-    return reward_mean - reward_std, reward_std
+    return reward_mean - 10.0*reward_std, reward_std
     
 
 def get_env(building_name, eval=False):

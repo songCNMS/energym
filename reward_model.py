@@ -173,7 +173,7 @@ def run_train(i, input_dim, parent_loc, building_name):
     train_round_list = list(range(num_workers))
     train_round_list.remove(i)        
     eval_round_list = [i]
-    epochs = 30
+    epochs = 50
     learning_rate = 0.001
     loss_fn = preference_loss
     model = RewardNet(input_dim, seed=i).to(device)
