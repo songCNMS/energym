@@ -142,7 +142,8 @@ if __name__ == "__main__":
         train_episodes, test_episodes = train_test_split(dataset)
         mopo = ProbabilisticEnsembleDynamics(learning_rate=1e-4, use_gpu=device_id)
         mopo.fit(train_episodes,
-                 n_steps=episode_len,
+                 n_steps=episode_len*args.iter,
+                 n_steps_per_epoch=episode_len,
                  eval_episodes=test_episodes,
                  scorers={
                     'observation_error': dynamics_observation_prediction_error_scorer,

@@ -20,8 +20,8 @@ class RewardNet(nn.Module):
         super(RewardNet, self).__init__()
         self.linear_relu_stack = NN(input_dim=input_dim, 
                       layers_info= [256, 256, 256, 1],
-                      output_activation="sigmoid",
-                      batch_norm=False, dropout=0.2,
+                      output_activation="tanh",
+                      batch_norm=False, dropout=0.0,
                       random_seed=seed,
                       hidden_activations=['LeakyReLU', 'LeakyReLU', 'LeakyReLU', 'LeakyReLU'], 
                       initialiser="Xavier")
