@@ -88,7 +88,7 @@ def sample_trajectory(env, building_name, controller=None):
     step = 0
     trajectory = [state]
     rule_controller = controller_list[building_idx]
-    noisy_delta = np.random.choice([1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0])
+    noisy_delta = np.random.choice([0.7, 0.5, 0.3, 0.0])
     # trajectory.append(state)
     while not done:
         # if controller is None: 
