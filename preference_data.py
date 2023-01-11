@@ -88,7 +88,7 @@ def sample_trajectory(env, building_name, controller=None):
     step = 0
     trajectory = [state]
     rule_controller = controller_list[building_idx]
-    noisy_delta = np.random.choice([1.0, 0.0], p=[0.4, 0.6])
+    noisy_delta = np.random.choice([1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0])
     # trajectory.append(state)
     while not done:
         # if controller is None: 
@@ -130,19 +130,21 @@ def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, m
     if is_remote: 
         data_loc = os.environ['AMLT_DATA_DIR'] + "/data/offline_data/{}/preferences_data/{}/"
         traj_data_loc = f"{os.environ['AMLT_DATA_DIR']}/data/offline_data/{building_name}/traj_data/"
-        model_loc = f"{os.environ['AMLT_DATA_DIR']}/data/models/{building_name}/SAC_bs_simulator_seed7/best_model/best_model.zip"
+        model_loc = "{os.environ['AMLT_DATA_DIR']}/data/models/{}/SAC_bs_simulator_seed{}/best_model/best_model.zip"
     else: 
         data_loc = "data/offline_data/{}/preferences_data/{}/"
         traj_data_loc = f"data/offline_data/{building_name}/traj_data/"
-        model_loc = f"data/models/{building_name}/SAC_bs_simulator_seed7/best_model/best_model.zip"
+        model_loc = "data/models/{}/SAC_bs_simulator_seed{}/best_model/best_model.zip"
     env_rl = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func)
     for _len_traj in len_traj_list: os.makedirs(data_loc.format(building_name, _len_traj), exist_ok=True)
     os.makedirs(traj_data_loc, exist_ok=True)
     for i in preference_idx_list: 
         traj_file_loc = f"{traj_data_loc}/{round}_{i}.pkl"
         if not os.path.exists(traj_file_loc):
-            controller1 = SAC.load(model_loc, device=device)
-            controller2 = SAC.load(model_loc, device=device)
+            sample_seed1 = np.random.choice([7, 13, 17, 19])
+            sample_seed2 = np.random.choice([7, 13, 17, 19])
+            controller1 = SAC.load(model_loc.format(building_name, sample_seed1), device=device)
+            controller2 = SAC.load(model_loc.format(building_name, sample_seed2), device=device)
             trajectory1 = sample_trajectory(env_rl, building_name, controller=controller1)
             trajectory2 = sample_trajectory(env_rl, building_name, controller=controller2)
             trajectories = [trajectory1, trajectory2]
