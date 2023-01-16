@@ -20,12 +20,12 @@ if __name__ == "__main__":
     cmds = []
     for building_name in building_name_list:
         for seed in seed_list:
-            cmd_prefix = f"python train.py --building {building_name} --seed {seed} --iter 100 "
+            cmd_prefix = f"python train.py --building {building_name} --seed {seed} --iter 200 "
             if args.amlt: cmd_prefix += "--amlt "
             # cmds.extend([cmd_prefix+" --dm --rm"])
             # cmds.append(cmd_prefix)
             # cmds.extend([cmd_prefix+" --dm", cmd_prefix+" --dm --rm"])
-            cmds.extend([cmd_prefix + "--rm bs --dm"])
+            cmds.extend([cmd_prefix + "--rm bs"])
     device_count = torch.cuda.device_count()
     if building_name.startswith("Swiss") or building_name.startswith("Simple"):
         jobs = []

@@ -18,7 +18,7 @@ def add_kpi(cur_kpi, kpi, min_kpis, max_kpis):
         min_v, max_v = min_kpis[key]['kpi'], max_kpis[key]['kpi']
         if val["type"] not in cur_kpi: cur_kpi[val["type"]] = {}
         if val["name"] not in cur_kpi[val["type"]]: cur_kpi[val["type"]][val["name"]] = 0
-        cur_kpi[val["type"]][val["name"]] += (val["kpi"]-min_v)/max(1.0, max_v-min_v)
+        cur_kpi[val["type"]][val["name"]] += val["kpi"]/max(1.0, max_v-min_v)
     return cur_kpi
 
 def objective_compare(kpi1, kpi2):
@@ -33,21 +33,21 @@ def constraint_violate(kpis):
     return False
 
 def constraint_violate_compare(kpi1, kpi2):
-    preference = 0
-    for key in kpi1['avg_dev'].keys():
-        val1 = kpi1['avg_dev'][key]
-        val2 = kpi2['avg_dev'][key]
-        if val1 > val2 and preference <= 0: preference = -1.0
-        elif val1 > val2 and preference == 1.0:
-            preference = 0.0
-            break
-        elif val1 < val2 and preference >= 0: preference = 1.0
-        elif val1 < val2 and preference == -1.0:
-            preference = 0.0
-            break
-    # val1 = np.sum([v for v in kpi1['avg_dev'].values()])
-    # val2 = np.sum([v for v in kpi2['avg_dev'].values()])
-    # preference = (1.0 if val1 < val2 else (0.0 if val1 == val2 else -1.0))
+    # preference = 0
+    # for key in kpi1['avg_dev'].keys():
+    #     val1 = kpi1['avg_dev'][key]
+    #     val2 = kpi2['avg_dev'][key]
+    #     if val1 > val2 and preference <= 0: preference = -1.0
+    #     elif val1 > val2 and preference == 1.0:
+    #         preference = 0.0
+    #         break
+    #     elif val1 < val2 and preference >= 0: preference = 1.0
+    #     elif val1 < val2 and preference == -1.0:
+    #         preference = 0.0
+    #         break
+    val1 = np.sum([v for v in kpi1['avg_dev'].values()])
+    val2 = np.sum([v for v in kpi2['avg_dev'].values()])
+    preference = (1.0 if val1 < val2 else (0.0 if val1 == val2 else -1.0))
     return preference
 
 def get_info_from_trajectory(trajectory, _len_traj, min_kpis, max_kpis):
@@ -65,18 +65,18 @@ def get_info_from_trajectory(trajectory, _len_traj, min_kpis, max_kpis):
 def compare_trajectory(trajectory1, trajectory2, _len_traj, min_kpis, max_kpis):
     state1, kpis1 = get_info_from_trajectory(trajectory1, _len_traj, min_kpis, max_kpis)
     state2, kpis2 = get_info_from_trajectory(trajectory2, _len_traj, min_kpis, max_kpis)
-    # preference = 0
-    # if (not constraint_violate(kpis1)) and (not constraint_violate(kpis2)): preference = objective_compare(kpis1, kpis2)
-    # elif constraint_violate(kpis1) and (not constraint_violate(kpis2)): preference = -1.0
-    # elif (not constraint_violate(kpis1)) and constraint_violate(kpis2): preference = 1.0
-    # else: preference = constraint_violate_compare(kpis1, kpis2)
-    obj1 = np.sum([v for v in kpis1['avg'].values()]) 
-    obj2 = np.sum([v for v in kpis2['avg'].values()]) 
-    vio1 = np.sum([v for v in kpis1["avg_dev"].values()])
-    vio2 = np.sum([v for v in kpis2["avg_dev"].values()])
-    r1 = -obj1-vio1
-    r2 = -obj2-vio2
-    preference = (1.0 if r1 > r2 else (-1.0 if r1 < r2 else 0.0))
+    preference = 0
+    if (not constraint_violate(kpis1)) and (not constraint_violate(kpis2)): preference = objective_compare(kpis1, kpis2)
+    elif constraint_violate(kpis1) and (not constraint_violate(kpis2)): preference = -1.0
+    elif (not constraint_violate(kpis1)) and constraint_violate(kpis2): preference = 1.0
+    else: preference = constraint_violate_compare(kpis1, kpis2)
+    # obj1 = np.sum([v for v in kpis1['avg'].values()]) 
+    # obj2 = np.sum([v for v in kpis2['avg'].values()]) 
+    # vio1 = np.sum([v for v in kpis1["avg_dev"].values()])
+    # vio2 = np.sum([v for v in kpis2["avg_dev"].values()])
+    # r1 = -obj1-vio1
+    # r2 = -obj2-vio2
+    # preference = (1.0 if r1 > r2 else (-1.0 if r1 < r2 else 0.0))
     mu = ([1.0, 0.0] if preference==1.0 else ([0.5, 0.5] if preference == 0.0 else [0.0, 1.0]))
     return state1, state2, mu
         
@@ -88,7 +88,7 @@ def sample_trajectory(env, building_name, controller=None):
     step = 0
     trajectory = [state]
     rule_controller = controller_list[building_idx]
-    noisy_delta = np.random.choice([0.7, 0.5, 0.3, 0.0])
+    noisy_delta = np.random.choice([1.0, 0.7, 0.5, 0.3, 0.0])
     # trajectory.append(state)
     while not done:
         # if controller is None: 
@@ -130,7 +130,7 @@ def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, m
     if is_remote: 
         data_loc = os.environ['AMLT_DATA_DIR'] + "/data/offline_data/{}/preferences_data/{}/"
         traj_data_loc = f"{os.environ['AMLT_DATA_DIR']}/data/offline_data/{building_name}/traj_data/"
-        model_loc = "{os.environ['AMLT_DATA_DIR']}/data/models/{}/SAC_bs_simulator_seed{}/best_model/best_model.zip"
+        model_loc = os.environ['AMLT_DATA_DIR'] + "/data/models/{}/SAC_bs_simulator_seed{}/best_model/best_model.zip"
     else: 
         data_loc = "data/offline_data/{}/preferences_data/{}/"
         traj_data_loc = f"data/offline_data/{building_name}/traj_data/"
@@ -141,8 +141,8 @@ def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, m
     for i in preference_idx_list: 
         traj_file_loc = f"{traj_data_loc}/{round}_{i}.pkl"
         if not os.path.exists(traj_file_loc):
-            sample_seed1 = np.random.choice([7, 13, 17, 19])
-            sample_seed2 = np.random.choice([7, 13, 17, 19])
+            sample_seed1 = np.random.choice([7, 13, 19])
+            sample_seed2 = np.random.choice([7, 13, 19])
             controller1 = SAC.load(model_loc.format(building_name, sample_seed1), device=device)
             controller2 = SAC.load(model_loc.format(building_name, sample_seed2), device=device)
             trajectory1 = sample_trajectory(env_rl, building_name, controller=controller1)
@@ -168,11 +168,11 @@ def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, m
     env_rl.close()
 
 
-len_traj = 1
-len_traj_list = [1]
+len_traj = 4
+len_traj_list = [1,4,8]
 # len_traj_list = list(range(1, 9))
 num_workers = 8
-preference_per_round = 50
+preference_per_round = 20
 perference_pairs_per_sample = 102400
 
 # buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",

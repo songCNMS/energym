@@ -25,22 +25,22 @@ jobs:
 - name: OfficesThermostat-v0-preference_data--round_all-idx_all
   sku: G1
   command:
-  - python preference_data.py --building OfficesThermostat-v0 --amlt  --device cuda:0
+  - python preference_data.py --building OfficesThermostat-v0 --amlt  --device cpu
 
 - name: MixedUseFanFCU-v0-preference_data--round_all-idx_all
   sku: G1
   command:
-  - python preference_data.py --building MixedUseFanFCU-v0 --amlt  --device cuda:0
+  - python preference_data.py --building MixedUseFanFCU-v0 --amlt  --device cpu
 
 - name: SeminarcenterThermostat-v0-preference_data--round_all-idx_all
   sku: G1
   command:
-  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --device cuda:0
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --device cpu
 
 - name: SeminarcenterFull-v0-preference_data--round_all-idx_all
   sku: G1
   command:
-  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --device cuda:0
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --device cpu
 
 - name: SimpleHouseRad-v0-preference_data--round_all-idx_all
   sku: G1

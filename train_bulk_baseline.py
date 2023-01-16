@@ -22,8 +22,8 @@ if __name__ == "__main__":
         for seed in seed_list:
             cmd_prefix = f"python d3rl_baselines.py --building {building_name} --seed {seed} --iter 100 "
             if args.amlt: cmd_prefix += "--amlt "
-            # cmds.extend([cmd_prefix+"--algo TD3PlusBC", cmd_prefix+"--algo CQL", cmd_prefix+"--algo MOPO"])
-            cmds.extend([cmd_prefix+"--algo MOPO"])
+            cmds.extend([cmd_prefix+"--algo TD3PlusBC", cmd_prefix+"--algo CQL", cmd_prefix+"--algo MOPO"])
+            # cmds.extend([cmd_prefix+"--algo MOPO"])
         
     device_count = torch.cuda.device_count()
     # for cmd in cmds: run(cmd)

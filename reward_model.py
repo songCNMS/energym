@@ -20,8 +20,8 @@ class RewardNet(nn.Module):
         super(RewardNet, self).__init__()
         self.linear_relu_stack = NN(input_dim=input_dim, 
                       layers_info= [256, 256, 256, 1],
-                      output_activation="tanh",
-                      batch_norm=False, dropout=0.0,
+                      output_activation="Sigmoid",
+                      batch_norm=False, dropout=0.2,
                       random_seed=seed,
                       hidden_activations=['LeakyReLU', 'LeakyReLU', 'LeakyReLU', 'LeakyReLU'], 
                       initialiser="Xavier")
@@ -105,6 +105,7 @@ def train_loop(building_name, models, loss_fn, optimizers, round_list, parent_lo
                 if (batch % 100 == 0):
                     current = batch * batch_size
                     print(f"round: {round}, traj_idx: {traj_idx}, loss: {losses}  [{current:>5d}/{size:>5d}]")
+                    print("pred: ", preds, "y: ", y)
     return [total_loss / total_size for total_loss in total_losses]
 
 def test_loop(building_name, models, loss_fn, round_list, parent_loc, device):
@@ -181,7 +182,7 @@ def run_train(i, input_dim, parent_loc, building_name):
     loss_list = []
     test_loss_list = []
     correct_list = []
-    model_loc = f"{parent_loc}/data/models/{building_name}/reward_model/"
+    model_loc = f"{parent_loc}/data/models/{building_name}/reward_model/{len_traj}/"
     os.makedirs(model_loc, exist_ok=True)
     for t in range(epochs):
         print(f"Epoch {t+1}\n-------------------------------")

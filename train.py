@@ -309,13 +309,13 @@ class EnergymEvalCallback(BaseCallback):
         if self.is_reward_model_retrain: self.reward_model_trainig()
         
         
-def load_reward_model(input_dim, reward_model_loc, building_name, device):
+def load_reward_model(input_dim, reward_model_loc, building_name, traj, device):
     reward_models = []
     optimizers = []
     for i in range(ensemble_num):
         reward_model = RewardNet(input_dim).to(device)
         optimizer = torch.optim.Adam(reward_model.parameters(), lr=0.001)
-        _reward_model_loc = reward_model_loc.format(building_name, i)
+        _reward_model_loc = reward_model_loc.format(building_name, traj, i)
         checkpoint = torch.load(_reward_model_loc, map_location=torch.device(device))
         reward_model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
@@ -346,6 +346,7 @@ parser.add_argument('--wandb', action='store_true', help="whether using wandb")
 parser.add_argument('--algo', type=str, help='algorithm', default="SAC")
 parser.add_argument('--device', type=str, help='device', default="cuda:0")
 parser.add_argument('--inc', action='store_true', help="interleaving training")
+parser.add_argument('--traj', type=int, help='traj. len', default=1)
 
 
 if __name__ == "__main__":
@@ -358,19 +359,19 @@ if __name__ == "__main__":
     building_name = args.building
     min_kpis, max_kpis, min_outputs, max_outputs = collect_baseline_kpi(building_name, args.amlt)
     policy_name = args.algo
-    reward_path_suffix = f"{policy_name}"
+    reward_path_suffix = f"{policy_name}_{args.traj}"
     reward_path_suffix += ("_inc" if args.inc else "")
     reward_path_suffix += f"_{args.rm}"
     reward_path_suffix += ("_predictor" if args.dm else "_simulator")
     reward_path_suffix += f"_seed{args.seed}"
     if args.amlt:
         model_loc = f"{os.environ['AMLT_DATA_DIR']}/data/{args.logdir}/{building_name}/{reward_path_suffix}/"
-        reward_model_loc = os.environ['AMLT_DATA_DIR'] + "/data/models/{}/reward_model/reward_model_best_{}.pkl"
+        reward_model_loc = os.environ['AMLT_DATA_DIR'] + "/data/models/{}/reward_model/{}/reward_model_best_{}.pkl"
         dynamics_model_loc = f"{os.environ['AMLT_DATA_DIR']}/data/models/{building_name}/dynamics_model/dynamics_model_best.pkl"
         online_data_loc = f"{os.environ['AMLT_DATA_DIR']}/data/offline_data/{building_name}/traj_data/online_traj.pkl"
     else:
         model_loc = f"data/{args.logdir}/{building_name}/{reward_path_suffix}/"
-        reward_model_loc = "data/models/{}/reward_model/reward_model_best_{}.pkl"
+        reward_model_loc = "data/models/{}/reward_model/{}/reward_model_best_{}.pkl"
         dynamics_model_loc = f"data/models/{building_name}/dynamics_model/dynamics_model_best.pkl"
         online_data_loc = f"data/offline_data/{building_name}/traj_data/online_traj.pkl"
     
@@ -385,7 +386,7 @@ if __name__ == "__main__":
     
     if args.rm == "dnn":
         input_dim = env_RL.observation_space.shape[0]
-        reward_models, optimizers = load_reward_model(input_dim, reward_model_loc, building_name, args.device)
+        reward_models, optimizers = load_reward_model(input_dim, reward_model_loc, building_name, args.traj, args.device)
         env_RL.reward_function = lambda min_kip, max_kpi, kpi, state: learnt_reward_func(reward_models, min_kip, max_kpi, kpi, state)
     elif args.rm == 'bs': env_RL.reward_function = baseline_reward_func
     
