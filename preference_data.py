@@ -168,8 +168,8 @@ def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, m
     env_rl.close()
 
 
-len_traj = 4
-len_traj_list = [1,4,8]
+len_traj = 1
+len_traj_list = [4, 8]
 # len_traj_list = list(range(1, 9))
 num_workers = 8
 preference_per_round = 20

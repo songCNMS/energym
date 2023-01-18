@@ -18,29 +18,29 @@ code:
 
 data:
   local_dir: $CONFIG_DIR/data/
-  remote_dir: energym_v2/
+  remote_dir: energym/v2/
 
 jobs:
 
 - name: OfficesThermostat-v0-preference_data--round_all-idx_all
   sku: G1
   command:
-  - python preference_data.py --building OfficesThermostat-v0 --amlt  --device cpu
+  - python preference_data.py --building OfficesThermostat-v0 --amlt  --device cuda:0
 
 - name: MixedUseFanFCU-v0-preference_data--round_all-idx_all
   sku: G1
   command:
-  - python preference_data.py --building MixedUseFanFCU-v0 --amlt  --device cpu
+  - python preference_data.py --building MixedUseFanFCU-v0 --amlt  --device cuda:0
 
-- name: SeminarcenterThermostat-v0-preference_data--round_all-idx_all
-  sku: G1
-  command:
-  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --device cpu
+# - name: SeminarcenterThermostat-v0-preference_data--round_all-idx_all
+#   sku: G1
+#   command:
+#   - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --device cpu
 
-- name: SeminarcenterFull-v0-preference_data--round_all-idx_all
-  sku: G1
-  command:
-  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --device cpu
+# - name: SeminarcenterFull-v0-preference_data--round_all-idx_all
+#   sku: G1
+#   command:
+#   - python preference_data.py --building SeminarcenterFull-v0 --amlt  --device cpu
 
 - name: SimpleHouseRad-v0-preference_data--round_all-idx_all
   sku: G1
