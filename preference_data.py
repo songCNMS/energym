@@ -141,8 +141,8 @@ def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, m
     for i in preference_idx_list: 
         traj_file_loc = f"{traj_data_loc}/{round}_{i}.pkl"
         if not os.path.exists(traj_file_loc):
-            sample_seed1 = np.random.choice([7, 13, 19])
-            sample_seed2 = np.random.choice([7, 13, 19])
+            sample_seed1 = np.random.choice([7, 13, 17, 19])
+            sample_seed2 = np.random.choice([7, 13, 17, 19])
             controller1 = SAC.load(model_loc.format(building_name, sample_seed1), device=device)
             controller2 = SAC.load(model_loc.format(building_name, sample_seed2), device=device)
             trajectory1 = sample_trajectory(env_rl, building_name, controller=controller1)
@@ -169,7 +169,7 @@ def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, m
 
 
 len_traj = 1
-len_traj_list = [4, 8]
+len_traj_list = [1, 4, 8]
 # len_traj_list = list(range(1, 9))
 num_workers = 8
 preference_per_round = 20

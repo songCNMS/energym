@@ -76,7 +76,8 @@ def train_loop(building_name, models, loss_fn, optimizers, round_list, parent_lo
     for round in round_list:
         for traj_idx in range(preference_per_round):
             if not os.path.exists(f'{parent_loc}/data/offline_data/{building_name}/preferences_data/{traj}/preference_data_{round}_{traj_idx}.pkl'): continue
-            training_dataset = PreferencDataset(round, traj_idx, building_name, parent_loc, traj)
+            try: training_dataset = PreferencDataset(round, traj_idx, building_name, parent_loc, traj)
+            except: continue
             dataloader = DataLoader(training_dataset, batch_size=batch_size, shuffle=True)
             size = len(dataloader.dataset)
             # total_size += size
@@ -118,7 +119,8 @@ def test_loop(building_name, models, loss_fn, round_list, parent_loc, traj, devi
     for round in round_list:
         for traj_idx in range(preference_per_round):
             if not os.path.exists(f'{parent_loc}/data/offline_data/{building_name}/preferences_data/{traj}/preference_data_{round}_{traj_idx}.pkl'): continue
-            testing_dataset = PreferencDataset(round, traj_idx, building_name, parent_loc, traj)
+            try: testing_dataset = PreferencDataset(round, traj_idx, building_name, parent_loc, traj)
+            except: continue
             dataloader = DataLoader(testing_dataset, batch_size=batch_size, shuffle=False)
             with torch.no_grad():
                 for X, y in dataloader:
@@ -189,7 +191,7 @@ import matplotlib.pyplot as plt
 from buildings_factory import *
 from energym.wrappers.rl_wrapper import StableBaselinesRLWrapper
 
-ensemble_num = 8
+ensemble_num = 2
 batch_size = 1024
 # device = ("cuda" if torch.cuda.is_available() else "cpu")
 # print(device)

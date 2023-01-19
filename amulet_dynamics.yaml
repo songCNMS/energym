@@ -83,10 +83,10 @@ jobs:
   command:
   - python dynamics_predictor.py --building SimpleHouseRad-v0 --amlt
 
-- name: SimpleHouseRSla-v0-dynamics
-  sku: G1
-  command:
-  - python dynamics_predictor.py --building SimpleHouseRSla-v0 --amlt
+# - name: SimpleHouseRSla-v0-dynamics
+#   sku: G1
+#   command:
+#   - python dynamics_predictor.py --building SimpleHouseRSla-v0 --amlt
 
 - name: SwissHouseRSlaW2W-v0-dynamics
   sku: G1

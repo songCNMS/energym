@@ -76,7 +76,8 @@ def train_loop(building_name, model, loss_fn, optimizer, round_list, device):
     for round in round_list:
         for traj_idx in range(preference_per_round):
             if not os.path.exists(f'{parent_loc}/data/offline_data/{building_name}/traj_data/{round}_{traj_idx}.pkl'): continue
-            training_dataset = DynamicsDataset(round, traj_idx, building_name)
+            try: training_dataset = DynamicsDataset(round, traj_idx, building_name)
+            except: continue
             dataloader = DataLoader(training_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
             size = len(dataloader.dataset)
             for batch, (X, y) in enumerate(dataloader):
@@ -103,7 +104,8 @@ def test_loop(building_name, model, loss_fn, round_list, device):
     for round in round_list:
         for traj_idx in range(preference_per_round):
             if not os.path.exists(f'{parent_loc}/data/offline_data/{building_name}/traj_data/{round}_{traj_idx}.pkl'): continue
-            training_dataset = DynamicsDataset(round, traj_idx, building_name)
+            try: training_dataset = DynamicsDataset(round, traj_idx, building_name)
+            except: continue
             dataloader = DataLoader(training_dataset, batch_size=batch_size, shuffle=False)
             total_size += len(dataloader)
             with torch.no_grad():

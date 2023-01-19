@@ -1,12 +1,12 @@
 description: Energym Reward Model
 
 target:
-  service: sing
-  name: msrresrchvc
-  vc: gcr-singularity-resrch
-  # service: amlk8s
-  # name: ms-shared
-  # vc: MS-Shared
+  # service: sing
+  # name: msrresrchvc
+  # vc: gcr-singularity-resrch
+  service: amlk8s
+  name: ms-shared
+  vc: MS-Shared
   # run "amlt target list amlk8s" to list the names of available AMLK8s targets
   # name: msrresrchvc
   # vc: gcr-singularity-resrch
@@ -87,10 +87,10 @@ jobs:
   command:
   - python reward_model.py --building SimpleHouseRSla-v0 --amlt
 
-- name: SwissHouseRSlaW2W-v0-reward
-  sku: G2-V100
-  command:
-  - python reward_model.py --building SwissHouseRSlaW2W-v0 --amlt
+# - name: SwissHouseRSlaW2W-v0-reward
+#   sku: G2-V100
+#   command:
+#   - python reward_model.py --building SwissHouseRSlaW2W-v0 --amlt
 
 - name: SwissHouseRSlaTank-v0-reward
   sku: G2-V100

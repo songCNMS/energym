@@ -2,10 +2,12 @@
 description: Energym Preference Data
 
 target:
-  service: sing
-  name: msrresrchvc
-  vc: gcr-singularity-resrch
-
+  # service: sing
+  # name: msrresrchvc
+  # vc: gcr-singularity-resrch
+  service: amlk8s
+  name: ms-shared
+  vc: MS-Shared
 environment:
   image: energym_gcr:sing2
   registry: resrchvc4cr.azurecr.io # any public registry can be specified here
@@ -22,15 +24,15 @@ data:
 
 jobs:
 
-- name: OfficesThermostat-v0-preference_data--round_all-idx_all
-  sku: G1
-  command:
-  - python preference_data.py --building OfficesThermostat-v0 --amlt  --device cuda:0
+# - name: OfficesThermostat-v0-preference_data--round_all-idx_all
+#   sku: G1
+#   command:
+#   - python preference_data.py --building OfficesThermostat-v0 --amlt  --device cuda:0
 
-- name: MixedUseFanFCU-v0-preference_data--round_all-idx_all
-  sku: G1
-  command:
-  - python preference_data.py --building MixedUseFanFCU-v0 --amlt  --device cuda:0
+# - name: MixedUseFanFCU-v0-preference_data--round_all-idx_all
+#   sku: G1
+#   command:
+#   - python preference_data.py --building MixedUseFanFCU-v0 --amlt  --device cuda:0
 
 # - name: SeminarcenterThermostat-v0-preference_data--round_all-idx_all
 #   sku: G1
@@ -43,21 +45,21 @@ jobs:
 #   - python preference_data.py --building SeminarcenterFull-v0 --amlt  --device cpu
 
 - name: SimpleHouseRad-v0-preference_data--round_all-idx_all
-  sku: G1
+  sku: C4
   command:
   - python preference_data.py --building SimpleHouseRad-v0 --amlt  --device cuda:0
 
 - name: SimpleHouseRSla-v0-preference_data--round_all-idx_all
-  sku: G1
+  sku: C4
   command:
   - python preference_data.py --building SimpleHouseRSla-v0 --amlt  --device cuda:0
 
 - name: SwissHouseRSlaW2W-v0-preference_data--round_all-idx_all
-  sku: G1
+  sku: C4
   command:
   - python preference_data.py --building SwissHouseRSlaW2W-v0 --amlt  --device cuda:0
 
 - name: SwissHouseRSlaTank-v0-preference_data--round_all-idx_all
-  sku: G1
+  sku: C4
   command:
   - python preference_data.py --building SwissHouseRSlaTank-v0 --amlt  --device cuda:0
