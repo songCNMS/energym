@@ -77,22 +77,22 @@ jobs:
 #   command:
 #   - python reward_model.py --building SeminarcenterFull-v0 --amlt
 
-- name: SimpleHouseRad-v0-reward-1
-  sku: G2-V100
-  command:
-  - python reward_model.py --building SimpleHouseRad-v0 --amlt --traj 1
+# - name: SimpleHouseRad-v0-reward-1
+#   sku: G2-V100
+#   command:
+#   - python reward_model.py --building SimpleHouseRad-v0 --amlt --traj 1
 
-- name: SimpleHouseRSla-v0-reward
-  sku: G2-V100
-  command:
-  - python reward_model.py --building SimpleHouseRSla-v0 --amlt --traj 4,8
+# - name: SimpleHouseRSla-v0-reward
+#   sku: G2-V100
+#   command:
+#   - python reward_model.py --building SimpleHouseRSla-v0 --amlt --traj 4,8
 
-- name: SwissHouseRSlaW2W-v0-reward
-  sku: G2-V100
-  command:
-  - python reward_model.py --building SwissHouseRSlaW2W-v0 --amlt --traj 4,8
+# - name: SwissHouseRSlaW2W-v0-reward
+#   sku: G2-V100
+#   command:
+#   - python reward_model.py --building SwissHouseRSlaW2W-v0 --amlt --traj 4,8
 
-- name: SwissHouseRSlaTank-v0-reward
-  sku: G2-V100
-  command:
-  - python reward_model.py --building SwissHouseRSlaTank-v0 --amlt --traj 4,8
+# - name: SwissHouseRSlaTank-v0-reward
+#   sku: G2-V100
+#   command:
+#   - python reward_model.py --building SwissHouseRSlaTank-v0 --amlt --traj 4,8

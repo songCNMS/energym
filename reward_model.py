@@ -213,6 +213,14 @@ parser.add_argument('--building', type=str, help='building name', required=True)
 parser.add_argument('--device', type=str, help='device', default="cuda:0")
 parser.add_argument('--traj', type=str, help='traj. len', default="1")
 
+input_dim_dict={"OfficesThermostat-v0": 53,
+"MixedUseFanFCU-v0": 38,
+"SeminarcenterThermostat-v0": 66,
+"SeminarcenterFull-v0": 67,
+"SimpleHouseRad-v0": 21,
+"SimpleHouseRSla-v0": 22,
+"SwissHouseRSlaW2W-v0": 22,
+"SwissHouseRSlaTank-v0": 18}
 
 
 if __name__ == "__main__":
@@ -222,8 +230,9 @@ if __name__ == "__main__":
     parent_loc = (os.environ['AMLT_DATA_DIR'] if is_remote else "./")
     building_name = args.building
     min_kpis, max_kpis, min_outputs, max_outputs = collect_baseline_kpi(building_name, args.amlt)
-    env_rl = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func)
-    input_dim = env_rl.observation_space.shape[0]
+    # env_rl = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func)
+    # input_dim = env_rl.observation_space.shape[0]
+    input_dim = input_dim_dict[building_name]
     
     # run_train(7, input_dim, parent_loc, building_name)
     # for i in range(ensemble_num): run_train(i, input_dim, parent_loc, building_name)

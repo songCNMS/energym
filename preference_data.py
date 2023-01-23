@@ -173,7 +173,7 @@ len_traj = 1
 len_traj_list = [4, 8]
 # len_traj_list = list(range(1, 9))
 num_workers = 8
-preference_per_round = 50
+preference_per_round = 20
 perference_pairs_per_sample = 102400
 
 # buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
