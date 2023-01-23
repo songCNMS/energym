@@ -11,3 +11,4 @@ amlt_configs
 *.ipynb
 d3rlpy_logs
 *.yaml
+scratch_data

@@ -6,7 +6,7 @@ import random
 import torch
 from torch import nn
 from nn_builder.pytorch.NN import NN
-from preference_data import sample_preferences, preference_per_round, num_workers
+from preference_data import sample_preferences, preference_per_round, num_workers, perference_pairs_per_sample
 import os
 import pandas as pd
 from torch.utils.data import Dataset, DataLoader
@@ -48,13 +48,16 @@ def preference_loss(outputs, labels):
 
 
 class PreferencDataset(Dataset):
-    def __init__(self, round, traj_idx, building_name, parent_loc, traj):
+    def __init__(self, round, traj_idx, building_name, min_kpis, max_kpis, parent_loc, traj):
         self.round = round
         self.traj_idx = traj_idx
-        with open(f'{parent_loc}/data/offline_data/{building_name}/preferences_data/{traj}/preference_data_{round}_{traj_idx}.pkl', 'rb') as f:
-            self.raw_data = np.load(f, allow_pickle=True)
-            if len(self.raw_data.shape) > 2: self.raw_data = self.raw_data[0]
-            # self.raw_data = _raw_data[_raw_data[:, -1] != 0.5, :]
+        with open(f'{parent_loc}/data/offline_data/{building_name}/traj_data/{round}_{traj_idx}.pkl', 'rb') as f:
+            trajectories = pickle.load(f)
+            trajectory1, trajectory2 = trajectories[0], trajectories[1]
+        preference_pairs1 = sample_preferences(trajectory1, trajectory2, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample, traj_list=[traj])
+        preference_pairs2 = sample_preferences(trajectory1, trajectory1, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample, traj_list=[traj])
+        preference_pairs3 = sample_preferences(trajectory2, trajectory2, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample, traj_list=[traj])
+        self.raw_data = np.array(preference_pairs1[0] + preference_pairs2[0] + preference_pairs3[0])
         self.data = torch.from_numpy(self.raw_data[:, :-2]).to(torch.float)
         self.labels = torch.from_numpy(self.raw_data[:, -2:]).to(torch.float)
         
@@ -66,7 +69,7 @@ class PreferencDataset(Dataset):
         label = self.labels[idx, :]
         return feature, label
     
-def train_loop(building_name, models, loss_fn, optimizers, round_list, parent_loc, traj, device):
+def train_loop(building_name, min_kpis, max_kpis, models, loss_fn, optimizers, round_list, parent_loc, traj, device):
     total_size = 0
     if not isinstance(models, list): models = [models]
     if not isinstance(optimizers, list): optimizers = [optimizers]
@@ -75,8 +78,9 @@ def train_loop(building_name, models, loss_fn, optimizers, round_list, parent_lo
     
     for round in round_list:
         for traj_idx in range(preference_per_round):
-            if not os.path.exists(f'{parent_loc}/data/offline_data/{building_name}/preferences_data/{traj}/preference_data_{round}_{traj_idx}.pkl'): continue
-            try: training_dataset = PreferencDataset(round, traj_idx, building_name, parent_loc, traj)
+            if not os.path.exists(f'{parent_loc}/data/offline_data/{building_name}/traj_data/{round}_{traj_idx}.pkl'): continue
+            # training_dataset = PreferencDataset(round, traj_idx, building_name, min_kpis, max_kpis, parent_loc, traj)
+            try: training_dataset = PreferencDataset(round, traj_idx, building_name, min_kpis, max_kpis, parent_loc, traj)
             except: continue
             dataloader = DataLoader(training_dataset, batch_size=batch_size, shuffle=True)
             size = len(dataloader.dataset)
@@ -109,7 +113,7 @@ def train_loop(building_name, models, loss_fn, optimizers, round_list, parent_lo
                     print("pred: ", preds, "y: ", y)
     return [total_loss / total_size for total_loss in total_losses]
 
-def test_loop(building_name, models, loss_fn, round_list, parent_loc, traj, device):
+def test_loop(building_name, min_kpis, max_kpis, models, loss_fn, round_list, parent_loc, traj, device):
     total_num_batches = 0
     total_samples = 0
     if not isinstance(models, list): models = [models]
@@ -118,8 +122,8 @@ def test_loop(building_name, models, loss_fn, round_list, parent_loc, traj, devi
     for model in models: model.eval()
     for round in round_list:
         for traj_idx in range(preference_per_round):
-            if not os.path.exists(f'{parent_loc}/data/offline_data/{building_name}/preferences_data/{traj}/preference_data_{round}_{traj_idx}.pkl'): continue
-            try: testing_dataset = PreferencDataset(round, traj_idx, building_name, parent_loc, traj)
+            if not os.path.exists(f'{parent_loc}/data/offline_data/{building_name}/traj_data/{round}_{traj_idx}.pkl'): continue
+            try: testing_dataset = PreferencDataset(round, traj_idx, building_name, min_kpis, max_kpis, parent_loc, traj)
             except: continue
             dataloader = DataLoader(testing_dataset, batch_size=batch_size, shuffle=False)
             with torch.no_grad():
@@ -146,7 +150,7 @@ def test_loop(building_name, models, loss_fn, round_list, parent_loc, traj, devi
     
 
 
-def run_train(i, input_dim, parent_loc, building_name, traj):
+def run_train(i, input_dim, parent_loc, building_name, min_kpis, max_kpis, traj):
     device = "cpu"
     if torch.cuda.is_available():
         device_count = torch.cuda.device_count()
@@ -166,11 +170,11 @@ def run_train(i, input_dim, parent_loc, building_name, traj):
     os.makedirs(model_loc, exist_ok=True)
     for t in range(epochs):
         print(f"Epoch {t+1}\n-------------------------------")
-        total_loss = train_loop(building_name, model, loss_fn, optimizer, train_round_list, parent_loc, traj, device)
+        total_loss = train_loop(building_name, min_kpis, max_kpis, model, loss_fn, optimizer, train_round_list, parent_loc, traj, device)
         loss_list.append(total_loss[0])
         fig, axs = plt.subplots(3, 1)
         axs[0].plot(loss_list)
-        test_loss, correct = test_loop(building_name, model, loss_fn, eval_round_list, parent_loc, traj, device)
+        test_loss, correct = test_loop(building_name, min_kpis, max_kpis, model, loss_fn, eval_round_list, parent_loc, traj, device)
         test_loss, correct = test_loss[0], correct[0]
         test_loss_list.append(test_loss)
         correct_list.append(correct)
@@ -191,7 +195,7 @@ import matplotlib.pyplot as plt
 from buildings_factory import *
 from energym.wrappers.rl_wrapper import StableBaselinesRLWrapper
 
-ensemble_num = 2
+ensemble_num = 4
 batch_size = 1024
 # device = ("cuda" if torch.cuda.is_available() else "cpu")
 # print(device)
@@ -207,7 +211,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
 parser.add_argument('--building', type=str, help='building name', required=True)
 parser.add_argument('--device', type=str, help='device', default="cuda:0")
-parser.add_argument('--traj', type=int, help='traj. len', default=1)
+parser.add_argument('--traj', type=str, help='traj. len', default="1")
 
 
 
@@ -224,10 +228,11 @@ if __name__ == "__main__":
     # run_train(7, input_dim, parent_loc, building_name)
     # for i in range(ensemble_num): run_train(i, input_dim, parent_loc, building_name)
     jobs = []
-    for i in range(ensemble_num):
-        p = mp.Process(target=run_train, args=(i, input_dim, parent_loc, building_name, args.traj))
-        jobs.append(p)
-        p.start()
+    for traj in [int(c) for c in args.traj.split(",")]:
+        for i in range(ensemble_num):
+            p = mp.Process(target=run_train, args=(i, input_dim, parent_loc, building_name, min_kpis, max_kpis, traj))
+            jobs.append(p)
+            p.start()
     for proc in jobs:
         proc.join()
 

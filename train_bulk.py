@@ -20,7 +20,7 @@ if __name__ == "__main__":
     cmds = []
     for building_name in building_name_list:
         for seed in seed_list:
-            cmd_prefix = f"python train.py --building {building_name} --seed {seed} --iter 200 --traj 8 "
+            cmd_prefix = f"python train.py --building {building_name} --seed {seed} --iter 200 --traj 1 "
             if args.amlt: cmd_prefix += "--amlt "
             # cmds.extend([cmd_prefix+" --dm --rm"])
             # cmds.append(cmd_prefix)

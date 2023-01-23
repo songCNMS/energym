@@ -1,12 +1,12 @@
 description: Energym Reward Model
 
 target:
-  # service: sing
-  # name: msrresrchvc
-  # vc: gcr-singularity-resrch
-  service: amlk8s
-  name: ms-shared
-  vc: MS-Shared
+  service: sing
+  name: msrresrchvc
+  vc: gcr-singularity-resrch
+  # service: amlk8s
+  # name: ms-shared
+  # vc: MS-Shared
   # run "amlt target list amlk8s" to list the names of available AMLK8s targets
   # name: msrresrchvc
   # vc: gcr-singularity-resrch
@@ -24,7 +24,7 @@ code:
   local_dir: $CONFIG_DIR/
 
 data:
-  local_dir: $CONFIG_DIR/data/
+  local_dir: $CONFIG_DIR/
   remote_dir: energym/v2/
 
 
@@ -57,15 +57,15 @@ jobs:
 #   command:
 #   - python reward_model.py --building Apartments2Grid-v0 --amlt
 
-# - name: OfficesThermostat-v0-reward
-#   sku: G2
-#   command:
-#   - python reward_model.py --building OfficesThermostat-v0 --amlt
+- name: OfficesThermostat-v0-reward
+  sku: G2-V100
+  command:
+  - python reward_model.py --building OfficesThermostat-v0 --amlt --traj 1,4,8
 
-# - name: MixedUseFanFCU-v0-reward
-#   sku: G2
-#   command:
-#   - python reward_model.py --building MixedUseFanFCU-v0 --amlt
+- name: MixedUseFanFCU-v0-reward
+  sku: G2-V100
+  command:
+  - python reward_model.py --building MixedUseFanFCU-v0 --amlt --traj 1,4,8
 
 # - name: SeminarcenterThermostat-v0-reward
 #   sku: G2
@@ -77,22 +77,22 @@ jobs:
 #   command:
 #   - python reward_model.py --building SeminarcenterFull-v0 --amlt
 
-- name: SimpleHouseRad-v0-reward
+- name: SimpleHouseRad-v0-reward-1
   sku: G2-V100
   command:
-  - python reward_model.py --building SimpleHouseRad-v0 --amlt
+  - python reward_model.py --building SimpleHouseRad-v0 --amlt --traj 1
 
 - name: SimpleHouseRSla-v0-reward
   sku: G2-V100
   command:
-  - python reward_model.py --building SimpleHouseRSla-v0 --amlt
+  - python reward_model.py --building SimpleHouseRSla-v0 --amlt --traj 4,8
 
-# - name: SwissHouseRSlaW2W-v0-reward
-#   sku: G2-V100
-#   command:
-#   - python reward_model.py --building SwissHouseRSlaW2W-v0 --amlt
+- name: SwissHouseRSlaW2W-v0-reward
+  sku: G2-V100
+  command:
+  - python reward_model.py --building SwissHouseRSlaW2W-v0 --amlt --traj 4,8
 
 - name: SwissHouseRSlaTank-v0-reward
   sku: G2-V100
   command:
-  - python reward_model.py --building SwissHouseRSlaTank-v0 --amlt
+  - python reward_model.py --building SwissHouseRSlaTank-v0 --amlt --traj 4,8

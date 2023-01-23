@@ -112,11 +112,12 @@ def sample_trajectory(env, building_name, controller=None):
     return trajectory
 
 
-def sample_preferences(trajectory1, trajectory2, min_kpis, max_kpis, num_preferences=8):
+def sample_preferences(trajectory1, trajectory2, min_kpis, max_kpis, num_preferences=8, traj_list=None):
     trajectory_len1 = len(trajectory1) // 4
     trajectory_len2 = len(trajectory2) // 4
-    preference_pairs = [[] for _ in len_traj_list]
-    for i, _len_traj in enumerate(len_traj_list):
+    if traj_list is None: traj_list = len_traj_list
+    preference_pairs = [[] for _ in traj_list]
+    for i, _len_traj in enumerate(traj_list):
         for _ in range(num_preferences):
             start_idx1 = np.random.randint(trajectory_len1-_len_traj)
             start_idx2 = np.random.randint(trajectory_len2-_len_traj)
@@ -150,29 +151,29 @@ def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, m
             trajectories = [trajectory1, trajectory2]
             with open(traj_file_loc, "wb") as f:
                 pickle.dump(trajectories, f)
-        else:
-            with open(traj_file_loc, "rb") as f:
-                trajectories = pickle.load(f)
-            trajectory1, trajectory2 = trajectories[0], trajectories[1]
-        preference_pairs1 = sample_preferences(trajectory1, trajectory2, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
-        preference_pairs2 = sample_preferences(trajectory1, trajectory1, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
-        preference_pairs3 = sample_preferences(trajectory2, trajectory2, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
+        # else:
+        #     with open(traj_file_loc, "rb") as f:
+        #         trajectories = pickle.load(f)
+        #     trajectory1, trajectory2 = trajectories[0], trajectories[1]
+        # preference_pairs1 = sample_preferences(trajectory1, trajectory2, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
+        # preference_pairs2 = sample_preferences(trajectory1, trajectory1, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
+        # preference_pairs3 = sample_preferences(trajectory2, trajectory2, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
         
-        for j, _len_traj in enumerate(len_traj_list):
-            _data_loc = data_loc.format(building_name, _len_traj)
-            file_loc = f'{_data_loc}/preference_data_{round}_{i}.pkl'
-            with open(file_loc, 'wb') as f:
-                np.save(f, preference_pairs1[j]+preference_pairs2[j]+preference_pairs3[j])
+        # for j, _len_traj in enumerate(len_traj_list):
+        #     _data_loc = data_loc.format(building_name, _len_traj)
+        #     file_loc = f'{_data_loc}/preference_data_{round}_{i}.pkl'
+        #     with open(file_loc, 'wb') as f:
+        #         np.save(f, preference_pairs1[j]+preference_pairs2[j]+preference_pairs3[j])
         print(f"round {round}, preference {i+1} done!")
     print(f"round {round} done!")
     env_rl.close()
 
 
 len_traj = 1
-len_traj_list = [1, 4, 8]
+len_traj_list = [4, 8]
 # len_traj_list = list(range(1, 9))
 num_workers = 8
-preference_per_round = 20
+preference_per_round = 50
 perference_pairs_per_sample = 102400
 
 # buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
