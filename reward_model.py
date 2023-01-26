@@ -51,13 +51,18 @@ class PreferencDataset(Dataset):
     def __init__(self, round, traj_idx, building_name, min_kpis, max_kpis, parent_loc, traj):
         self.round = round
         self.traj_idx = traj_idx
-        with open(f'{parent_loc}/data/offline_data/{building_name}/traj_data/{round}_{traj_idx}.pkl', 'rb') as f:
-            trajectories = pickle.load(f)
-            trajectory1, trajectory2 = trajectories[0], trajectories[1]
-        preference_pairs1 = sample_preferences(trajectory1, trajectory2, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample, traj_list=[traj])
-        preference_pairs2 = sample_preferences(trajectory1, trajectory1, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample, traj_list=[traj])
-        preference_pairs3 = sample_preferences(trajectory2, trajectory2, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample, traj_list=[traj])
-        self.raw_data = np.array(preference_pairs1[0] + preference_pairs2[0] + preference_pairs3[0])
+        if os.path.exists(f'{parent_loc}/data/offline_data/{building_name}/preferences_data/{traj}/preference_data_{round}_{traj_idx}.pkl'):
+            print("loading ", f'{parent_loc}/data/offline_data/{building_name}/preferences_data/{traj}/preference_data_{round}_{traj_idx}.pkl')
+            with open(f'{parent_loc}/data/offline_data/{building_name}/preferences_data/{traj}/preference_data_{round}_{traj_idx}.pkl', 'rb') as f:
+                self.raw_data = np.load(f, allow_pickle=True)
+        else:
+            with open(f'{parent_loc}/data/offline_data/{building_name}/traj_data/{round}_{traj_idx}.pkl', 'rb') as f:
+                trajectories = pickle.load(f)
+                trajectory1, trajectory2 = trajectories[0], trajectories[1]
+            preference_pairs1 = sample_preferences(trajectory1, trajectory2, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample, traj_list=[traj])
+            preference_pairs2 = sample_preferences(trajectory1, trajectory1, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample, traj_list=[traj])
+            preference_pairs3 = sample_preferences(trajectory2, trajectory2, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample, traj_list=[traj])
+            self.raw_data = np.array(preference_pairs1[0] + preference_pairs2[0] + preference_pairs3[0])
         self.data = torch.from_numpy(self.raw_data[:, :-2]).to(torch.float)
         self.labels = torch.from_numpy(self.raw_data[:, -2:]).to(torch.float)
         
@@ -78,10 +83,11 @@ def train_loop(building_name, min_kpis, max_kpis, models, loss_fn, optimizers, r
     
     for round in round_list:
         for traj_idx in range(preference_per_round):
-            if not os.path.exists(f'{parent_loc}/data/offline_data/{building_name}/traj_data/{round}_{traj_idx}.pkl'): continue
-            # training_dataset = PreferencDataset(round, traj_idx, building_name, min_kpis, max_kpis, parent_loc, traj)
-            try: training_dataset = PreferencDataset(round, traj_idx, building_name, min_kpis, max_kpis, parent_loc, traj)
-            except: continue
+            if os.path.exists(f'{parent_loc}/data/offline_data/{building_name}/preferences_data/{traj}/preference_data_{round}_{traj_idx}.pkl'):
+                if not os.path.exists(f'{parent_loc}/data/offline_data/{building_name}/traj_data/{round}_{traj_idx}.pkl'): continue
+            training_dataset = PreferencDataset(round, traj_idx, building_name, min_kpis, max_kpis, parent_loc, traj)
+            # try: training_dataset = PreferencDataset(round, traj_idx, building_name, min_kpis, max_kpis, parent_loc, traj)
+            # except: continue
             dataloader = DataLoader(training_dataset, batch_size=batch_size, shuffle=True)
             size = len(dataloader.dataset)
             # total_size += size
@@ -110,7 +116,7 @@ def train_loop(building_name, min_kpis, max_kpis, models, loss_fn, optimizers, r
                 if (batch % 100 == 0):
                     current = batch * batch_size
                     print(f"round: {round}, traj_idx: {traj_idx}, loss: {losses}  [{current:>5d}/{size:>5d}]")
-                    print("pred: ", preds, "y: ", y)
+                    # print("pred: ", preds, "y: ", y)
     return [total_loss / total_size for total_loss in total_losses]
 
 def test_loop(building_name, min_kpis, max_kpis, models, loss_fn, round_list, parent_loc, traj, device):
@@ -122,7 +128,8 @@ def test_loop(building_name, min_kpis, max_kpis, models, loss_fn, round_list, pa
     for model in models: model.eval()
     for round in round_list:
         for traj_idx in range(preference_per_round):
-            if not os.path.exists(f'{parent_loc}/data/offline_data/{building_name}/traj_data/{round}_{traj_idx}.pkl'): continue
+            if os.path.exists(f'{parent_loc}/data/offline_data/{building_name}/preferences_data/{traj}/preference_data_{round}_{traj_idx}.pkl'):
+                if not os.path.exists(f'{parent_loc}/data/offline_data/{building_name}/traj_data/{round}_{traj_idx}.pkl'): continue
             try: testing_dataset = PreferencDataset(round, traj_idx, building_name, min_kpis, max_kpis, parent_loc, traj)
             except: continue
             dataloader = DataLoader(testing_dataset, batch_size=batch_size, shuffle=False)

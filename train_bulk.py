@@ -25,7 +25,13 @@ if __name__ == "__main__":
             # cmds.extend([cmd_prefix+" --dm --rm"])
             # cmds.append(cmd_prefix)
             # cmds.extend([cmd_prefix+" --dm", cmd_prefix+" --dm --rm"])
-            cmds.extend([cmd_prefix + "--rm dnn --dm"])
+            cmds.extend([cmd_prefix+"--rm dnn --dm --alpha 1",
+                         cmd_prefix+"--rm dnn --dm --alpha 2", 
+                         cmd_prefix+"--rm dnn --dm --alpha 4",
+                         cmd_prefix+"--rm dnn --dm --alpha 6",
+                         cmd_prefix+"--rm dnn --dm --alpha 8",
+                         cmd_prefix+"--rm dnn --dm --alpha 10"
+                         ])
     device_count = torch.cuda.device_count()
     if building_name.startswith("Swiss") or building_name.startswith("Simple"):
         jobs = []
@@ -38,4 +44,7 @@ if __name__ == "__main__":
         for proc in jobs:
             proc.join()
     else:
-        for cmd in cmds: run(cmd)
+        for i, cmd in enumerate(cmds): 
+            device_idx = i % device_count
+            cmd += " --device cuda:%i"%device_idx
+            run(cmd)

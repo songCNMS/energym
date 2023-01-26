@@ -136,12 +136,12 @@ def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, m
         data_loc = "data/offline_data/{}/preferences_data/{}/"
         traj_data_loc = f"data/offline_data/{building_name}/traj_data/"
         model_loc = "data/models/{}/SAC_bs_simulator_seed{}/best_model/best_model.zip"
-    env_rl = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func)
     for _len_traj in len_traj_list: os.makedirs(data_loc.format(building_name, _len_traj), exist_ok=True)
     os.makedirs(traj_data_loc, exist_ok=True)
     for i in preference_idx_list: 
         traj_file_loc = f"{traj_data_loc}/{round}_{i}.pkl"
         if not os.path.exists(traj_file_loc):
+            env_rl = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func)
             sample_seed1 = np.random.choice([7, 13, 17, 19])
             sample_seed2 = np.random.choice([7, 13, 17, 19])
             controller1 = SAC.load(model_loc.format(building_name, sample_seed1), device=device)
@@ -151,30 +151,31 @@ def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, m
             trajectories = [trajectory1, trajectory2]
             with open(traj_file_loc, "wb") as f:
                 pickle.dump(trajectories, f)
-        # else:
-        #     with open(traj_file_loc, "rb") as f:
-        #         trajectories = pickle.load(f)
-        #     trajectory1, trajectory2 = trajectories[0], trajectories[1]
-        # preference_pairs1 = sample_preferences(trajectory1, trajectory2, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
-        # preference_pairs2 = sample_preferences(trajectory1, trajectory1, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
-        # preference_pairs3 = sample_preferences(trajectory2, trajectory2, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
+            env_rl.close()
+        else:
+            print("loading file in ", traj_file_loc)
+            with open(traj_file_loc, "rb") as f:
+                trajectories = pickle.load(f)
+            trajectory1, trajectory2 = trajectories[0], trajectories[1]
+        preference_pairs1 = sample_preferences(trajectory1, trajectory2, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
+        preference_pairs2 = sample_preferences(trajectory1, trajectory1, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
+        preference_pairs3 = sample_preferences(trajectory2, trajectory2, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
         
-        # for j, _len_traj in enumerate(len_traj_list):
-        #     _data_loc = data_loc.format(building_name, _len_traj)
-        #     file_loc = f'{_data_loc}/preference_data_{round}_{i}.pkl'
-        #     with open(file_loc, 'wb') as f:
-        #         np.save(f, preference_pairs1[j]+preference_pairs2[j]+preference_pairs3[j])
+        for j, _len_traj in enumerate(len_traj_list):
+            _data_loc = data_loc.format(building_name, _len_traj)
+            file_loc = f'{_data_loc}/preference_data_{round}_{i}.pkl'
+            with open(file_loc, 'wb') as f:
+                np.save(f, preference_pairs1[j]+preference_pairs2[j]+preference_pairs3[j])
         print(f"round {round}, preference {i+1} done!")
     print(f"round {round} done!")
-    env_rl.close()
 
 
 len_traj = 1
-len_traj_list = [4, 8]
+len_traj_list = [1, 4, 8]
 # len_traj_list = list(range(1, 9))
 num_workers = 8
 preference_per_round = 20
-perference_pairs_per_sample = 102400
+perference_pairs_per_sample = 10240
 
 # buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
 #                   "Apartments2Grid-v0", "OfficesThermostat-v0", "MixedUseFanFCU-v0",
@@ -202,7 +203,7 @@ if __name__ == "__main__":
     if args.idx == "": idx_list = list(range(preference_per_round))
     else: idx_list = [int(c) for c in args.idx.split(",")]
     
-    if (not building_name.startswith("Simple")) and (not building_name.startswith("Swiss")):
+    if False: #(not building_name.startswith("Simple")) and (not building_name.startswith("Swiss")):
         for i in rounds_list: 
             generate_offline_data_worker(args.amlt, building_name, min_kpis, max_kpis, min_outputs, max_outputs, i, idx_list, args.device)
     else:
