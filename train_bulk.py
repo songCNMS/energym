@@ -2,6 +2,7 @@ import argparse
 import multiprocessing as mp
 import os
 import torch
+import numpy as np
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
@@ -41,6 +42,6 @@ if __name__ == "__main__":
     #     proc.join()
     # else:
     for i, cmd in enumerate(cmds): 
-        device_idx = i % device_count
+        device_idx = np.random.randint(device_count)
         cmd += " --device cuda:%i"%device_idx
         run(cmd)

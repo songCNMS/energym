@@ -364,7 +364,7 @@ if __name__ == "__main__":
     reward_path_suffix += ("_inc" if args.inc else "")
     reward_path_suffix += f"_{args.rm}"
     reward_path_suffix += ("_predictor" if args.dm else "_simulator")
-    reward_path_suffix += f"_seed{args.seed}"
+    reward_path_suffix += f"_alpha{args.alpha}_seed{args.seed}"
     if args.amlt:
         model_loc = f"{os.environ['AMLT_DATA_DIR']}/data/{args.logdir}/{building_name}/{reward_path_suffix}/"
         reward_model_loc = os.environ['AMLT_DATA_DIR'] + "/data/models/{}/reward_model/{}/reward_model_best_{}.pkl"
