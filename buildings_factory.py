@@ -129,14 +129,14 @@ def baseline_reward_func(min_kpi, max_kpi, kpi, state):
     return reward + 5.0*constraint, 0.0
 
 
-def learnt_reward_func(reward_models, min_kpi, max_kpi, kpi, state):
+def learnt_reward_func(reward_models, min_kpi, max_kpi, kpi, state, alpha=2.0):
     reward_list = []
     model_in = torch.from_numpy(np.array(state)).reshape(1, -1).to(torch.float).to(next(reward_models[0].parameters()).device)
     with torch.no_grad():
         reward_list = torch.concat([reward_model.get_reward(model_in) for reward_model in reward_models], axis=0)         
     reward_mean = reward_list.mean().item()
     reward_std = (0.0 if len(reward_list) <= 1 else reward_list.std().item())
-    return reward_mean - 2.0*reward_std, reward_std
+    return reward_mean - alpha*reward_std, reward_std
     
 
 def get_env(building_name, eval=False):

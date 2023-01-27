@@ -237,8 +237,6 @@ if __name__ == "__main__":
     parent_loc = (os.environ['AMLT_DATA_DIR'] if is_remote else "./")
     building_name = args.building
     min_kpis, max_kpis, min_outputs, max_outputs = collect_baseline_kpi(building_name, args.amlt)
-    # env_rl = StableBaselinesRLWrapper(building_name, min_kpis, max_kpis, min_outputs, max_outputs, reward_func)
-    # input_dim = env_rl.observation_space.shape[0]
     input_dim = input_dim_dict[building_name]
     
     # run_train(7, input_dim, parent_loc, building_name)

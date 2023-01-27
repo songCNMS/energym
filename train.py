@@ -347,6 +347,7 @@ parser.add_argument('--algo', type=str, help='algorithm', default="SAC")
 parser.add_argument('--device', type=str, help='device', default="cuda:0")
 parser.add_argument('--inc', action='store_true', help="interleaving training")
 parser.add_argument('--traj', type=int, help='traj. len', default=1)
+parser.add_argument('--alpha', type=int, help='alpha', default=2)
 
 
 if __name__ == "__main__":
@@ -387,7 +388,7 @@ if __name__ == "__main__":
     if args.rm == "dnn":
         input_dim = env_RL.observation_space.shape[0]
         reward_models, optimizers = load_reward_model(input_dim, reward_model_loc, building_name, args.traj, args.device)
-        env_RL.reward_function = lambda min_kip, max_kpi, kpi, state: learnt_reward_func(reward_models, min_kip, max_kpi, kpi, state)
+        env_RL.reward_function = lambda min_kip, max_kpi, kpi, state: learnt_reward_func(reward_models, min_kip, max_kpi, kpi, state, alpha=args.alpha)
     elif args.rm == 'bs': env_RL.reward_function = baseline_reward_func
     
     if args.dm:

@@ -4,61 +4,88 @@ target:
   service: sing
   name: msrresrchvc
   vc: gcr-singularity-resrch
+  # service: amlk8s
+  # name: ms-shared
+  # vc: MS-Shared
+  # run "amlt target list amlk8s" to list the names of available AMLK8s targets
+  # name: msrresrchvc
+  # vc: gcr-singularity-resrch
 
 environment:
-  image: energym_gcr:sing1
+  image: energym_gcr:sing2
   registry: resrchvc4cr.azurecr.io # any public registry can be specified here
   username: resrchvc4cr
   setup:
     - apt-get update
 
-
 code:
+  # local directory of the code. this will be uploaded to the server.
+  # $CONFIG_DIR is expanded to the directory of this config file
   local_dir: $CONFIG_DIR/
 
 data:
-  local_dir: $CONFIG_DIR/data/
-  remote_dir: energym/
+  local_dir: $CONFIG_DIR/
+  remote_dir: energym/v2/
 
 jobs:
 
-- name: SimpleHouseRad-v0-1
-  sku: G2-V100
+- name: MixedUseFanFCU-v0-alpha1
+  sku: G1
   command:
-  - python train_bulk.py --building SimpleHouseRad-v0 --amlt --seed 7,13
+  - python train_bulk.py --building MixedUseFanFCU-v0 --amlt --seed 7,13,17,19 --alpha 1
 
-- name: SimpleHouseRSla-v0-1
-  sku: G2-V100
+- name: MixedUseFanFCU-v0-alpha2
+  sku: G1
   command:
-  - python train_bulk.py --building SimpleHouseRSla-v0 --amlt --seed 7,13
+  - python train_bulk.py --building MixedUseFanFCU-v0 --amlt --seed 7,13,17,19 --alpha 2
 
-- name: SwissHouseRSlaW2W-v0-1
-  sku: G2-V100
+- name: MixedUseFanFCU-v0-alpha4
+  sku: G1
   command:
-  - python train_bulk.py --building SwissHouseRSlaW2W-v0 --amlt --seed 7,13
+  - python train_bulk.py --building MixedUseFanFCU-v0 --amlt --seed 7,13,17,19 --alpha 4
 
-- name: SwissHouseRSlaTank-v0-1
-  sku: G2-V100
+- name: MixedUseFanFCU-v0-alpha6
+  sku: G1
   command:
-  - python train_bulk.py --building SwissHouseRSlaTank-v0 --amlt --seed 7,13
+  - python train_bulk.py --building MixedUseFanFCU-v0 --amlt --seed 7,13,17,19 --alpha 6
 
-
-- name: SwissHouseRSlaW2W-v0-2
-  sku: G2-V100
+- name: MixedUseFanFCU-v0-alpha8
+  sku: G1
   command:
-  - python train_bulk.py --building SwissHouseRSlaW2W-v0 --amlt --seed 29,31
+  - python train_bulk.py --building MixedUseFanFCU-v0 --amlt --seed 7,13,17,19 --alpha 8
 
-- name: SwissHouseRSlaTank-v0-2
-  sku: G2-V100
+- name: MixedUseFanFCU-v0-alpha10
+  sku: G1
   command:
-  - python train_bulk.py --building SwissHouseRSlaTank-v0 --amlt --seed 29,31
+  - python train_bulk.py --building MixedUseFanFCU-v0 --amlt --seed 7,13,17,19 --alpha 10
 
-- name: SimpleHouseRSla-v0-2
-  sku: G2-V100
+- name: OfficesThermostat-v0-alpha1
+  sku: G1
   command:
-  - python train_bulk.py --building SimpleHouseRSla-v0 --amlt --seed 29,31
+  - python train_bulk.py --building OfficesThermostat-v0 --amlt --seed 7,13,17,19 --alpha 1
 
-- name: SimpleHouseRad-v0-2
-  sku: G2-V100
+- name: OfficesThermostat-v0-alpha2
+  sku: G1
   command:
-  - python train_bulk.py --building SimpleHouseRad-v0 --amlt --seed 29,31
+  - python train_bulk.py --building OfficesThermostat-v0 --amlt --seed 7,13,17,19 --alpha 2
+
+- name: OfficesThermostat-v0-alpha4
+  sku: G1
+  command:
+  - python train_bulk.py --building OfficesThermostat-v0 --amlt --seed 7,13,17,19 --alpha 4
+
+- name: OfficesThermostat-v0-alpha6
+  sku: G1
+  command:
+  - python train_bulk.py --building OfficesThermostat-v0 --amlt --seed 7,13,17,19 --alpha 6
+
+- name: OfficesThermostat-v0-alpha8
+  sku: G1
+  command:
+  - python train_bulk.py --building OfficesThermostat-v0 --amlt --seed 7,13,17,19 --alpha 8
+
+- name: OfficesThermostat-v0-alpha10
+  sku: G1
+  command:
+  - python train_bulk.py --building OfficesThermostat-v0 --amlt --seed 7,13,17,19 --alpha 10
+

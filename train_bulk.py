@@ -6,7 +6,8 @@ import torch
 parser = argparse.ArgumentParser()
 parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
 parser.add_argument('--building', type=str, help='building name', required=True)
-parser.add_argument('--seed', type=str, help='seed', default=7)
+parser.add_argument('--seed', type=str, help='seed', default="7")
+parser.add_argument('--alpha', type=str, help='alpha', default="1")
 
 def run(cmd):
     print(cmd)
@@ -25,26 +26,21 @@ if __name__ == "__main__":
             # cmds.extend([cmd_prefix+" --dm --rm"])
             # cmds.append(cmd_prefix)
             # cmds.extend([cmd_prefix+" --dm", cmd_prefix+" --dm --rm"])
-            cmds.extend([cmd_prefix+"--rm dnn --dm --alpha 1",
-                         cmd_prefix+"--rm dnn --dm --alpha 2", 
-                         cmd_prefix+"--rm dnn --dm --alpha 4",
-                         cmd_prefix+"--rm dnn --dm --alpha 6",
-                         cmd_prefix+"--rm dnn --dm --alpha 8",
-                         cmd_prefix+"--rm dnn --dm --alpha 10"
-                         ])
+            for alpha in args.alpha.split(","):
+                cmds.append(cmd_prefix+f"--rm dnn --dm --alpha {alpha}")
     device_count = torch.cuda.device_count()
-    if building_name.startswith("Swiss") or building_name.startswith("Simple"):
-        jobs = []
-        for i, cmd in enumerate(cmds):
-            device_idx = i % device_count
-            cmd += " --device cuda:%i"%device_idx
-            p = mp.Process(target=run, args=(cmd,))
-            jobs.append(p)
-            p.start()
-        for proc in jobs:
-            proc.join()
-    else:
-        for i, cmd in enumerate(cmds): 
-            device_idx = i % device_count
-            cmd += " --device cuda:%i"%device_idx
-            run(cmd)
+    # if building_name.startswith("Swiss") or building_name.startswith("Simple"):
+    # jobs = []
+    # for i, cmd in enumerate(cmds):
+    #     device_idx = i % device_count
+    #     cmd += " --device cuda:%i"%device_idx
+    #     p = mp.Process(target=run, args=(cmd,))
+    #     jobs.append(p)
+    #     p.start()
+    # for proc in jobs:
+    #     proc.join()
+    # else:
+    for i, cmd in enumerate(cmds): 
+        device_idx = i % device_count
+        cmd += " --device cuda:%i"%device_idx
+        run(cmd)
