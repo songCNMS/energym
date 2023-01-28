@@ -9,6 +9,7 @@ parser.add_argument('--amlt', action='store_true', help="remote execution on aml
 parser.add_argument('--building', type=str, help='building name', required=True)
 parser.add_argument('--seed', type=str, help='seed', default="7")
 parser.add_argument('--alpha', type=str, help='alpha', default="1")
+parser.add_argument('--traj', type=str, help='traj', default="1")
 
 def run(cmd):
     print(cmd)
@@ -22,13 +23,10 @@ if __name__ == "__main__":
     cmds = []
     for building_name in building_name_list:
         for seed in seed_list:
-            cmd_prefix = f"python train.py --building {building_name} --seed {seed} --iter 200 --traj 1 "
+            cmd_prefix = f"python train.py --building {building_name} --seed {seed} --iter 200 "
             if args.amlt: cmd_prefix += "--amlt "
-            # cmds.extend([cmd_prefix+" --dm --rm"])
-            # cmds.append(cmd_prefix)
-            # cmds.extend([cmd_prefix+" --dm", cmd_prefix+" --dm --rm"])
             for alpha in args.alpha.split(","):
-                cmds.append(cmd_prefix+f"--rm dnn --dm --alpha {alpha}")
+                cmds.extend([cmd_prefix+f"--rm dnn --dm --alpha {alpha} --traj {traj}" for traj in [int(c) for c in args.traj.split(",")]])
     device_count = torch.cuda.device_count()
     # if building_name.startswith("Swiss") or building_name.startswith("Simple"):
     # jobs = []

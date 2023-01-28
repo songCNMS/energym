@@ -70,12 +70,12 @@ jobs:
 # - name: SeminarcenterThermostat-v0-reward
 #   sku: G2
 #   command:
-#   - python reward_model.py --building SeminarcenterThermostat-v0 --amlt
+#   - python reward_model.py --building SeminarcenterThermostat-v0 --traj 1,4,8 --amlt
   
 # - name: SeminarcenterFull-v0-reward
 #   sku: G2-V100
 #   command:
-#   - python reward_model.py --building SeminarcenterFull-v0 --amlt
+#   - python reward_model.py --building SeminarcenterFull-v0 --traj 1,4,8 --amlt
 
 # - name: SimpleHouseRad-v0-reward-1
 #   sku: G2-V100

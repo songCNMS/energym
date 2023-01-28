@@ -83,7 +83,7 @@ def train_loop(building_name, min_kpis, max_kpis, models, loss_fn, optimizers, r
     
     for round in round_list:
         for traj_idx in range(preference_per_round):
-            if os.path.exists(f'{parent_loc}/data/offline_data/{building_name}/preferences_data/{traj}/preference_data_{round}_{traj_idx}.pkl'):
+            if not os.path.exists(f'{parent_loc}/data/offline_data/{building_name}/preferences_data/{traj}/preference_data_{round}_{traj_idx}.pkl'):
                 if not os.path.exists(f'{parent_loc}/data/offline_data/{building_name}/traj_data/{round}_{traj_idx}.pkl'): continue
             training_dataset = PreferencDataset(round, traj_idx, building_name, min_kpis, max_kpis, parent_loc, traj)
             # try: training_dataset = PreferencDataset(round, traj_idx, building_name, min_kpis, max_kpis, parent_loc, traj)

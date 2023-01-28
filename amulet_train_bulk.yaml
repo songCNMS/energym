@@ -29,63 +29,85 @@ data:
 
 jobs:
 
-- name: MixedUseFanFCU-v0-alpha1
+- name: MixedUseFanFCU-v0-traj4
   sku: G1
   command:
-  - python train_bulk.py --building MixedUseFanFCU-v0 --amlt --seed 7,13,17,19 --alpha 1
+  - python train_bulk.py --building MixedUseFanFCU-v0 --amlt --seed 7,13,17,19 --alpha 2 --traj 4
 
-- name: MixedUseFanFCU-v0-alpha2
+- name: MixedUseFanFCU-v0-traj8
   sku: G1
   command:
-  - python train_bulk.py --building MixedUseFanFCU-v0 --amlt --seed 7,13,17,19 --alpha 2
+  - python train_bulk.py --building MixedUseFanFCU-v0 --amlt --seed 7,13,17,19 --alpha 2 --traj 8
 
-- name: MixedUseFanFCU-v0-alpha4
-  sku: G1
-  command:
-  - python train_bulk.py --building MixedUseFanFCU-v0 --amlt --seed 7,13,17,19 --alpha 4
 
-- name: MixedUseFanFCU-v0-alpha6
+- name: OfficesThermostat-v0-traj4
   sku: G1
   command:
-  - python train_bulk.py --building MixedUseFanFCU-v0 --amlt --seed 7,13,17,19 --alpha 6
+  - python train_bulk.py --building OfficesThermostat-v0 --amlt --seed 7,13,17,19 --alpha 2 --traj 4
 
-- name: MixedUseFanFCU-v0-alpha8
+- name: OfficesThermostat-v0-traj8
   sku: G1
   command:
-  - python train_bulk.py --building MixedUseFanFCU-v0 --amlt --seed 7,13,17,19 --alpha 8
+  - python train_bulk.py --building OfficesThermostat-v0 --amlt --seed 7,13,17,19 --alpha 2 --traj 8
 
-- name: MixedUseFanFCU-v0-alpha10
-  sku: G1
-  command:
-  - python train_bulk.py --building MixedUseFanFCU-v0 --amlt --seed 7,13,17,19 --alpha 10
 
-- name: OfficesThermostat-v0-alpha1
-  sku: G1
-  command:
-  - python train_bulk.py --building OfficesThermostat-v0 --amlt --seed 7,13,17,19 --alpha 1
+# - name: MixedUseFanFCU-v0-alpha1
+#   sku: G1
+#   command:
+#   - python train_bulk.py --building MixedUseFanFCU-v0 --amlt --seed 7,13,17,19 --alpha 1
 
-- name: OfficesThermostat-v0-alpha2
-  sku: G1
-  command:
-  - python train_bulk.py --building OfficesThermostat-v0 --amlt --seed 7,13,17,19 --alpha 2
+# - name: MixedUseFanFCU-v0-alpha2
+#   sku: G1
+#   command:
+#   - python train_bulk.py --building MixedUseFanFCU-v0 --amlt --seed 7,13,17,19 --alpha 2
 
-- name: OfficesThermostat-v0-alpha4
-  sku: G1
-  command:
-  - python train_bulk.py --building OfficesThermostat-v0 --amlt --seed 7,13,17,19 --alpha 4
+# - name: MixedUseFanFCU-v0-alpha4
+#   sku: G1
+#   command:
+#   - python train_bulk.py --building MixedUseFanFCU-v0 --amlt --seed 7,13,17,19 --alpha 4
 
-- name: OfficesThermostat-v0-alpha6
-  sku: G1
-  command:
-  - python train_bulk.py --building OfficesThermostat-v0 --amlt --seed 7,13,17,19 --alpha 6
+# - name: MixedUseFanFCU-v0-alpha6
+#   sku: G1
+#   command:
+#   - python train_bulk.py --building MixedUseFanFCU-v0 --amlt --seed 7,13,17,19 --alpha 6
 
-- name: OfficesThermostat-v0-alpha8
-  sku: G1
-  command:
-  - python train_bulk.py --building OfficesThermostat-v0 --amlt --seed 7,13,17,19 --alpha 8
+# - name: MixedUseFanFCU-v0-alpha8
+#   sku: G1
+#   command:
+#   - python train_bulk.py --building MixedUseFanFCU-v0 --amlt --seed 7,13,17,19 --alpha 8
 
-- name: OfficesThermostat-v0-alpha10
-  sku: G1
-  command:
-  - python train_bulk.py --building OfficesThermostat-v0 --amlt --seed 7,13,17,19 --alpha 10
+# - name: MixedUseFanFCU-v0-alpha10
+#   sku: G1
+#   command:
+#   - python train_bulk.py --building MixedUseFanFCU-v0 --amlt --seed 7,13,17,19 --alpha 10
+
+# - name: OfficesThermostat-v0-alpha1
+#   sku: G1
+#   command:
+#   - python train_bulk.py --building OfficesThermostat-v0 --amlt --seed 7,13,17,19 --alpha 1
+
+# - name: OfficesThermostat-v0-alpha2
+#   sku: G1
+#   command:
+#   - python train_bulk.py --building OfficesThermostat-v0 --amlt --seed 7,13,17,19 --alpha 2
+
+# - name: OfficesThermostat-v0-alpha4
+#   sku: G1
+#   command:
+#   - python train_bulk.py --building OfficesThermostat-v0 --amlt --seed 7,13,17,19 --alpha 4
+
+# - name: OfficesThermostat-v0-alpha6
+#   sku: G1
+#   command:
+#   - python train_bulk.py --building OfficesThermostat-v0 --amlt --seed 7,13,17,19 --alpha 6
+
+# - name: OfficesThermostat-v0-alpha8
+#   sku: G1
+#   command:
+#   - python train_bulk.py --building OfficesThermostat-v0 --amlt --seed 7,13,17,19 --alpha 8
+
+# - name: OfficesThermostat-v0-alpha10
+#   sku: G1
+#   command:
+#   - python train_bulk.py --building OfficesThermostat-v0 --amlt --seed 7,13,17,19 --alpha 10
 
