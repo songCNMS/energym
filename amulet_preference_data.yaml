@@ -5,9 +5,7 @@ target:
   service: sing
   name: msrresrchvc
   vc: gcr-singularity-resrch
-  # service: amlk8s
-  # name: ms-shared
-  # vc: MS-Shared
+
 environment:
   image: energym_gcr:sing2
   registry: resrchvc4cr.azurecr.io # any public registry can be specified here
@@ -24,42 +22,322 @@ data:
 
 jobs:
 
-# - name: OfficesThermostat-v0-preference_data--round_all-idx_all
-#   sku: G1
-#   command:
-#   - python preference_data.py --building OfficesThermostat-v0 --amlt  --device cuda:0
-
-# - name: MixedUseFanFCU-v0-preference_data--round_all-idx_all
-#   sku: G1
-#   command:
-#   - python preference_data.py --building MixedUseFanFCU-v0 --amlt  --device cuda:0
-
-- name: SeminarcenterThermostat-v0-preference_data--round_all-idx_all
+- name: SeminarcenterThermostat-v0-preference_data--round_0-idx_0,1,2,3,4
   sku: G1
   command:
-  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --device cpu
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 0 --idx 0,1,2,3,4 --device cuda:0
 
-- name: SeminarcenterFull-v0-preference_data--round_all-idx_all
+- name: SeminarcenterThermostat-v0-preference_data--round_0-idx_5,6,7,8,9
   sku: G1
   command:
-  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --device cpu
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 0 --idx 5,6,7,8,9 --device cuda:0
 
-# - name: SimpleHouseRad-v0-preference_data--round_all-idx_all
-#   sku: G1
-#   command:
-#   - python preference_data.py --building SimpleHouseRad-v0 --amlt  --device cuda:0
+- name: SeminarcenterThermostat-v0-preference_data--round_0-idx_10,11,12,13,14
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 0 --idx 10,11,12,13,14 --device cuda:0
 
-# - name: SimpleHouseRSla-v0-preference_data--round_all-idx_all
-#   sku: G1
-#   command:
-#   - python preference_data.py --building SimpleHouseRSla-v0 --amlt  --device cuda:0
+- name: SeminarcenterThermostat-v0-preference_data--round_0-idx_15,16,17,18,19
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 0 --idx 15,16,17,18,19 --device cuda:0
 
-# - name: SwissHouseRSlaW2W-v0-preference_data--round_all-idx_all
-#   sku: G1
-#   command:
-#   - python preference_data.py --building SwissHouseRSlaW2W-v0 --amlt  --device cuda:0
+- name: SeminarcenterThermostat-v0-preference_data--round_1-idx_0,1,2,3,4
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 1 --idx 0,1,2,3,4 --device cuda:0
 
-# - name: SwissHouseRSlaTank-v0-preference_data--round_all-idx_all
-#   sku: G1
-#   command:
-#   - python preference_data.py --building SwissHouseRSlaTank-v0 --amlt  --device cuda:0
+- name: SeminarcenterThermostat-v0-preference_data--round_1-idx_5,6,7,8,9
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 1 --idx 5,6,7,8,9 --device cuda:0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_1-idx_10,11,12,13,14
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 1 --idx 10,11,12,13,14 --device cuda:0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_1-idx_15,16,17,18,19
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 1 --idx 15,16,17,18,19 --device cuda:0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_2-idx_0,1,2,3,4
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 2 --idx 0,1,2,3,4 --device cuda:0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_2-idx_5,6,7,8,9
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 2 --idx 5,6,7,8,9 --device cuda:0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_2-idx_10,11,12,13,14
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 2 --idx 10,11,12,13,14 --device cuda:0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_2-idx_15,16,17,18,19
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 2 --idx 15,16,17,18,19 --device cuda:0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_3-idx_0,1,2,3,4
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 3 --idx 0,1,2,3,4 --device cuda:0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_3-idx_5,6,7,8,9
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 3 --idx 5,6,7,8,9 --device cuda:0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_3-idx_10,11,12,13,14
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 3 --idx 10,11,12,13,14 --device cuda:0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_3-idx_15,16,17,18,19
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 3 --idx 15,16,17,18,19 --device cuda:0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_4-idx_0,1,2,3,4
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 4 --idx 0,1,2,3,4 --device cuda:0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_4-idx_5,6,7,8,9
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 4 --idx 5,6,7,8,9 --device cuda:0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_4-idx_10,11,12,13,14
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 4 --idx 10,11,12,13,14 --device cuda:0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_4-idx_15,16,17,18,19
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 4 --idx 15,16,17,18,19 --device cuda:0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_5-idx_0,1,2,3,4
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 5 --idx 0,1,2,3,4 --device cuda:0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_5-idx_5,6,7,8,9
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 5 --idx 5,6,7,8,9 --device cuda:0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_5-idx_10,11,12,13,14
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 5 --idx 10,11,12,13,14 --device cuda:0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_5-idx_15,16,17,18,19
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 5 --idx 15,16,17,18,19 --device cuda:0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_6-idx_0,1,2,3,4
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 6 --idx 0,1,2,3,4 --device cuda:0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_6-idx_5,6,7,8,9
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 6 --idx 5,6,7,8,9 --device cuda:0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_6-idx_10,11,12,13,14
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 6 --idx 10,11,12,13,14 --device cuda:0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_6-idx_15,16,17,18,19
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 6 --idx 15,16,17,18,19 --device cuda:0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_7-idx_0,1,2,3,4
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 7 --idx 0,1,2,3,4 --device cuda:0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_7-idx_5,6,7,8,9
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 7 --idx 5,6,7,8,9 --device cuda:0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_7-idx_10,11,12,13,14
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 7 --idx 10,11,12,13,14 --device cuda:0
+
+- name: SeminarcenterThermostat-v0-preference_data--round_7-idx_15,16,17,18,19
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterThermostat-v0 --amlt  --round 7 --idx 15,16,17,18,19 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_0-idx_0,1,2,3,4
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 0 --idx 0,1,2,3,4 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_0-idx_5,6,7,8,9
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 0 --idx 5,6,7,8,9 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_0-idx_10,11,12,13,14
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 0 --idx 10,11,12,13,14 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_0-idx_15,16,17,18,19
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 0 --idx 15,16,17,18,19 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_1-idx_0,1,2,3,4
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 1 --idx 0,1,2,3,4 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_1-idx_5,6,7,8,9
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 1 --idx 5,6,7,8,9 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_1-idx_10,11,12,13,14
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 1 --idx 10,11,12,13,14 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_1-idx_15,16,17,18,19
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 1 --idx 15,16,17,18,19 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_2-idx_0,1,2,3,4
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 2 --idx 0,1,2,3,4 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_2-idx_5,6,7,8,9
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 2 --idx 5,6,7,8,9 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_2-idx_10,11,12,13,14
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 2 --idx 10,11,12,13,14 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_2-idx_15,16,17,18,19
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 2 --idx 15,16,17,18,19 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_3-idx_0,1,2,3,4
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 3 --idx 0,1,2,3,4 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_3-idx_5,6,7,8,9
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 3 --idx 5,6,7,8,9 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_3-idx_10,11,12,13,14
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 3 --idx 10,11,12,13,14 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_3-idx_15,16,17,18,19
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 3 --idx 15,16,17,18,19 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_4-idx_0,1,2,3,4
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 4 --idx 0,1,2,3,4 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_4-idx_5,6,7,8,9
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 4 --idx 5,6,7,8,9 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_4-idx_10,11,12,13,14
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 4 --idx 10,11,12,13,14 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_4-idx_15,16,17,18,19
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 4 --idx 15,16,17,18,19 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_5-idx_0,1,2,3,4
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 5 --idx 0,1,2,3,4 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_5-idx_5,6,7,8,9
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 5 --idx 5,6,7,8,9 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_5-idx_10,11,12,13,14
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 5 --idx 10,11,12,13,14 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_5-idx_15,16,17,18,19
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 5 --idx 15,16,17,18,19 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_6-idx_0,1,2,3,4
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 6 --idx 0,1,2,3,4 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_6-idx_5,6,7,8,9
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 6 --idx 5,6,7,8,9 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_6-idx_10,11,12,13,14
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 6 --idx 10,11,12,13,14 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_6-idx_15,16,17,18,19
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 6 --idx 15,16,17,18,19 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_7-idx_0,1,2,3,4
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 7 --idx 0,1,2,3,4 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_7-idx_5,6,7,8,9
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 7 --idx 5,6,7,8,9 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_7-idx_10,11,12,13,14
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 7 --idx 10,11,12,13,14 --device cuda:0
+
+- name: SeminarcenterFull-v0-preference_data--round_7-idx_15,16,17,18,19
+  sku: G1
+  command:
+  - python preference_data.py --building SeminarcenterFull-v0 --amlt  --round 7 --idx 15,16,17,18,19 --device cuda:0

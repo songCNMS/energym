@@ -157,6 +157,7 @@ def generate_offline_data_worker(is_remote, building_name, min_kpis, max_kpis, m
             with open(traj_file_loc, "rb") as f:
                 trajectories = pickle.load(f)
             trajectory1, trajectory2 = trajectories[0], trajectories[1]
+        
         preference_pairs1 = sample_preferences(trajectory1, trajectory2, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
         preference_pairs2 = sample_preferences(trajectory1, trajectory1, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
         preference_pairs3 = sample_preferences(trajectory2, trajectory2, min_kpis, max_kpis, num_preferences=perference_pairs_per_sample)
@@ -174,8 +175,8 @@ len_traj = 1
 len_traj_list = [1, 4, 8]
 # len_traj_list = list(range(1, 9))
 num_workers = 8
-preference_per_round = 20
-perference_pairs_per_sample = 10240
+preference_per_round = 10
+perference_pairs_per_sample = 102400
 
 # buildings_list = ["ApartmentsThermal-v0", "ApartmentsGrid-v0", "Apartments2Thermal-v0",
 #                   "Apartments2Grid-v0", "OfficesThermostat-v0", "MixedUseFanFCU-v0",
@@ -203,7 +204,7 @@ if __name__ == "__main__":
     if args.idx == "": idx_list = list(range(preference_per_round))
     else: idx_list = [int(c) for c in args.idx.split(",")]
     
-    if False: #(not building_name.startswith("Simple")) and (not building_name.startswith("Swiss")):
+    if (not building_name.startswith("Simple")) and (not building_name.startswith("Swiss")):
         for i in rounds_list: 
             generate_offline_data_worker(args.amlt, building_name, min_kpis, max_kpis, min_outputs, max_outputs, i, idx_list, args.device)
     else:

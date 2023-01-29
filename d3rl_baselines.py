@@ -115,8 +115,8 @@ if __name__ == "__main__":
     if args.rm == "dnn":
         input_dim = env_RL.observation_space.shape[0]
         reward_models, optimizers = load_reward_model(input_dim, reward_model_loc, building_name, args.traj, args.device)
-        reward_function = lambda min_kip, max_kpi, kpi, state: learnt_reward_func(reward_models, min_kip, max_kpi, kpi, state, alpha=args.alpha)
-    elif args.rm == 'bs': reward_function = baseline_reward_func
+        reward_function = lambda kpi, state: learnt_reward_func(reward_models, min_kpis, max_kpis, kpi, state, alpha=args.alpha)
+    elif args.rm == 'bs': reward_function = lambda kpi, state: baseline_reward_func(min_kpis, max_kpis, kpi, state)
     env_RL.reward_function = reward_function
     
     if args.dm:
