@@ -81,6 +81,7 @@ parser.add_argument('--rm', type=str, help='reward models', default="ori")
 parser.add_argument('--dm', action='store_true', help="whether using learnt dynamics model")
 parser.add_argument('--device', type=str, help='device', default="cuda:0")
 parser.add_argument('--traj', type=int, help='traj. len', default=1)
+parser.add_argument('--alpha', type=int, help='alpha', default=2)
 
 
 
@@ -92,7 +93,7 @@ if __name__ == "__main__":
     reward_path_suffix = f"{args.algo}_{args.traj}"
     reward_path_suffix += f"_{args.rm}"
     reward_path_suffix += ("_predictor" if args.dm else "_simulator")
-    reward_path_suffix += f"_seed{args.seed}"
+    reward_path_suffix += f"_alpha{args.alpha}_seed{args.seed}"
     if args.amlt:
         model_loc = f"{os.environ['AMLT_DATA_DIR']}/data/{args.logdir}/{building_name}/{reward_path_suffix}/"
         reward_model_loc = os.environ['AMLT_DATA_DIR'] + "/data/models/{}/reward_model/{}/reward_model_best_{}.pkl"
@@ -114,7 +115,7 @@ if __name__ == "__main__":
     if args.rm == "dnn":
         input_dim = env_RL.observation_space.shape[0]
         reward_models, optimizers = load_reward_model(input_dim, reward_model_loc, building_name, args.traj, args.device)
-        reward_function = lambda min_kip, max_kpi, kpi, state: learnt_reward_func(reward_models, min_kip, max_kpi, kpi, state)
+        reward_function = lambda min_kip, max_kpi, kpi, state: learnt_reward_func(reward_models, min_kip, max_kpi, kpi, state, alpha=args.alpha)
     elif args.rm == 'bs': reward_function = baseline_reward_func
     env_RL.reward_function = reward_function
     
